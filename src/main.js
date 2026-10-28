@@ -102,6 +102,7 @@ let installEvt = null;
 window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; if (view === root) draw(); });
 window.addEventListener("appinstalled", () => { installEvt = null; draw(); });
 const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isIpad = () => /ipad/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
 /* ---------- État de l'interface ---------- */
@@ -171,7 +172,7 @@ function root() {
 function playersBody() {
   return `${isSample ? `<p class="hint">Ce sont des prénoms d'exemple. Ajoute tes amis, la liste d'exemple disparaîtra.</p>` : `<p class="hint">Le sexe sert à adapter les cartes : bisous entre fille et garçon, « la reine » ou « le roi ».</p>`}
   ${btn("Ajouter un joueur", "editP", { icon: "userPlus" })}
-  <ul class="list">${roster.map(p => `<li><button class="row-item" data-act="editP" data-arg="${p.id}">${av(p.name, "m")}<span class="grow"><b>${esc(p.name)}</b><small>${p.g === "h" ? "Garçon" : "Fille"}</small></span>${ic("pencil", 18)}</button></li>`).join("")}</ul>
+  <ul class="list two-col">${roster.map(p => `<li><button class="row-item" data-act="editP" data-arg="${p.id}">${av(p.name, "m")}<span class="grow"><b>${esc(p.name)}</b><small>${p.g === "h" ? "Garçon" : "Fille"}</small></span>${ic("pencil", 18)}</button></li>`).join("")}</ul>
   ${roster.length ? `<button class="textbtn danger" data-act="askClear">Vider la liste</button>` : ""}`;
 }
 function boardBody() {
@@ -216,9 +217,9 @@ function sheetHTML() {
         ${btn("C'est fait", "gageDone", { icon: "check" })}`;
   } else if (sheet.type === "install") {
     inner = isIos()
-      ? `<h2 class="sheet-title">Installer sur iPhone</h2>
+      ? `<h2 class="sheet-title">Installer sur ${isIpad() ? "iPad" : "iPhone"}</h2>
          <ol class="steps"><li><span class="stepn">1</span><span>Ouvre cette page dans <b>Safari</b>.</span></li>
-         <li><span class="stepn">2</span><span>Touche le bouton Partager ${ic("share", 18)} en bas de l'écran.</span></li>
+         <li><span class="stepn">2</span><span>Touche le bouton Partager ${ic("share", 18)} ${isIpad() ? "en haut à droite de l'écran" : "en bas de l'écran"}.</span></li>
          <li><span class="stepn">3</span><span>Choisis <b>Sur l'écran d'accueil</b> ${ic("squarePlus", 18)}, puis <b>Ajouter</b>.</span></li></ol>
          <button class="btn ghost" data-act="closeSheet">J'ai compris</button>`
       : `<h2 class="sheet-title">Installer sur Android</h2>
