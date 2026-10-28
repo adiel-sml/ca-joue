@@ -1,6 +1,6 @@
 # Ça Joue
 
-Six jeux de soirée sur un seul téléphone qu'on se passe : **Mimes**, **Mot interdit**, **Action ou Vérité** (de Chill à +18), **2 vérités, 1 mensonge**, **Undercover** avec rôles spéciaux et **Jeu mystère**. Un classement additionne les points de tous les jeux. Gratuit, sans compte, sans publicité, utilisable hors ligne.
+Douze jeux de soirée sur un seul téléphone qu'on se passe. En équipes : **Mimes**, **Mot interdit**, **Time's Up**, **Quiz**. Tous ensemble : **Action ou Vérité**, **Je n'ai jamais**, **Tu préfères**, **La Bombe**, **2 vérités, 1 mensonge**, **Jeu mystère**. Rôles secrets : **Undercover** et **Loup-garou**, avec l'appli comme meneur de jeu. Un classement additionne les points de tous les jeux. Gratuit, sans compte, sans publicité, utilisable hors ligne.
 
 L'appli s'installe sur l'écran d'accueil du téléphone (iPhone et Android) comme une appli classique : plein écran, icône, fonctionnement sans réseau.
 
@@ -30,7 +30,7 @@ npm run preview    # teste la version de production (installation et hors ligne 
 
 | Fichier | Rôle |
 |---|---|
-| `src/content.js`, `src/content-plus.js` | Tout le contenu : mots, cartes, paires Undercover, cartes mystère, rôles spéciaux. Une carte ne revient qu'une fois tout le paquet passé, même d'une partie à l'autre. |
+| `src/content.js`, `src/content-plus.js`, `src/content-games.js` | Tout le contenu : mots, cartes, paires Undercover, cartes mystère, rôles spéciaux. Une carte ne revient qu'une fois tout le paquet passé, même d'une partie à l'autre. |
 | `src/main.js` | Écrans, navigation et règles des jeux. |
 | `src/styles.css` | Le design. |
 | `src/avatars.js` | Les personnages des joueurs. |
