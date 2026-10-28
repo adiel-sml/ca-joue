@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Ça Joue</string>
+    <string name="title_activity_main">Ça Joue</string>
+    <string name="package_name">app.cajoue.soiree</string>
+    <string name="custom_url_scheme">app.cajoue.soiree</string>
+</resources>
