@@ -4,7 +4,7 @@ import "@fontsource/figtree/latin-600.css";
 import "@fontsource/figtree/latin-800.css";
 import "./styles.css";
 import { registerSW } from "virtual:pwa-register";
-import { MIME_EASY, MIME_HARD, TABOO, AV, GAGES, AV_LEVELS, AV_PTS, AV_BONUS, TVM_THEMES, UC_PAIRS, UC_SPECIALS, UC_PTS, MYS_TYPES, MYS, TEAM_NAMES, TEAM_COLORS, GAMES, GAME_CATS } from "./content.js";
+import { MIME_EASY, MIME_HARD, TABOO, AV, GAGES, GAGES_HOT, AV_LEVELS, AV_PTS, AV_BONUS, TVM_THEMES, UC_PAIRS, UC_SPECIALS, UC_PTS, MYS_TYPES, MYS, TEAM_NAMES, TEAM_COLORS, GAMES, GAME_CATS } from "./content.js";
 import { TU_WORDS, BOMB_THEMES, WYR, NHIE, QUIZ, LG_ROLES, LG_SPECIALS } from "./content-games.js";
 import { ic } from "./icons.js";
 import { AVATARS, avatarSvg } from "./avatars.js";
@@ -128,8 +128,9 @@ function screen({ title = "", left = "close", right = "board", color = "", body 
     : left === "back" ? `<button class="iconbtn" data-act="boardBack" aria-label="Retour">${ic("back")}</button>` : "";
   const r = right === "board" ? `<button class="iconbtn" data-act="board" aria-label="Classement">${ic("trophy")}</button>`
     : right === "stop" ? `<button class="iconbtn" data-act="turnStop" aria-label="Arrêter le tour">${ic("stop")}</button>` : (right || "");
+  const rep = G && G.kind === "lg" && voiceOn && lastSay && view !== lgSetup && view !== lgDeal ? `<button class="iconbtn" data-act="lgRepeat" aria-label="Répéter l'annonce">${ic("volume")}</button>` : "";
   return `<div class="screen${tabs ? " has-tabs" : ""}${foot ? " has-foot" : ""}" style="${color ? "--gc:" + color : ""}">
-    ${title || l || r ? `<header class="appbar">${l}<h1 class="appbar-title">${esc(title)}</h1>${r}</header>` : ""}
+    ${title || l || r ? `<header class="appbar">${l}<h1 class="appbar-title">${esc(title)}</h1>${rep}${r}</header>` : ""}
     <main class="content">${body}</main>
     ${foot ? `<footer class="foot">${foot}</footer>` : ""}
     ${tabs ? tabbar() : ""}
@@ -203,6 +204,16 @@ function sheetHTML() {
   } else if (sheet.type === "confirm") {
     inner = `<h2 class="sheet-title">${sheet.title}</h2><p class="sheet-text">${sheet.text}</p>
     <div class="stack">${btn(sheet.ok, sheet.act, { kind: sheet.danger ? "danger" : "" })}<button class="btn ghost" data-act="closeSheet">Annuler</button></div>`;
+  } else if (sheet.type === "gage") {
+    const who = sheet.who ? esc(sheet.who) : "";
+    inner = sheet.chosen == null
+      ? `<h2 class="sheet-title">${who ? `Gage pour ${who}` : "Choisis un gage"}</h2><p class="sheet-text">Choisis parmi ces trois propositions.</p>
+        <ul class="list">${sheet.opts.map((o, i) => `<li><button class="row-item gage-opt" data-act="gagePick" data-arg="${i}"><span class="opt">${i + 1}</span><span class="grow">${esc(o)}</span></button></li>`).join("")}
+        <li><button class="row-item gage-opt" data-act="gagePick" data-arg="2"><span class="opt">${ic("users", 16)}</span><span class="grow"><b>Le groupe choisit le gage</b><small>Si aucune proposition ne convient</small></span></button></li></ul>
+        <button class="textbtn" data-act="gageReroll">${ic("shuffle", 18)} Deux autres propositions</button>`
+      : `<h2 class="sheet-title">${who ? `Gage de ${who}` : "Le gage"}</h2>
+        <div class="card"><span class="card-label">Gage</span><div class="txt">${sheet.chosen === "group" ? "Le groupe invente le gage. À vous de jouer !" : esc(sheet.chosen)}</div></div>
+        ${btn("C'est fait", "gageDone", { icon: "check" })}`;
   } else if (sheet.type === "install") {
     inner = isIos()
       ? `<h2 class="sheet-title">Installer sur iPhone</h2>
@@ -218,6 +229,13 @@ function sheetHTML() {
   return `<div class="backdrop" data-act="closeSheet"></div><section class="sheet" role="dialog" aria-modal="true"><span class="grabber" aria-hidden="true"></span>${inner}</section>`;
 }
 function confirmSheet(o) { sheet = { type: "confirm", ...o }; draw(); }
+/* Gages : deux propositions tirées au sort, plus le choix du groupe */
+function gageOpts(spicy) {
+  const n = pdeck("gages", GAGES), a = spicy ? pdeck("gages-hot", GAGES_HOT).draw() : n.draw();
+  let b = n.draw(); if (b === a) b = n.draw();
+  return [a, b];
+}
+function openGage(who, spicy = false, then = null) { sheet = { type: "gage", who, spicy, opts: gageOpts(spicy), chosen: null, then }; draw(); }
 
 /* ---------- Mimes & Mot interdit ---------- */
 function makeTeams() {
@@ -334,7 +352,7 @@ function avCard() {
     title: "Action ou Vérité", color: "var(--c-av)", body: `
     <div class="who">${av(p, "m")}<div><span class="kicker">${lab} pour</span><b>${esc(p)}</b></div></div>
     <div class="card"><span class="card-label">${lab}${G.type !== "g" ? ", niveau " + levelName(G.level) : ""}</span><div class="txt">${G.text}</div></div>`,
-    foot: btn(pts ? `Fait <small>${ptsTxt(pts)}</small>` : "Fait", "avNext", { icon: "check" }) + (G.type !== "g" ? `<button class="textbtn" data-act="avJoker">Joker : je prends un gage à la place</button>` : "")
+    foot: btn(pts ? `Fait <small>${ptsTxt(pts)}</small>` : "Fait", "avNext", { icon: "check" }) + (G.type !== "g" ? `<button class="textbtn" data-act="avJoker">Je ne peux pas, je choisis un gage</button>` : "")
   });
 }
 
@@ -545,7 +563,7 @@ function mys() {
     ${win}
     ${G.rule && c.t !== "regle" ? `<div class="rule"><span class="label">${ic("gavel", 14)} Règle en cours</span><p>${G.rule}</p></div>` : ""}` : `
     <div class="hero">${ic("dices", 48)}<h2 class="big">Paquet mystère</h2><p class="lead">Qui pourrait, Je n'ai jamais, défis, duels, patate chaude, devinettes et règles absurdes. On tire une carte et on voit.</p></div>`,
-    foot: btn(c ? "Carte suivante" : "Tirer une carte", "mysDraw", { icon: "dices" })
+    foot: btn(c ? "Carte suivante" : "Tirer une carte", "mysDraw", { icon: "dices" }) + (c ? `<button class="textbtn" data-act="mysGage">Quelqu'un ne peut pas le faire : gage</button>` : "")
   });
 }
 
@@ -625,9 +643,8 @@ function bomb() {
     title: "La Bombe", color: C, body: G.loser == null ? `
     <div class="hero">${ic("bomb", 56)}<h2 class="big boom">Boum !</h2><p class="lead">Qui tenait la bombe ?</p></div>
     <div class="pickgrid">${players.map(n => `<button class="pickav" data-act="bombLoser" data-arg="${esc(n)}">${av(n, "m")}<span>${esc(n)}</span></button>`).join("")}</div>` : `
-    <div class="hero">${av(G.loser, "xl")}<span class="kicker">Perdu</span><h2 class="big">${esc(G.loser)}</h2><p class="lead">Les autres gagnent 1 point.</p></div>
-    <div class="card"><span class="card-label">Gage</span><div class="txt">${esc(G.gage)}</div></div>`,
-    foot: G.loser == null ? "" : btn("Nouvelle manche", "bombNew", { icon: "undo" })
+    <div class="hero">${av(G.loser, "xl")}<span class="kicker">Perdu</span><h2 class="big">${esc(G.loser)}</h2><p class="lead">Les autres gagnent 1 point. ${esc(G.loser)} choisit son gage.</p></div>`,
+    foot: G.loser == null ? "" : btn("Nouvelle manche", "bombNew", { icon: "undo" }) + `<button class="textbtn" data-act="bombGage">Revoir les gages</button>`
   });
   return screen({
     title: "La Bombe", color: C, body: `
@@ -660,7 +677,7 @@ function wyr() {
       <h2 class="h2">${minority ? (minority.length ? "La minorité prend un gage" : "Tout le monde est d'accord") : "Égalité parfaite"}</h2>
       <p class="hint">${minority && minority.length ? "La majorité gagne 1 point. La minorité boit une gorgée ou prend un gage." : "Personne ne gagne de point sur ce dilemme."}</p>
       ${col("Choix A", a, A_)}${col("Choix B", b, B_)}`,
-      foot: btn("Dilemme suivant", "wyrNext", { icon: "play" })
+      foot: btn("Dilemme suivant", "wyrNext", { icon: "play" }) + (minority && minority.length ? `<button class="textbtn" data-act="wyrGage">Choisir le gage de la minorité</button>` : "")
     });
   }
   return screen({
@@ -691,11 +708,24 @@ function nhie() {
 /* ---------- Loup-garou ---------- */
 const LGC = "var(--c-lg)";
 let voiceOn = store.get("voice", true);
+let lastSay = "", frVoice = null;
+/* Voix du meneur : la meilleure voix française disponible sur le téléphone */
+function pickVoice() {
+  try {
+    const vs = speechSynthesis.getVoices().filter(v => /^fr/i.test(v.lang));
+    const pref = ["Amélie", "Thomas", "Audrey", "Aurélie", "Google français", "Marie", "Daniel"];
+    frVoice = pref.map(p => vs.find(v => v.name.includes(p))).find(Boolean) || vs.find(v => v.lang === "fr-FR") || vs[0] || null;
+  } catch (e) {}
+}
+if (window.speechSynthesis) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
 function say(t) {
+  lastSay = t;
   try {
     if (!voiceOn || !window.speechSynthesis) return;
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(t); u.lang = "fr-FR"; u.rate = 0.95;
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = "fr-FR"; if (frVoice) u.voice = frVoice;
+    u.rate = 0.92; u.pitch = 0.9; u.volume = 1;
     speechSynthesis.speak(u);
   } catch (e) {}
 }
@@ -715,7 +745,8 @@ function lgSetup() {
     <div class="panel"><span class="label">Rôles spéciaux du village</span>
       <ul class="list">${LG_SPECIALS.map(id => { const r = LG_ROLES[id], on = sel.includes(id); return `<li><button class="row-item toggle${on ? " on" : ""}" data-act="lgRole" data-arg="${id}" aria-pressed="${on}"><span class="role-ic">${ic(r.icon, 20)}</span><span class="grow"><b>${r.name}</b><small>${r.d}</small></span><span class="check">${ic("check", 16)}</span></button></li>`; }).join("")}</ul>
       ${G.nW + sel.length > n ? `<p class="hint warn">Trop de rôles pour ${n} joueurs. Retires-en un.</p>` : ""}</div>
-    <button class="row-item toggle${voiceOn ? " on" : ""}" data-act="lgVoice" aria-pressed="${voiceOn}"><span class="role-ic">${ic(voiceOn ? "volume" : "volumeOff", 20)}</span><span class="grow"><b>Voix du meneur</b><small>Le téléphone lit les annonces de la nuit à voix haute.</small></span><span class="check">${ic("check", 16)}</span></button>`,
+    <button class="row-item toggle${voiceOn ? " on" : ""}" data-act="lgVoice" aria-pressed="${voiceOn}"><span class="role-ic">${ic(voiceOn ? "volume" : "volumeOff", 20)}</span><span class="grow"><b>Voix du meneur</b><small>Le téléphone annonce la nuit, les morts, le débat et le vote. Monte le son.</small></span><span class="check">${ic("check", 16)}</span></button>
+    ${voiceOn ? `<button class="textbtn" data-act="lgTestVoice">${ic("volume", 18)} Tester la voix</button>` : ""}`,
     foot: btn("Distribuer les rôles", "lgGo", { icon: "play", dis: !lgOk() })
   });
 }
@@ -866,7 +897,7 @@ function lgProcessQueue() {
   if (!G.queue.length) {
     const w = lgWinner();
     if (w) return lgFinish(w);
-    if (G.after === "debate") return go(lgDebateScreen);
+    if (G.after === "debate") { go(lgDebateScreen); return say("Le village se réunit. Débattez et démasquez les loups-garous."); }
     G.night++; return lgStartNight();
   }
   const q = G.queue[0], p = G.ps[q.i];
@@ -896,6 +927,9 @@ const A = {
   home() { stopTimer(); try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) {} G = null; tab = "games"; go(root); },
   askQuit() { confirmSheet({ title: "Quitter la partie ?", text: "Les points déjà gagnés restent au classement.", ok: "Quitter", act: "home", danger: true }); },
   closeSheet() { sheet = null; draw(); },
+  gagePick(i) { sheet.chosen = +i === 2 ? "group" : sheet.opts[+i]; draw(); },
+  gageReroll() { sheet.opts = gageOpts(sheet.spicy); draw(); },
+  gageDone() { const then = sheet && sheet.then; sheet = null; if (then) A[then](); else draw(); },
   install() {
     if (installEvt) { const e = installEvt; installEvt = null; e.prompt(); e.userChoice.finally(() => draw()); return; }
     sheet = { type: "install" }; draw();
@@ -970,7 +1004,8 @@ const A = {
     G.type = t; G.text = fill(G.decks[key].draw(), { cur, joueur: pick(o.length ? o : players), opp: oppOf(cur) });
     go(avCard);
   },
-  avJoker() { G.decks.g = G.decks.g || pdeck("gages", GAGES); G.type = "g"; G.text = esc(G.decks.g.draw()); go(avCard); },
+  avJoker() { openGage(avCur(), G.level === "hot" || G.level === "x18", "avAfterGage"); },
+  avAfterGage() { G.i++; go(avTurn); },
   avNext() {
     const p = avCur(), pts = G.type === "g" ? 0 : AV_PTS[G.type] + AV_BONUS[G.level];
     addPts(p, pts); G.i++; go(avTurn); if (pts) toast(`${ptsTxt(pts)} pour ${p}`);
@@ -1034,7 +1069,16 @@ const A = {
     if (c.t === "regle") G.rule = G.text;
     go(mys); beep(520, .06);
   },
-  mysWin(arg) { stopTimer(); const k = arg.lastIndexOf("|"), n = arg.slice(0, k), v = +arg.slice(k + 1); G.scored = true; draw(); if (n && v) { addPts(n, v); toast(`${ptsTxt(v)} pour ${n}`); } },
+  mysWin(arg) {
+    stopTimer();
+    const k = arg.lastIndexOf("|"), n = arg.slice(0, k), v = +arg.slice(k + 1);
+    G.scored = true;
+    if (n && v) { addPts(n, v); }
+    if (G.card.t === "defi" && !v) return openGage(G.p1);
+    if (G.card.t === "duel" && n) return openGage(n === G.p1 ? G.p2 : G.p1);
+    draw(); if (n && v) toast(`${ptsTxt(v)} pour ${n}`);
+  },
+  mysGage() { openGage(G.card.t === "defi" || G.card.t === "devine" ? G.p1 : null); },
   mysTimer() { runTimer(G.card.s, draw); draw(); },
   stopClock() { stopTimer(); draw(); }
 };
@@ -1116,7 +1160,8 @@ Object.assign(A, {
     };
     draw(); tick();
   },
-  bombLoser(n) { G.loser = n; G.gage = G.gd.draw(); others(n).forEach(o => addPts(o, 1)); draw(); },
+  bombLoser(n) { G.loser = n; others(n).forEach(o => addPts(o, 1)); openGage(n); },
+  bombGage() { openGage(G.loser); },
   bombNew() { G.state = "idle"; G.loser = null; G.theme = G.d.draw(); draw(); },
   /* Tu préfères */
   wyrLevel(k) { if (k === "x18" && !adultOk) { G.gate = true; return draw(); } G.level = k; store.set("wyrlvl", k); wyrDraw(); draw(); },
@@ -1129,6 +1174,7 @@ Object.assign(A, {
     G.step = "result"; go(wyr);
   },
   wyrNext() { wyrDraw(); go(wyr); },
+  wyrGage() { const a = G.sel, b = players.filter(n => !a.includes(n)); openGage((a.length < b.length ? a : b).join(", "), G.level !== "normal"); },
   /* Je n'ai jamais */
   nhieLevel(k) { if (k === "x18" && !adultOk) { G.gate = true; return draw(); } G.level = k; store.set("nhielvl", k); nhieDraw(); draw(); },
   nhieAdult() { adultOk = true; G.gate = false; G.level = "x18"; store.set("nhielvl", "x18"); nhieDraw(); draw(); },
@@ -1151,7 +1197,7 @@ Object.assign(A, {
     const roles = shuffle([...Array(G.nW).fill("wolf"), ...sel, ...Array(players.length - G.nW - sel.length).fill("villager")]);
     G.ps = shuffle(players).map((name, i) => ({ name, role: roles[i], alive: true, lover: null }));
     Object.assign(G, { i: 0, show: false, night: 1, potions: { life: true, death: true }, win: null, queue: [], pick: [] });
-    go(lgDeal);
+    go(lgDeal); say("Distribution des rôles. Chacun découvre le sien en secret.");
   },
   lgShow() { G.show = true; draw(); },
   lgHide() { G.show = false; G.i++; if (G.i >= G.ps.length) lgStartNight(); else go(lgDeal); },
@@ -1177,10 +1223,12 @@ Object.assign(A, {
   lgPoison(i) { G.poison = +i; G.potions.death = false; G.wmode = null; lgSleepNow(); },
   lgProcess() { lgProcessQueue(); },
   lgNext() { G.queue.shift(); lgProcessQueue(); },
-  lgShoot(i) { G.queue[0].shot = true; G.queue.push({ i: +i, cause: "hunter" }); draw(); },
-  lgDebate() { go(lgDebateScreen); },
+  lgShoot(i) { G.queue[0].shot = true; G.queue.push({ i: +i, cause: "hunter" }); draw(); say(`Le chasseur tire sur ${G.ps[+i].name}.`); },
+  lgDebate() { go(lgDebateScreen); say("Le village se réunit. Débattez et démasquez les loups-garous."); },
+  lgRepeat() { const t = lastSay; say(t); },
+  lgTestVoice() { say("Bienvenue au village. Je serai votre meneur de jeu cette nuit."); },
   lgClock() { runTimer(120, draw); draw(); },
-  lgVote() { stopTimer(); G.pick = []; go(lgVoteScreen); },
+  lgVote() { stopTimer(); G.pick = []; go(lgVoteScreen); say("Il est temps de voter. À trois, désignez un suspect."); },
   lgElim() { if (!G.pick.length) return; G.after = "night"; G.queue = [{ i: G.pick[0], cause: "vote" }]; G.pick = []; lgProcessQueue(); },
   lgNoElim() { G.night++; lgStartNight(); }
 });

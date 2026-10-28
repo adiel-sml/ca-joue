@@ -1,7 +1,9 @@
 /* Contenu des jeux Time's Up, La Bombe, Tu préfères, Je n'ai jamais, Quiz et Loup-garou */
+import { TU_MORE, BOMB_MORE, WYR_MORE, NHIE_MORE, QUIZ_MORE } from "./content-more.js";
+const uniq = l => { const s = new Set(); return l.filter(x => { const k = (typeof x === "string" ? x : x.q || x.join("|")).toLowerCase(); if (s.has(k)) return false; s.add(k); return true; }); };
 
 /* ---------- Time's Up : personnalités, personnages et objets connus ---------- */
-export const TU_WORDS = [
+const TU_BASE = [
   "Zinédine Zidane", "Kylian Mbappé", "Omar Sy", "Jamel Debbouze", "Céline Dion", "Johnny Hallyday", "Édith Piaf", "Aya Nakamura", "Jul", "Booba",
   "Angèle", "Stromae", "David Guetta", "Squeezie", "Brad Pitt", "Leonardo DiCaprio", "Beyoncé", "Rihanna", "Shakira", "Taylor Swift",
   "Michael Jackson", "Madonna", "Elvis Presley", "Freddie Mercury", "Lady Gaga", "Ed Sheeran", "Justin Bieber", "Kim Kardashian", "Barack Obama", "Emmanuel Macron",
@@ -22,7 +24,7 @@ export const TU_WORDS = [
 ];
 
 /* ---------- La Bombe : thèmes ---------- */
-export const BOMB_THEMES = [
+const BOMB_BASE = [
   ...["OU", "CH", "AN", "ON", "EAU", "IN", "OI", "GN", "ILL", "PR", "TR", "QU", "ER", "AR", "OR", "UR", "EU", "AI", "ION", "ETTE"].map(s => `Un mot qui contient « ${s} »`),
   ...["A", "B", "C", "D", "F", "G", "L", "M", "P", "R", "S", "T", "V"].map(l => `Un mot qui commence par ${l}`),
   ...["Un pays", "Une marque de vêtements", "Un fruit ou un légume", "Un animal", "Un prénom de fille", "Un prénom de garçon", "Un chanteur ou une chanteuse", "Un film", "Une série", "Un métier",
@@ -32,7 +34,7 @@ export const BOMB_THEMES = [
 
 /* ---------- Tu préfères : "choix A|choix B" ---------- */
 const wyr = s => s.trim().split("\n").map(l => l.split("|").map(x => x.trim()));
-export const WYR = {
+const WYR_BASE = {
   normal: wyr(`Avoir le hoquet toute ta vie|Éternuer toutes les cinq minutes
 Ne plus jamais manger de chocolat|Ne plus jamais manger de fromage
 Pouvoir voler|Être invisible
@@ -137,7 +139,7 @@ Une nuit torride sans bisou|Une heure de bisous sans rien d'autre`)
 
 /* ---------- Je n'ai jamais (la carte commence par « Je n'ai jamais… ») ---------- */
 const nhie = s => s.trim().split("\n").map(x => x.trim());
-export const NHIE = {
+const NHIE_BASE = {
   soft: nhie(`mangé de sushis
 pris le train sans billet
 oublié l'anniversaire d'un proche
@@ -262,7 +264,7 @@ fantasmé sur quelqu'un de cette pièce`)
 
 /* ---------- Quiz : [question, bonne réponse, 3 mauvaises réponses, catégorie] ---------- */
 const Q = (cat, list) => list.map(([q, a, ...w]) => ({ q, a, w, cat }));
-export const QUIZ = [
+const QUIZ_BASE = [
   ...Q("Culture générale", [
     ["Quelle est la capitale de l'Australie ?", "Canberra", "Sydney", "Melbourne", "Perth"],
     ["Quel est le plus grand océan du monde ?", "Le Pacifique", "L'Atlantique", "L'océan Indien", "L'Arctique"],
@@ -391,6 +393,12 @@ export const QUIZ = [
     ["Quel est le vrai nom du youtubeur Squeezie ?", "Lucas Hauchard", "Cyprien Iov", "Norman Thavaud", "Natoo"]
   ])
 ];
+
+export const TU_WORDS = uniq([...TU_BASE, ...TU_MORE]);
+export const BOMB_THEMES = uniq([...BOMB_BASE, ...BOMB_MORE]);
+export const WYR = Object.fromEntries(Object.keys(WYR_BASE).map(k => [k, uniq([...WYR_BASE[k], ...WYR_MORE[k]])]));
+export const NHIE = Object.fromEntries(Object.keys(NHIE_BASE).map(k => [k, uniq([...NHIE_BASE[k], ...NHIE_MORE[k]])]));
+export const QUIZ = uniq([...QUIZ_BASE, ...QUIZ_MORE]);
 
 /* ---------- Loup-garou ---------- */
 export const LG_ROLES = {

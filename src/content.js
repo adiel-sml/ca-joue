@@ -1,4 +1,5 @@
 import { MIMES_EASY, TABOO_PLUS, UC_PLUS, AV_PLUS, GAGES_PLUS, TVM_PLUS, MYS_PLUS } from "./content-plus.js";
+import { MIMES_EASY_MORE, MIMES_HARD_MORE, TABOO_MORE, UC_MORE, AV_MORE, GAGES_MORE, GAGES_HOT, MYS_MORE, TVM_MORE } from "./content-more.js";
 
 /* ---------- Contenu ----------
    Gabarits : {joueur} = autre joueur au hasard, {opp} = joueur du sexe opposé (sinon un autre),
@@ -11,8 +12,9 @@ export const MIMES = {
   "Personnage":["Michael Jackson","Le Père Noël","Dracula","Beyoncé","Napoléon","Mario","Tarzan","Superman","Une sirène","Un zombie","Charlie Chaplin","Freddie Mercury","Un mannequin sur le podium","Une reine d'Angleterre"],
   "Objet":["Parapluie","Aspirateur","Trottinette","Machine à laver","Sèche-cheveux","Montgolfière","Grille-pain","Tondeuse","Photomaton","Ascenseur","Balançoire","Brosse à dents électrique","Trampoline","Tire-bouchon"]
 };
-export const MIME_HARD = Object.entries(MIMES).flatMap(([cat,ws])=>ws.map(w=>({w,cat})));
-export const MIME_EASY = Object.entries(MIMES_EASY).flatMap(([cat,ws])=>ws.map(w=>({w,cat})));
+const toCards = o => Object.entries(o).flatMap(([cat,ws])=>ws.map(w=>({w,cat})));
+export const MIME_HARD = [...toCards(MIMES), ...toCards(MIMES_HARD_MORE)];
+export const MIME_EASY = [...toCards(MIMES_EASY), ...toCards(MIMES_EASY_MORE)];
 
 const TABOO_BASE = [
  ["Plage","sable","mer","soleil","vacances"],["Pizza","Italie","fromage","four","livraison"],["Mariage","robe","bague","église","mariés"],
@@ -141,9 +143,13 @@ export const GAMES = [
 ];
 export const GAME_CATS = [["team", "En équipes"], ["all", "Tous ensemble"], ["secret", "Rôles secrets"]];
 
-export const TABOO = [...TABOO_BASE, ...TABOO_PLUS];
-export const AV = Object.fromEntries(Object.entries(AV_BASE).map(([k, l]) => [k, { v: [...l.v, ...AV_PLUS[k].v], a: [...l.a, ...AV_PLUS[k].a] }]));
-export const GAGES = [...GAGES_BASE, ...GAGES_PLUS];
-export const TVM_THEMES = [...TVM_BASE, ...TVM_PLUS];
-export const UC_PAIRS = [...UC_BASE, ...UC_PLUS];
-export const MYS = [...MYS_BASE, ...MYS_PLUS];
+/* Fusion des listes, en écartant les doublons (même mot, sans tenir compte des majuscules) */
+const uniqBy = (list, key) => { const seen = new Set(); return list.filter(x => { const k = key(x).toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }); };
+function uniqPairs(list) { const seen = new Set(); return list.filter(p => { const k = p.map(x => x.toLowerCase()); if (k.some(x => seen.has(x))) return false; k.forEach(x => seen.add(x)); return true; }); }
+export const TABOO = uniqBy([...TABOO_BASE, ...TABOO_PLUS, ...TABOO_MORE], x => x.w);
+export const AV = Object.fromEntries(Object.entries(AV_BASE).map(([k, l]) => [k, { v: [...l.v, ...AV_PLUS[k].v, ...AV_MORE[k].v], a: [...l.a, ...AV_PLUS[k].a, ...AV_MORE[k].a] }]));
+export const GAGES = uniqBy([...GAGES_BASE, ...GAGES_PLUS, ...GAGES_MORE], x => x);
+export { GAGES_HOT };
+export const TVM_THEMES = uniqBy([...TVM_BASE, ...TVM_PLUS, ...TVM_MORE], x => x);
+export const UC_PAIRS = uniqPairs([...UC_BASE, ...UC_PLUS, ...UC_MORE]);
+export const MYS = [...MYS_BASE, ...MYS_PLUS, ...MYS_MORE];
