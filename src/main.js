@@ -3,562 +3,694 @@ import "@fontsource/figtree/latin-400.css";
 import "@fontsource/figtree/latin-600.css";
 import "@fontsource/figtree/latin-800.css";
 import "./styles.css";
+import { registerSW } from "virtual:pwa-register";
 import { MIME_CARDS, TABOO, AV, GAGES, AV_LEVELS, AV_PTS, AV_BONUS, TVM_THEMES, UC_PAIRS, UC_SPECIALS, UC_PTS, MYS_TYPES, MYS, TEAM_NAMES, TEAM_COLORS, GAMES } from "./content.js";
+import { ic } from "./icons.js";
+import { AVATARS, avatarSvg } from "./avatars.js";
 
 /* ---------- Outils ---------- */
 const $app = document.getElementById("app");
-const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const shuffle = a => { a=[...a]; for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];} return a; };
-const pick = a => a[Math.random()*a.length|0];
-const deck = arr => { let pool=[]; return { draw(){ if(!pool.length) pool=shuffle(arr); return pool.pop(); } }; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = a => a[Math.random() * a.length | 0];
+const deck = arr => { let pool = []; return { draw() { if (!pool.length) pool = shuffle(arr); return pool.pop(); } }; };
 const store = {
-  get(k,d){ try{ const v=localStorage.getItem("cajoue:"+k); return v?JSON.parse(v):d; }catch(e){ return d; } },
-  set(k,v){ try{ localStorage.setItem("cajoue:"+k, JSON.stringify(v)); }catch(e){} }
+  get(k, d) { try { const v = localStorage.getItem("cajoue:" + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("cajoue:" + k, JSON.stringify(v)); } catch (e) {} }
 };
-const SAMPLE = [["Léa","f"],["Inès","f"],["Sarah","f"],["Léo","h"],["Camille","f"],["Yanis","h"]];
-let players = store.get("players", null);
-let genders = store.get("genders", {});
-let isSample = !players;
-if(!players){ players = SAMPLE.map(s=>s[0]); SAMPLE.forEach(([n,g])=>genders[n]=g); }
-const savePlayers = () => { isSample=false; store.set("players", players); store.set("genders", genders); };
-const gOf = n => genders[n]==="h" ? "h" : "f";
-let addG = "f";
+const plural = (n, w) => `${n} ${w}${Math.abs(n) > 1 ? "s" : ""}`;
+const ptsTxt = v => `${v > 0 ? "+" : ""}${plural(v, "pt")}`;
 
-/* Classement de la soirée, tous jeux confondus */
-let scores = store.get("scores", {});
-function addPts(name, v){ if(!v) return; scores[name]=(scores[name]||0)+v; store.set("scores", scores); }
-function toast(t){ const el=document.getElementById("toast"); if(!el) return; el.textContent=t; el.hidden=false; el.classList.remove("show"); void el.offsetWidth; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.hidden=true,1800); }
-const ptsTxt = v => `${v>0?"+":""}${v} pt${Math.abs(v)>1?"s":""}`;
-
-const others = (p, list=players) => list.filter(x=>x!==p);
-function oppOf(p, list=players){
-  const o = list.filter(x=>x!==p && gOf(x)!==gOf(p));
-  return pick(o.length ? o : (others(p,list).length ? others(p,list) : list));
+/* ---------- Joueurs ---------- */
+const uid = () => Math.random().toString(36).slice(2, 9);
+const SAMPLE = [["Léa", "f", "f0"], ["Inès", "f", "f2"], ["Sarah", "f", "f5"], ["Léo", "h", "h0"], ["Camille", "f", "f7"], ["Yanis", "h", "h2"]];
+let roster = store.get("roster", null);
+let isSample = false;
+if (!roster) {
+  const old = store.get("players", null), oldG = store.get("genders", {});
+  if (old && old.length) roster = old.map((n, i) => ({ id: uid(), name: n, g: oldG[n] === "h" ? "h" : "f", av: (oldG[n] === "h" ? "h" : "f") + (i % 12) }));
+  else { roster = SAMPLE.map(([name, g, av]) => ({ id: uid(), name, g, av })); isSample = true; }
+}
+const saveRoster = () => { isSample = false; store.set("roster", roster); };
+let players = roster.map(p => p.name);
+const syncNames = () => { players = roster.map(p => p.name); };
+const byName = n => roster.find(p => p.name === n);
+const gOf = n => (byName(n) || {}).g === "h" ? "h" : "f";
+const av = (n, size = "m") => { const p = byName(n); return `<span class="av av-${size}">${avatarSvg(p ? p.av : "f0")}</span>`; };
+const others = (p, list = players) => list.filter(x => x !== p);
+function oppOf(p, list = players) {
+  const o = list.filter(x => x !== p && gOf(x) !== gOf(p));
+  return pick(o.length ? o : (others(p, list).length ? others(p, list) : list));
 }
 /* Remplit un gabarit de carte : accords {f|h} puis prénoms */
-function fill(txt, ctx){
+function fill(txt, ctx) {
   return esc(txt)
-    .replace(/\{([^{}|:]*)\|([^{}|:]*)(?::(\w+))?\}/g, (m,f,h,k) => gOf(ctx[k||"cur"])==="h" ? h : f)
-    .replace(/\{(joueur|opp|p1|p2)\}/g, (m,k) => `<b>${esc(ctx[k])}</b>`);
+    .replace(/\{([^{}|:]*)\|([^{}|:]*)(?::(\w+))?\}/g, (m, f, h, k) => gOf(ctx[k || "cur"]) === "h" ? h : f)
+    .replace(/\{(joueur|opp|p1|p2)\}/g, (m, k) => `<b>${esc(ctx[k])}</b>`);
 }
+const fe = (n, f, h) => gOf(n) === "h" ? h : f;
 
-let G = null;
-let view = home;
-let prevView = null;
-let msg = "";
-let adultOk = false;
+/* ---------- Classement ---------- */
+let scores = store.get("scores", {});
+function addPts(name, v) { if (!v) return; scores[name] = (scores[name] || 0) + v; store.set("scores", scores); }
 
+/* ---------- Son, chrono, écran allumé ---------- */
 let actx;
-function beep(f,d){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); const o=actx.createOscillator(), g=actx.createGain(); o.type="triangle"; o.frequency.value=f; g.gain.setValueAtTime(.25,actx.currentTime); g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+d); o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime+d); }catch(e){} }
-const vib = () => { try{ navigator.vibrate && navigator.vibrate([200,80,200]); }catch(e){} };
+function beep(f, d) { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.type = "triangle"; o.frequency.value = f; g.gain.setValueAtTime(.22, actx.currentTime); g.gain.exponentialRampToValueAtTime(.001, actx.currentTime + d); o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime + d); } catch (e) {} }
+const vib = () => { try { navigator.vibrate && navigator.vibrate([200, 80, 200]); } catch (e) {} };
 
 let timer = null;
-function stopTimer(){ if(timer){ clearInterval(timer.id); timer=null; } }
-function runTimer(sec, onEnd){
+function stopTimer() { if (timer) { clearInterval(timer.id); timer = null; } }
+function runTimer(sec, onEnd) {
   stopTimer();
-  const end = Date.now()+sec*1000;
-  timer = { id:0, last:null, sec, left:sec };
+  const end = Date.now() + sec * 1000;
+  timer = { id: 0, last: null, sec, left: sec };
   const tick = () => {
-    const left = Math.max(0, Math.ceil((end-Date.now())/1000));
+    const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
     timer.left = left;
-    const n=document.getElementById("tnum"), b=document.getElementById("tbar");
-    if(n){ n.textContent=left; n.classList.toggle("urgent", left<=10); }
-    if(b) b.style.width = (100*(end-Date.now())/(sec*1000)) + "%";
-    if(left<=5 && left>0 && left!==timer.last){ timer.last=left; beep(660,.08); }
-    if(left===0){ stopTimer(); beep(330,.6); vib(); onEnd && onEnd(); }
+    const n = document.getElementById("tnum"), b = document.getElementById("tbar");
+    if (n) { n.textContent = left; n.classList.toggle("urgent", left <= 10); }
+    if (b) b.style.transform = `scaleX(${Math.max(0, (end - Date.now()) / (sec * 1000))})`;
+    if (left <= 5 && left > 0 && left !== timer.last) { timer.last = left; beep(660, .08); }
+    if (left === 0) { stopTimer(); beep(330, .6); vib(); onEnd && onEnd(); }
   };
   timer.id = setInterval(tick, 200);
   tick();
 }
-const timerHTML = s => `<div class="timer"><div class="tbar"><i id="tbar" style="width:${timer?100*timer.left/timer.sec:100}%"></i></div><div class="tnum" id="tnum">${s}</div></div>`;
+const timerHTML = s => `<div class="timer"><div class="tbar"><i id="tbar" style="transform:scaleX(${timer ? timer.left / timer.sec : 1})"></i></div><div class="tnum" id="tnum">${s}</div></div>`;
 
-let wake=null;
-async function keepAwake(){ try{ if(!wake && navigator.wakeLock){ wake=await navigator.wakeLock.request("screen"); wake.addEventListener("release",()=>wake=null); } }catch(e){} }
-document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") keepAwake(); });
+let wake = null;
+async function keepAwake() { try { if (!wake && navigator.wakeLock) { wake = await navigator.wakeLock.request("screen"); wake.addEventListener("release", () => wake = null); } } catch (e) {} }
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") keepAwake(); });
 
-function go(fn){ view=fn; draw(); window.scrollTo(0,0); }
-function draw(){ $app.innerHTML = view() + '<div id="toast" class="toast" hidden></div>'; }
+/* ---------- Installation sur l'écran d'accueil ---------- */
+let installEvt = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; if (view === root) draw(); });
+window.addEventListener("appinstalled", () => { installEvt = null; draw(); });
+const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
-let armed=false, armT;
-const bar = (title) => `<div class="topbar"><button class="back${armed?" armed":""}" data-act="quit">${armed?"Quitter la partie ?":"‹ Jeux"}</button><span class="ttl">${esc(title)}</span><button class="ptsbtn" data-act="board">Classement</button></div>`;
-const scoreRows = (entries, mark=true) => { const best=entries.length?entries[0][1]:0; return `<div class="score">${entries.map(([p,v])=>`<div class="${mark&&v===best&&v>0?"lead1":""}"><span>${esc(p)}</span><b>${v}</b></div>`).join("")}</div>`; };
+/* ---------- État de l'interface ---------- */
+let G = null;          // partie en cours
+let tab = "games";     // onglet de l'accueil
+let view = root;       // écran affiché
+let prevView = null;   // écran à rouvrir après le classement
+let sheet = null;      // panneau du bas ouvert
+let adultOk = false;
+let installHidden = store.get("installHidden", false);
 
-/* ---------- Accueil, joueurs, classement ---------- */
-function home(){
-  const top = Object.entries(scores).sort((a,b)=>b[1]-a[1])[0];
-  return `<header class="hero"><div class="logo">Ça Joue<span>&nbsp;!</span></div>
-  <p>Six jeux pour animer la soirée. Un seul téléphone, on se le passe.</p></header>
-  <button class="pbar" data-act="players"><div class="chips">${players.map(p=>`<span class="chip g${gOf(p)}">${esc(p)}</span>`).join("")||'<span class="note">Aucun joueur</span>'}</div><span class="edit">${players.length} · Modifier</span></button>
-  ${isSample?'<p class="note warn">Prénoms d\'exemple. Touche « Modifier » pour ajouter tes amis.</p>':""}
-  <div class="games">${GAMES.map(g=>`<button class="game" style="--c:${g.c}" data-n="${g.min}+" data-act="open" data-arg="${g.id}" aria-label="${esc(g.name)}, ${g.min} joueurs minimum"><span class="tag">${g.tag}</span><h3>${esc(g.name)}</h3><p>${g.desc}</p></button>`).join("")}</div>
-  <button class="pbar" data-act="board"><div style="flex:1;min-width:0"><span class="label">Classement de la soirée</span><div style="font-weight:700;margin-top:2px">${top&&top[1]>0?`En tête : ${esc(top[0])} · ${top[1]} pts`:"Les points de tous les jeux s'additionnent ici."}</div></div><span class="edit">Voir</span></button>
-  <p class="note" style="text-align:center">Le chiffre sur chaque jeu = nombre de joueurs minimum. Monte le son pour le chrono.</p>`;
+function go(fn) { view = fn; sheet = null; draw(); window.scrollTo(0, 0); }
+function draw() {
+  $app.innerHTML = view() + sheetHTML() + '<div id="toast" class="toast" role="status" hidden></div>';
+  document.body.classList.toggle("locked", !!sheet);
 }
-function playersScreen(){
-  const want = G && G.want ? GAMES.find(g=>g.id===G.want) : null;
-  return `<div class="topbar"><button class="back" data-act="home">‹ Jeux</button><span class="ttl">Joueurs</span></div>
-  <h2>Qui joue ce soir ?</h2>
-  ${msg?`<p class="note warn">${msg}</p>`:""}
-  <p class="note">Le sexe sert à adapter les cartes : un garçon tombe sur une fille pour les bisous, « la reine » ou « le roi », etc.${isSample?" La liste d'exemple sera remplacée dès que tu ajoutes un prénom.":""}</p>
-  <form id="addform" class="stack">
-    <div class="seg">${[["f","Fille"],["h","Garçon"]].map(([k,l])=>`<button type="button" class="${addG===k?"on":""}" data-act="addG" data-arg="${k}">${l}</button>`).join("")}</div>
-    <div class="addrow"><input id="pname" maxlength="18" placeholder="Prénom" autocomplete="off" enterkeyhint="done" aria-label="Prénom"><button class="btn small" type="submit">Ajouter</button></div>
-  </form>
-  <ul class="plist">${players.map((p,i)=>`<li><span>${esc(p)}</span><button class="gtag g${gOf(p)}" data-act="toggleG" data-arg="${i}" aria-label="Changer le sexe de ${esc(p)}">${gOf(p)==="h"?"Garçon":"Fille"}</button><button class="x" data-act="rmP" data-arg="${i}" aria-label="Retirer ${esc(p)}">×</button></li>`).join("")}</ul>
-  <div class="stack">
-    ${want?`<button class="btn" data-act="open" data-arg="${want.id}" ${players.length<want.min?"disabled":""}>Jouer à ${esc(want.name)}</button>`:`<button class="btn" data-act="home">C'est bon (${players.length})</button>`}
-    ${players.length?'<button class="link" data-act="clearP">Vider la liste</button>':""}
+function toast(t) { const el = document.getElementById("toast"); if (!el) return; el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 1800); }
+
+/* Gabarit d'écran : barre du haut, contenu, zone d'actions en bas */
+function screen({ title = "", left = "close", right = "board", color = "", body = "", foot = "", tabs = false }) {
+  const l = left === "close" ? `<button class="iconbtn" data-act="askQuit" aria-label="Quitter la partie">${ic("x")}</button>`
+    : left === "back" ? `<button class="iconbtn" data-act="boardBack" aria-label="Retour">${ic("back")}</button>` : "";
+  const r = right === "board" ? `<button class="iconbtn" data-act="board" aria-label="Classement">${ic("trophy")}</button>`
+    : right === "stop" ? `<button class="iconbtn" data-act="turnStop" aria-label="Arrêter le tour">${ic("stop")}</button>` : (right || "");
+  return `<div class="screen${tabs ? " has-tabs" : ""}${foot ? " has-foot" : ""}" style="${color ? "--gc:" + color : ""}">
+    ${title || l || r ? `<header class="appbar">${l}<h1 class="appbar-title">${esc(title)}</h1>${r}</header>` : ""}
+    <main class="content">${body}</main>
+    ${foot ? `<footer class="foot">${foot}</footer>` : ""}
+    ${tabs ? tabbar() : ""}
   </div>`;
 }
-let resetArmed=false;
-function board(){
-  const s=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
-  return `<div class="topbar"><button class="back" data-act="boardBack">‹ Retour</button><span class="ttl">Classement</span></div>
-  <h2>Classement de la soirée</h2>
-  <p class="note">Mimes et Mot interdit : chaque membre de l'équipe gagne les points du tour. Action ou Vérité : +1 vérité, +2 action, bonus en Épicé et +18. Undercover : civils +2, Undercover +5, Mr White +6 en cas de victoire. 2 vérités 1 mensonge et Jeu mystère : points des manches.</p>
-  ${s.length?scoreRows(s):'<p class="note">Aucun point pour l\'instant. Lance un jeu !</p>'}
-  ${s.length?`<button class="link" data-act="boardReset">${resetArmed?"Sûr ? Touche encore pour tout effacer":"Remettre le classement à zéro"}</button>`:""}`;
+const tabbar = () => `<nav class="tabbar" aria-label="Navigation">${[["games", "grid", "Jeux"], ["players", "users", "Joueurs"], ["board", "trophy", "Classement"]].map(([k, i, l]) =>
+  `<button class="${tab === k ? "on" : ""}" data-act="tab" data-arg="${k}" ${tab === k ? 'aria-current="page"' : ""}>${ic(i, 24)}<span>${l}</span></button>`).join("")}</nav>`;
+const btn = (label, act, { arg = "", kind = "", icon = "", dis = false, style = "" } = {}) =>
+  `<button class="btn ${kind}" data-act="${act}" ${arg !== "" ? `data-arg="${esc(arg)}"` : ""} ${dis ? "disabled" : ""} ${style ? `style="${style}"` : ""}>${icon ? ic(icon, 20) : ""}<span>${label}</span></button>`;
+const scoreList = (entries, highlight = true, offset = 0) => {
+  const best = entries.length ? entries[0][1] : 0;
+  return `<ol class="list">${entries.map(([n, v], i) => `<li class="row-item${highlight && v === best && v > 0 ? " lead" : ""}"><span class="rank">${i + 1 + offset}</span>${av(n, "s")}<span class="grow">${esc(n)}</span><b class="num">${v}</b></li>`).join("")}</ol>`;
+};
+
+/* ---------- Accueil (onglets) ---------- */
+function root() {
+  if (tab === "players") return screen({ title: "Joueurs", left: null, right: null, tabs: true, body: playersBody() });
+  if (tab === "board") return screen({ title: "Classement", left: null, right: null, tabs: true, body: boardBody() });
+  const showInstall = !installHidden && !isStandalone();
+  return screen({
+    left: null, right: null, tabs: true, body: `
+    <div class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-name">Ça Joue</span></div>
+    <button class="crew" data-act="tab" data-arg="players">
+      <span class="stack-av">${players.slice(0, 6).map(n => av(n, "s")).join("")}</span>
+      <span class="grow"><b>${plural(players.length, "joueur")}</b><small>${isSample ? "Exemples à remplacer" : "Modifier la liste"}</small></span>
+      ${ic("pencil", 18)}
+    </button>
+    ${showInstall ? `<div class="install"><span class="install-ic">${ic("phone", 22)}</span><span class="grow"><b>Installer l'appli</b><small>Plein écran, même sans réseau.</small></span><button class="pill" data-act="install">Installer</button><button class="iconbtn sm" data-act="hideInstall" aria-label="Masquer">${ic("x", 18)}</button></div>` : ""}
+    <h2 class="section">Choisis un jeu</h2>
+    <div class="games">${GAMES.map(g => `<button class="tile" style="--tc:${g.c}" data-act="open" data-arg="${g.id}">
+      <span class="tile-ic">${ic(g.icon, 28)}</span>
+      <span class="tile-name">${esc(g.name)}</span>
+      <span class="tile-desc">${esc(g.desc)}</span>
+      <span class="tile-meta">${ic("users", 14)} Dès ${g.min} joueurs</span>
+    </button>`).join("")}</div>`
+  });
+}
+function playersBody() {
+  return `${isSample ? `<p class="hint">Ce sont des prénoms d'exemple. Ajoute tes amis, la liste d'exemple disparaîtra.</p>` : `<p class="hint">Le sexe sert à adapter les cartes : bisous entre fille et garçon, « la reine » ou « le roi ».</p>`}
+  ${btn("Ajouter un joueur", "editP", { icon: "userPlus" })}
+  <ul class="list">${roster.map(p => `<li><button class="row-item" data-act="editP" data-arg="${p.id}">${av(p.name, "m")}<span class="grow"><b>${esc(p.name)}</b><small>${p.g === "h" ? "Garçon" : "Fille"}</small></span>${ic("pencil", 18)}</button></li>`).join("")}</ul>
+  ${roster.length ? `<button class="textbtn danger" data-act="askClear">Vider la liste</button>` : ""}`;
+}
+function boardBody() {
+  const s = Object.entries(scores).filter(([n]) => n).sort((a, b) => b[1] - a[1]);
+  if (!s.length) return `<div class="empty">${ic("trophy", 40)}<b>Aucun point pour l'instant</b><p>Les points de tous les jeux s'additionnent ici.</p></div>`;
+  const top = s.slice(0, 3), order = [1, 0, 2].filter(i => top[i]);
+  return `<div class="podium">${order.map(i => `<div class="step s${i + 1}">${av(top[i][0], i === 0 ? "l" : "m")}<b>${esc(top[i][0])}</b><span class="num">${top[i][1]} pts</span><i>${i + 1}</i></div>`).join("")}</div>
+  ${s.length > 3 ? scoreList(s.slice(3), false, 3) : ""}
+  <details class="howto"><summary>${ic("info", 18)} Comment on gagne des points</summary>
+  <p>Mimes et Mot interdit : chaque membre de l'équipe gagne les points du tour, et 3 points de plus pour l'équipe gagnante. Action ou Vérité : 1 point par vérité, 2 par action, bonus en Épicé et en +18. Undercover : 2 points par civil gagnant, 5 par Undercover, 6 pour Mr White. 2 vérités 1 mensonge et Jeu mystère : les points de chaque manche.</p></details>
+  <button class="textbtn danger" data-act="askReset">Remettre le classement à zéro</button>`;
 }
 
+/* ---------- Panneaux du bas ---------- */
+function sheetHTML() {
+  if (!sheet) return "";
+  let inner = "";
+  if (sheet.type === "player") {
+    const d = sheet.draft, list = AVATARS.filter(a => a.g === d.g).concat(AVATARS.filter(a => a.g !== d.g));
+    inner = `<h2 class="sheet-title">${sheet.id ? "Modifier le joueur" : "Nouveau joueur"}</h2>
+    <form id="pform" class="stack">
+      <label class="field"><span>Prénom</span><input id="pname" value="${esc(d.name)}" maxlength="16" autocomplete="off" enterkeyhint="done" required></label>
+      <div class="seg" role="radiogroup" aria-label="Sexe">${[["f", "Fille"], ["h", "Garçon"]].map(([k, l]) => `<button type="button" role="radio" aria-checked="${d.g === k}" class="${d.g === k ? "on" : ""}" data-act="draftG" data-arg="${k}">${l}</button>`).join("")}</div>
+      <span class="label">Personnage</span>
+      <div class="avgrid">${list.map(a => `<button type="button" class="avpick${d.av === a.id ? " on" : ""}" data-act="draftAv" data-arg="${a.id}" aria-label="Personnage ${a.id}" aria-pressed="${d.av === a.id}"><span class="av av-m">${avatarSvg(a.id)}</span></button>`).join("")}</div>
+      ${sheet.err ? `<p class="hint warn">${sheet.err}</p>` : ""}
+      <button class="btn" type="submit">${ic("check", 20)}<span>${sheet.id ? "Enregistrer" : "Ajouter"}</span></button>
+      ${sheet.id ? `<button type="button" class="textbtn danger" data-act="rmP">Retirer ce joueur</button>` : ""}
+    </form>`;
+  } else if (sheet.type === "confirm") {
+    inner = `<h2 class="sheet-title">${sheet.title}</h2><p class="sheet-text">${sheet.text}</p>
+    <div class="stack">${btn(sheet.ok, sheet.act, { kind: sheet.danger ? "danger" : "" })}<button class="btn ghost" data-act="closeSheet">Annuler</button></div>`;
+  } else if (sheet.type === "install") {
+    inner = isIos()
+      ? `<h2 class="sheet-title">Installer sur iPhone</h2>
+         <ol class="steps"><li><span class="stepn">1</span><span>Ouvre cette page dans <b>Safari</b>.</span></li>
+         <li><span class="stepn">2</span><span>Touche le bouton Partager ${ic("share", 18)} en bas de l'écran.</span></li>
+         <li><span class="stepn">3</span><span>Choisis <b>Sur l'écran d'accueil</b> ${ic("squarePlus", 18)}, puis <b>Ajouter</b>.</span></li></ol>
+         <button class="btn ghost" data-act="closeSheet">J'ai compris</button>`
+      : `<h2 class="sheet-title">Installer sur Android</h2>
+         <ol class="steps"><li><span class="stepn">1</span><span>Ouvre cette page dans <b>Chrome</b>.</span></li>
+         <li><span class="stepn">2</span><span>Touche le menu en haut à droite, puis <b>Installer l'application</b> ou <b>Ajouter à l'écran d'accueil</b>.</span></li></ol>
+         <button class="btn ghost" data-act="closeSheet">J'ai compris</button>`;
+  }
+  return `<div class="backdrop" data-act="closeSheet"></div><section class="sheet" role="dialog" aria-modal="true"><span class="grabber" aria-hidden="true"></span>${inner}</section>`;
+}
+function confirmSheet(o) { sheet = { type: "confirm", ...o }; draw(); }
+
 /* ---------- Mimes & Mot interdit ---------- */
-function makeTeams(){
+function makeTeams() {
   const sh = shuffle(players);
-  G.teams = Array.from({length:G.nTeams},(_,i)=>({name:TEAM_NAMES[i], c:TEAM_COLORS[i], members:[], score:0, k:0}));
-  sh.forEach((p,i)=>G.teams[i%G.nTeams].members.push(p));
+  G.teams = Array.from({ length: G.nTeams }, (_, i) => ({ name: TEAM_NAMES[i], c: TEAM_COLORS[i], members: [], score: 0, k: 0 }));
+  sh.forEach((p, i) => G.teams[i % G.nTeams].members.push(p));
 }
-function teamSetup(){
-  const max = Math.min(4, players.length);
-  const solo = G.teams.some(t=>t.members.length===1);
-  return `${bar(G.kind==="mime"?"Mimes":"Mot interdit")}
-  <h2>${G.kind==="mime"?"Mimes":"Mot interdit"}</h2>
-  <p class="lead" style="font-size:16px">${G.kind==="mime"?"Une personne mime, son équipe devine. Interdit de parler, de faire des bruits ou de montrer un objet.":"Une personne fait deviner le mot avec des phrases, sans jamais dire le mot ni les 4 mots en rouge. L'équipe adverse surveille."}</p>
-  <div class="panel"><span class="label">Nombre d'équipes</span>
-    <div class="seg">${[2,3,4].map(n=>`<button class="${G.nTeams===n?"on":""}" data-act="nTeams" data-arg="${n}" ${n>max?"disabled":""}>${n}</button>`).join("")}</div>
-    <div class="teams">${G.teams.map(t=>`<div class="team" style="--tc:${t.c}"><b>${esc(t.name)}</b><small>${t.members.map(esc).join(", ")}</small></div>`).join("")}</div>
-    ${solo?'<p class="note">Équipe d\'une seule personne : ce sont les autres joueurs qui devinent, et les points vont à celui ou celle qui fait deviner.</p>':""}
-    <button class="btn alt" data-act="reTeams">Mélanger les équipes</button>
-  </div>
-  <div class="panel"><span class="label">Durée d'un tour</span>
-    <div class="seg">${[45,60,90].map(n=>`<button class="${G.dur===n?"on":""}" data-act="dur" data-arg="${n}">${n} s</button>`).join("")}</div>
-  </div>
-  <button class="btn" data-act="teamsGo">Commencer</button>`;
+const teamName = () => G.kind === "mime" ? "Mimes" : "Mot interdit";
+const gameColor = id => GAMES.find(g => g.id === id).c;
+function teamSetup() {
+  const max = Math.min(4, players.length), solo = G.teams.some(t => t.members.length === 1);
+  return screen({
+    title: teamName(), color: gameColor(G.kind), body: `
+    <p class="lead">${G.kind === "mime" ? "Une personne mime, son équipe devine. Interdit de parler, de faire des bruits ou de montrer un objet." : "Une personne fait deviner le mot avec des phrases, sans dire le mot ni les mots en rouge. L'équipe adverse surveille."}</p>
+    <div class="panel"><div class="panel-head"><span class="label">Équipes</span><button class="pill ghost" data-act="reTeams">${ic("shuffle", 16)} Mélanger</button></div>
+      <div class="seg">${[2, 3, 4].map(n => `<button class="${G.nTeams === n ? "on" : ""}" data-act="nTeams" data-arg="${n}" ${n > max ? "disabled" : ""}>${n} équipes</button>`).join("")}</div>
+      <div class="teams">${G.teams.map(t => `<div class="team" style="--tc:${t.c}"><b>${esc(t.name)}</b><div class="team-members">${t.members.map(m => `<span class="mini">${av(m, "xs")}${esc(m)}</span>`).join("")}</div></div>`).join("")}</div>
+      ${solo ? `<p class="hint">Dans une équipe d'une personne, ce sont les autres qui devinent. Les points vont à celle ou celui qui fait deviner.</p>` : ""}
+    </div>
+    <div class="panel"><span class="label">Durée d'un tour</span>
+      <div class="seg">${[45, 60, 90].map(n => `<button class="${G.dur === n ? "on" : ""}" data-act="dur" data-arg="${n}">${n} s</button>`).join("")}</div>
+    </div>`,
+    foot: btn("Commencer", "teamsGo", { icon: "play" })
+  });
 }
-const teamScore = () => { const best=Math.max(...G.teams.map(t=>t.score)); return `<div class="score">${G.teams.map(t=>`<div class="${t.score===best&&best>0?"lead1":""}" style="--tc:${t.c}"><i class="dot"></i><span>${esc(t.name)} <small class="note">${t.members.map(esc).join(", ")}</small></span><b>${t.score}</b></div>`).join("")}</div>`; };
+const teamScore = () => {
+  const best = Math.max(...G.teams.map(t => t.score));
+  return `<ul class="list">${G.teams.map(t => `<li class="row-item${t.score === best && best > 0 ? " lead" : ""}" style="--tc:${t.c}"><i class="dot"></i><span class="grow"><b>${esc(t.name)}</b><small>${t.members.map(esc).join(", ")}</small></span><b class="num">${t.score}</b></li>`).join("")}</ul>`;
+};
 const actorOf = t => t.members[t.k % t.members.length];
-function turnIntro(){
-  const t = G.teams[G.cur];
-  const verb = G.kind==="mime"?"mime":"fait deviner";
-  const who = t.members.length===1 ? `${verb} pour les autres joueurs. Les points vont à son équipe.` : `${verb} pour son équipe. Les autres équipes ne regardent pas l'écran.`;
-  return `${bar("Tour "+G.round)}
-  <div class="center" style="--gc:${t.c};padding-top:12px">
-    <span class="kicker">${esc(t.name)}</span>
-    <div class="big">${esc(actorOf(t))}</div>
-    <p class="lead">${who}</p>
-  </div>
-  <button class="btn" style="background:${t.c}" data-act="turnStart">Lancer le chrono · ${G.dur} s</button>
-  <div class="panel"><span class="label">Scores</span>${teamScore()}</div>
-  <button class="link" data-act="teamEnd">Terminer la partie</button>`;
+function turnIntro() {
+  const t = G.teams[G.cur], a = actorOf(t);
+  const verb = G.kind === "mime" ? "mime" : "fait deviner";
+  return screen({
+    title: `${teamName()}, tour ${G.round}`, color: t.c, body: `
+    <div class="hero">${av(a, "xl")}<span class="kicker">${esc(t.name)}</span><h2 class="big">${esc(a)}</h2>
+    <p class="lead">${t.members.length === 1 ? `${verb} pour les autres joueurs.` : `${verb} pour son équipe. Les autres équipes ne regardent pas l'écran.`}</p></div>
+    <span class="label">Scores</span>${teamScore()}`,
+    foot: btn(`Lancer le chrono, ${G.dur} s`, "turnStart", { icon: "timer" }) + `<button class="textbtn" data-act="teamEnd">Terminer la partie</button>`
+  });
 }
-function cardHTML(){
-  const c=G.card;
-  if(G.kind==="mime") return `<div class="card flip"><span class="cat">${esc(c.cat)}</span><div class="word">${esc(c.w)}</div></div>`;
-  return `<div class="card flip"><div class="word">${esc(c.w)}</div><div class="forbid">${c.f.map(f=>`<span>${esc(f)}</span>`).join("")}</div></div>`;
+function cardHTML() {
+  const c = G.card;
+  if (G.kind === "mime") return `<div class="card"><span class="card-label">${esc(c.cat)}</span><div class="word">${esc(c.w)}</div></div>`;
+  return `<div class="card"><div class="word">${esc(c.w)}</div><div class="forbid">${c.f.map(f => `<span>${esc(f)}</span>`).join("")}</div></div>`;
 }
-function turnPlay(){
-  const t = G.teams[G.cur];
-  const pts = G.log.reduce((s,l)=>s+l.v,0);
-  return `<div style="--gc:${t.c};display:flex;flex-direction:column;gap:16px">
-  ${timerHTML(timer?timer.left:G.dur)}
-  <div class="row" style="align-items:center"><span class="kicker" style="flex:3">${esc(t.name)} · ${esc(actorOf(t))}</span><span class="kicker" style="text-align:right">${ptsTxt(pts)}</span></div>
-  <div id="cardzone">${cardHTML()}</div>
-  <div class="row">
-    <button class="btn alt" data-act="mark" data-arg="0">Passer</button>
-    <button class="btn good" data-act="mark" data-arg="1">Trouvé</button>
-  </div>
-  ${G.kind==="taboo"?'<button class="btn bad" data-act="mark" data-arg="-1">Mot interdit dit ! (−1)</button>':""}
-  <button class="link" data-act="turnStop">Arrêter le tour</button></div>`;
+function turnPlay() {
+  const t = G.teams[G.cur], pts = G.log.reduce((s, l) => s + l.v, 0);
+  return screen({
+    title: actorOf(t), color: t.c, left: null, right: "stop", body: `
+    ${timerHTML(timer ? timer.left : G.dur)}
+    <div class="meta-row"><span class="kicker">${esc(t.name)}</span><span class="kicker">${ptsTxt(pts)}</span></div>
+    ${cardHTML()}
+    ${G.kind === "taboo" ? `<button class="btn outline-bad" data-act="mark" data-arg="-1">${ic("ban", 20)}<span>Mot interdit prononcé</span></button>` : ""}`,
+    foot: `<div class="row2">${btn("Passer", "mark", { arg: "0", kind: "ghost", icon: "skip" })}${btn("Trouvé", "mark", { arg: "1", icon: "check" })}</div>`
+  });
 }
-function turnEnd(){
-  const t = G.teams[G.cur];
-  const pts = G.log.reduce((s,l)=>s+l.v,0);
-  const lbl = v => v===1?"+1":v===-1?"−1":"0";
-  return `${bar("Fin du tour")}
-  <div class="center" style="--gc:${t.c}"><span class="kicker">Temps écoulé</span><div class="big">${ptsTxt(pts)}</div><p class="note">Touche une ligne pour corriger. Le dernier mot compte s'il a été trouvé au buzzer.</p></div>
-  <div class="log">${G.log.map((l,i)=>`<button data-act="toggle" data-arg="${i}"><span>${esc(l.c.w)}${l.last?' <small class="note">(dernier mot)</small>':""}</span><b class="v ${l.v===1?"v1":l.v===-1?"vm":"v0"}">${lbl(l.v)}</b></button>`).join("")||'<p class="note">Aucun mot cette fois.</p>'}</div>
-  <button class="btn" style="background:${t.c}" data-act="turnValidate">Valider et équipe suivante</button>`;
+function turnEnd() {
+  const t = G.teams[G.cur], pts = G.log.reduce((s, l) => s + l.v, 0);
+  const lbl = v => v === 1 ? "+1" : v === -1 ? "−1" : "0";
+  return screen({
+    title: "Fin du tour", color: t.c, left: null, body: `
+    <div class="hero"><span class="kicker">${esc(t.name)}</span><h2 class="big">${ptsTxt(pts)}</h2><p class="hint">Touche un mot pour corriger. Le dernier mot compte s'il a été trouvé au buzzer.</p></div>
+    ${G.log.length ? `<ul class="list">${G.log.map((l, i) => `<li><button class="row-item" data-act="toggle" data-arg="${i}"><span class="grow">${esc(l.c.w)}${l.last ? `<small>Dernier mot</small>` : ""}</span><b class="badge ${l.v === 1 ? "b-good" : l.v === -1 ? "b-bad" : ""}">${lbl(l.v)}</b></button></li>`).join("")}</ul>` : `<p class="hint">Aucun mot cette fois.</p>`}`,
+    foot: btn("Valider et équipe suivante", "turnValidate", { icon: "check" })
+  });
 }
-function teamFinal(){
-  const s=[...G.teams].sort((a,b)=>b.score-a.score);
-  const tie = s[0].score===s[1].score;
-  return `${bar("Résultats")}
-  <div class="center" style="--gc:${s[0].c};padding-top:12px"><span class="kicker">${tie?"Égalité !":"Victoire"}</span><div class="big">${tie?"Match nul":esc(s[0].name)}</div>${tie?"":`<p class="lead">+3 pts bonus au classement pour ${s[0].members.map(esc).join(", ")}</p>`}</div>
-  <div class="panel">${teamScore()}</div>
-  <button class="btn" data-act="teamsAgain">Rejouer avec les mêmes équipes</button>
-  <button class="btn ghost" data-act="home">Retour aux jeux</button>`;
+function teamFinal() {
+  const s = [...G.teams].sort((a, b) => b.score - a.score), tie = s[0].score === s[1].score;
+  return screen({
+    title: "Résultats", color: s[0].c, left: null, body: `
+    <div class="hero">${ic(tie ? "medal" : "trophy", 44)}<span class="kicker">${tie ? "Égalité" : "Victoire"}</span><h2 class="big">${tie ? "Match nul" : esc(s[0].name)}</h2>
+    ${tie ? "" : `<p class="lead">3 points bonus au classement pour ${s[0].members.map(esc).join(", ")}.</p>`}</div>
+    ${teamScore()}`,
+    foot: btn("Rejouer avec les mêmes équipes", "teamsAgain", { icon: "undo" }) + `<button class="textbtn" data-act="home">Retour aux jeux</button>`
+  });
 }
 
 /* ---------- Action ou Vérité ---------- */
 const avCur = () => G.order[G.i % G.order.length];
-function avTurn(){
-  if(G.gate) return `${bar("Action ou Vérité")}
-  <div class="center" style="--gc:var(--bad);padding-top:16px"><span class="kicker">Niveau +18</span><h2>Contenu sexuel explicite</h2>
-  <p class="lead">Réservé aux adultes. Tout le monde doit être majeur et partant. Chacun peut refuser une carte avec le joker, sans se justifier.</p></div>
-  <button class="btn bad" data-act="avAdult">On est tous majeurs, on y va</button>
-  <button class="btn ghost" data-act="avGateNo">Rester au niveau actuel</button>`;
-  return `${bar("Action ou Vérité")}
-  <div class="seg">${AV_LEVELS.map(([k,l])=>`<button class="${G.level===k?"on":""}" data-act="avLevel" data-arg="${k}">${l}</button>`).join("")}</div>
-  <div class="center" style="--gc:var(--rose);padding-top:20px"><span class="kicker">À toi de jouer</span><div class="big">${esc(avCur())}</div><p class="lead">Action ou vérité ?</p></div>
-  <div class="row"><button class="btn" style="background:var(--sky)" data-act="avPick" data-arg="v">Vérité · ${ptsTxt(AV_PTS.v+AV_BONUS[G.level])}</button><button class="btn" style="background:var(--hot)" data-act="avPick" data-arg="a">Action · ${ptsTxt(AV_PTS.a+AV_BONUS[G.level])}</button></div>
-  <button class="btn ghost" data-act="avPick" data-arg="r">Au hasard</button>
-  <button class="link" data-act="avSkip">Passer à la personne suivante</button>`;
+const levelName = k => AV_LEVELS.find(l => l[0] === k)[1];
+function avTurn() {
+  if (G.gate) return screen({
+    title: "Action ou Vérité", color: "var(--c-av)", body: `
+    <div class="hero">${ic("flame", 44)}<span class="kicker">Niveau +18</span><h2 class="big">Contenu sexuel explicite</h2>
+    <p class="lead">Réservé aux adultes. Tout le monde doit être majeur et partant. Chacun peut refuser une carte avec le joker, sans se justifier.</p></div>`,
+    foot: btn("Tout le monde est majeur", "avAdult", { kind: "danger" }) + `<button class="textbtn" data-act="avGateNo">Rester au niveau ${levelName(G.level)}</button>`
+  });
+  const p = avCur();
+  return screen({
+    title: "Action ou Vérité", color: "var(--c-av)", body: `
+    <div class="seg">${AV_LEVELS.map(([k, l]) => `<button class="${G.level === k ? "on" : ""}" data-act="avLevel" data-arg="${k}">${l}</button>`).join("")}</div>
+    <div class="hero">${av(p, "xl")}<span class="kicker">À toi de jouer</span><h2 class="big">${esc(p)}</h2><p class="lead">Action ou vérité ?</p></div>`,
+    foot: `<div class="row2">${btn(`Vérité <small>${ptsTxt(AV_PTS.v + AV_BONUS[G.level])}</small>`, "avPick", { arg: "v", kind: "alt" })}${btn(`Action <small>${ptsTxt(AV_PTS.a + AV_BONUS[G.level])}</small>`, "avPick", { arg: "a" })}</div>
+    <div class="row2 links"><button class="textbtn" data-act="avPick" data-arg="r">${ic("dices", 18)} Au hasard</button><button class="textbtn" data-act="avSkip">${ic("skip", 18)} Passer son tour</button></div>`
+  });
 }
-function avCard(){
-  const lab = {v:"Vérité",a:"Action",g:"Gage"}[G.type], col={v:"var(--sky)",a:"var(--hot)",g:"var(--bad)"}[G.type];
-  const pts = G.type==="g" ? 0 : AV_PTS[G.type]+AV_BONUS[G.level];
-  return `${bar("Action ou Vérité")}
-  <div class="center" style="--gc:${col}"><span class="kicker">${lab} pour</span><h2>${esc(avCur())}</h2></div>
-  <div class="card flip" style="--gc:${col}"><span class="cat">${lab}${G.type!=="g"?" · "+AV_LEVELS.find(l=>l[0]===G.level)[1]:""}</span><div class="txt">${G.text}</div></div>
-  <button class="btn good" data-act="avNext">${pts?`Fait ! ${ptsTxt(pts)} et au suivant`:"Fait ! Au suivant"}</button>
-  ${G.type!=="g"?'<button class="btn ghost" data-act="avJoker">Joker : je prends un gage (0 pt)</button>':""}`;
+function avCard() {
+  const lab = { v: "Vérité", a: "Action", g: "Gage" }[G.type], p = avCur();
+  const pts = G.type === "g" ? 0 : AV_PTS[G.type] + AV_BONUS[G.level];
+  return screen({
+    title: "Action ou Vérité", color: "var(--c-av)", body: `
+    <div class="who">${av(p, "m")}<div><span class="kicker">${lab} pour</span><b>${esc(p)}</b></div></div>
+    <div class="card"><span class="card-label">${lab}${G.type !== "g" ? ", niveau " + levelName(G.level) : ""}</span><div class="txt">${G.text}</div></div>`,
+    foot: btn(pts ? `Fait <small>${ptsTxt(pts)}</small>` : "Fait", "avNext", { icon: "check" }) + (G.type !== "g" ? `<button class="textbtn" data-act="avJoker">Joker : je prends un gage à la place</button>` : "")
+  });
 }
 
 /* ---------- 2 vérités, 1 mensonge ---------- */
 const tvmCur = () => G.order[G.i % G.order.length];
-const tvmScore = () => scoreRows(Object.entries(G.scores).sort((a,b)=>b[1]-a[1]));
-function tvm(){
-  const p = tvmCur();
-  if(G.step==="prep") return `${bar("2 vérités, 1 mensonge")}
-  <div class="center" style="--gc:var(--sun);padding-top:12px"><span class="kicker">Au tour de</span><div class="big">${esc(p)}</div><p class="lead">Prépare 2 anecdotes vraies et 1 fausse. Mélange l'ordre.</p></div>
-  <div class="panel"><span class="label">Idée de thème</span><div style="font-family:var(--f-display);font-size:22px">${esc(G.theme)}</div><button class="btn alt" data-act="tvmTheme">Autre thème</button></div>
-  <button class="btn" data-act="tvmReady">Je suis ${gOf(p)==="h"?"prêt":"prête"}</button>
-  <div class="panel"><span class="label">Scores de la partie</span>${tvmScore()}</div>
-  <button class="link" data-act="home">Terminer la partie</button>`;
-  if(G.step==="talk") return `${bar("2 vérités, 1 mensonge")}
-  <div class="center" style="--gc:var(--sun)"><span class="kicker">${esc(p)} raconte</span><p class="lead">Annonce tes 3 phrases. Les autres posent des questions pour te piéger.</p></div>
-  ${timerHTML(timer?timer.left:60)}
-  <button class="btn alt" data-act="tvmDebate">Lancer 60 s de questions</button>
-  <button class="btn" data-act="tvmVote">On vote : révéler le mensonge</button>`;
-  return `${bar("2 vérités, 1 mensonge")}
-  <div class="center" style="--gc:var(--sun)"><span class="kicker">${esc(p)} révèle le mensonge</span><h2>Qui avait trouvé ?</h2><p class="note">+1 par bonne réponse. Si personne n'a trouvé, ${esc(p)} gagne 2 points.</p></div>
-  <div class="pick" style="--gc:var(--sun)">${others(p).map(o=>`<button class="${G.sel.includes(o)?"on":""}" data-act="tvmSel" data-arg="${esc(o)}">${esc(o)}</button>`).join("")}</div>
-  <button class="btn" data-act="tvmValidate">${G.sel.length?"Valider (+1 × "+G.sel.length+")":"Personne n'a trouvé (+2 pour "+esc(p)+")"}</button>`;
+function tvm() {
+  const p = tvmCur(), C = "var(--c-tvm)";
+  if (G.step === "prep") return screen({
+    title: "2 vérités, 1 mensonge", color: C, body: `
+    <div class="hero">${av(p, "xl")}<span class="kicker">Au tour de</span><h2 class="big">${esc(p)}</h2><p class="lead">Prépare deux anecdotes vraies et une inventée, puis mélange l'ordre.</p></div>
+    <div class="panel"><div class="panel-head"><span class="label">Idée de thème</span><button class="pill ghost" data-act="tvmTheme">${ic("shuffle", 16)} Autre</button></div><p class="theme">${esc(G.theme)}</p></div>
+    <span class="label">Scores de la partie</span>${scoreList(Object.entries(G.scores).sort((a, b) => b[1] - a[1]))}`,
+    foot: btn(`Je suis ${fe(p, "prête", "prêt")}`, "tvmReady", { icon: "check" })
+  });
+  if (G.step === "talk") return screen({
+    title: "2 vérités, 1 mensonge", color: C, body: `
+    <div class="who">${av(p, "m")}<div><span class="kicker">Raconte</span><b>${esc(p)}</b></div></div>
+    <p class="lead">Annonce tes trois phrases. Les autres posent des questions pour te piéger.</p>
+    ${timerHTML(timer ? timer.left : 60)}
+    ${btn("Lancer 60 s de questions", "tvmDebate", { kind: "ghost", icon: "timer" })}`,
+    foot: btn("Révéler le mensonge", "tvmVote", { icon: "eye" })
+  });
+  return screen({
+    title: "2 vérités, 1 mensonge", color: C, body: `
+    <h2 class="h2">Qui avait trouvé ?</h2><p class="hint">1 point par bonne réponse. Si personne n'a trouvé, ${esc(p)} gagne 2 points.</p>
+    <div class="pickgrid">${others(p).map(o => `<button class="pickav${G.sel.includes(o) ? " on" : ""}" data-act="tvmSel" data-arg="${esc(o)}" aria-pressed="${G.sel.includes(o)}">${av(o, "m")}<span>${esc(o)}</span></button>`).join("")}</div>`,
+    foot: btn(G.sel.length ? `Valider <small>${plural(G.sel.length, "bonne réponse")}</small>` : `Personne n'a trouvé <small>+2 pour ${esc(p)}</small>`, "tvmValidate", { icon: "check" })
+  });
 }
 
 /* ---------- Undercover ---------- */
-const maxImp = () => Math.floor((players.length-1)/2);
-const ucSel = () => store.get("ucRoles", ["boss","lovers"]);
-const ucNeed = sel => sel.reduce((n,id)=>n+(id==="lovers"?2:1),0);
-const spName = id => (UC_SPECIALS.find(s=>s.id===id)||{}).name;
-function ucSetup(){
-  const n=players.length, civ=n-G.nU-G.nW, sel=ucSel(), need=ucNeed(sel);
-  return `${bar("Undercover")}
-  <h2>Undercover</h2>
-  <p class="lead" style="font-size:16px">Les civils ont tous le même mot. L'Undercover a un mot très proche et ne sait pas qu'il est l'intrus. Mr White n'a pas de mot et bluffe.</p>
-  <div class="panel">
-    <div class="stepper"><span><b>Undercover</b><br><span class="note">Mot proche</span></span><div class="ctl"><button data-act="ucU" data-arg="-1" aria-label="Moins">−</button><b>${G.nU}</b><button data-act="ucU" data-arg="1" aria-label="Plus">+</button></div></div>
-    <div class="stepper"><span><b>Mr White</b><br><span class="note">Pas de mot, ne parle jamais en premier</span></span><div class="ctl"><button data-act="ucW" data-arg="-1" aria-label="Moins">−</button><b>${G.nW}</b><button data-act="ucW" data-arg="1" aria-label="Plus">+</button></div></div>
-    <p class="note">${n} joueurs : ${civ} civil${civ>1?"s":""}, ${G.nU} undercover, ${G.nW} Mr White.</p>
-  </div>
-  <div class="panel"><span class="label">Rôles spéciaux (en plus du mot)</span>
-    <div class="roles">${UC_SPECIALS.map(s=>`<button class="role ${sel.includes(s.id)?"on":""}" data-act="ucRole" data-arg="${s.id}" aria-pressed="${sel.includes(s.id)}"><span class="box"></span><span><b>${s.name}</b><small>${s.d}</small></span></button>`).join("")}</div>
-    ${need>n?`<p class="note warn">Trop de rôles spéciaux pour ${n} joueurs : retire-en un.</p>`:""}
-  </div>
-  <div class="panel"><span class="label">Comment on joue</span>
-  <p class="note" style="font-size:15px">1. Chacun regarde son mot et son rôle spécial en secret.<br>2. Dans l'ordre affiché, chacun dit UN mot pour décrire le sien.<br>3. On débat, puis tout le monde vote. On entre les votes un par un dans l'appli.<br>4. Les civils gagnent s'ils éliminent tous les intrus. Les intrus gagnent s'il ne reste qu'un civil. Mr White éliminé peut voler la victoire en devinant le mot des civils.</p></div>
-  <button class="btn" style="background:var(--mint)" data-act="ucGo" ${need>n?"disabled":""}>Distribuer les rôles</button>`;
+const UCC = "var(--c-uc)";
+const maxImp = () => Math.floor((players.length - 1) / 2);
+const ucSel = () => store.get("ucRoles", ["boss", "lovers"]);
+const ucNeed = sel => sel.reduce((n, id) => n + (id === "lovers" ? 2 : 1), 0);
+const spOf = id => UC_SPECIALS.find(s => s.id === id);
+const roleName = r => ({ civil: "Civil", under: "Undercover", white: "Mr White" }[r]);
+const roleCol = r => r === "civil" ? "var(--c-taboo)" : r === "under" ? "var(--c-av)" : "var(--c-tvm)";
+function ucSetup() {
+  const n = players.length, civ = n - G.nU - G.nW, sel = ucSel(), need = ucNeed(sel);
+  const stepper = (lab, sub, act, val) => `<div class="stepper"><span class="grow"><b>${lab}</b><small>${sub}</small></span><button class="iconbtn round" data-act="${act}" data-arg="-1" aria-label="Moins">${ic("minus", 20)}</button><b class="num">${val}</b><button class="iconbtn round" data-act="${act}" data-arg="1" aria-label="Plus">${ic("plus", 20)}</button></div>`;
+  return screen({
+    title: "Undercover", color: UCC, body: `
+    <p class="lead">Les civils ont tous le même mot. L'Undercover a un mot très proche et ne sait pas qu'il est l'intrus. Mr White n'a pas de mot et doit bluffer.</p>
+    <div class="panel">${stepper("Undercover", "Reçoit un mot proche", "ucU", G.nU)}${stepper("Mr White", "Sans mot, ne commence jamais", "ucW", G.nW)}
+      <p class="hint">${n} joueurs : ${plural(civ, "civil")}, ${G.nU} Undercover, ${G.nW} Mr White.</p></div>
+    <div class="panel"><span class="label">Rôles spéciaux</span><p class="hint">Ils s'ajoutent au mot. Chacun découvre le sien en secret.</p>
+      <ul class="list">${UC_SPECIALS.map(s => `<li><button class="row-item toggle${sel.includes(s.id) ? " on" : ""}" data-act="ucRole" data-arg="${s.id}" aria-pressed="${sel.includes(s.id)}"><span class="role-ic">${ic(s.icon, 20)}</span><span class="grow"><b>${s.name}</b><small>${s.d}</small></span><span class="check">${ic("check", 16)}</span></button></li>`).join("")}</ul>
+      ${need > n ? `<p class="hint warn">Trop de rôles spéciaux pour ${n} joueurs. Retires-en un.</p>` : ""}</div>
+    <details class="howto"><summary>${ic("info", 18)} Comment on joue</summary>
+      <p>Chacun regarde son mot en secret. Dans l'ordre affiché, chacun dit un seul mot pour décrire le sien. On débat, puis tout le monde vote et on entre les votes un par un. Les civils gagnent s'ils éliminent tous les intrus. Les intrus gagnent s'il ne reste qu'un civil. Mr White éliminé peut voler la victoire en devinant le mot des civils.</p></details>`,
+    foot: btn("Distribuer les rôles", "ucGo", { icon: "play", dis: need > n })
+  });
 }
-function ucDeal(){
-  const p=G.ps[G.i];
-  if(!G.show) return `${bar("Distribution "+(G.i+1)+"/"+G.ps.length)}
-  <div class="center secret" style="--gc:var(--mint)"><span class="kicker">Passe le téléphone à</span><div class="big">${esc(p.name)}</div><p class="lead">Les autres ne regardent pas.</p></div>
-  <button class="btn" style="background:var(--mint)" data-act="ucShow">Je suis ${esc(p.name)} : voir mon mot</button>`;
-  return `${bar("Distribution "+(G.i+1)+"/"+G.ps.length)}
-  ${ucWordCard(p)}
-  <button class="btn" data-act="ucHide">J'ai retenu, je cache</button>`;
+function ucSpecialHTML(p) {
+  if (!p.sp) return "";
+  const s = spOf(p.sp);
+  const txt = p.sp === "lovers" ? `Tu es ${fe(p.name, "amoureuse", "amoureux")} de <b>${esc(G.ps[p.lover].name)}</b>. Si l'un de vous est éliminé, l'autre part aussi.` : s.d;
+  return `<div class="special"><span class="role-ic">${ic(s.icon, 20)}</span><div><span class="card-label">Rôle spécial secret</span><b>${s.name}</b><p>${txt}</p></div></div>`;
 }
-function ucSpecialHTML(p){
-  if(!p.sp) return "";
-  const s=UC_SPECIALS.find(x=>x.id===p.sp);
-  const extra = p.sp==="lovers" ? `Tu es amoureu${gOf(p.name)==="h"?"x":"se"} de <b>${esc(G.ps[p.lover].name)}</b>. Si l'un de vous est éliminé, l'autre part aussi.` : s.d;
-  return `<div class="spbox"><span class="cat">Rôle spécial secret</span><b>${s.name}</b><span>${extra}</span></div>`;
+const ucWordCard = p => p.role === "white"
+  ? `<div class="card"><span class="card-label">${esc(p.name)}, tu es</span><div class="word">Mr White</div><p class="card-foot">Tu n'as pas de mot. Écoute les autres et bluffe.</p>${ucSpecialHTML(p)}</div>`
+  : `<div class="card"><span class="card-label">Ton mot, ${esc(p.name)}</span><div class="word">${esc(p.word)}</div><p class="card-foot">Décris-le avec un seul mot, sans être trop évident.</p>${ucSpecialHTML(p)}</div>`;
+function ucDeal() {
+  const p = G.ps[G.i], t = `Distribution ${G.i + 1} sur ${G.ps.length}`;
+  if (!G.show) return screen({
+    title: t, color: UCC, body: `<div class="hero">${av(p.name, "xl")}<span class="kicker">Passe le téléphone à</span><h2 class="big">${esc(p.name)}</h2><p class="lead">Les autres ne regardent pas l'écran.</p></div>`,
+    foot: btn(`Je suis ${esc(p.name)}, voir mon mot`, "ucShow", { icon: "eye" })
+  });
+  return screen({ title: t, color: UCC, body: ucWordCard(p), foot: btn("J'ai retenu, je cache", "ucHide", { icon: "eyeOff" }) });
 }
-const ucWordCard = p => p.role==="white"
-  ? `<div class="card flip" style="--gc:var(--lilac)"><span class="cat">${esc(p.name)}</span><div class="word">Mr White</div><p class="foot">Tu n'as pas de mot. Écoute les autres et bluffe.</p>${ucSpecialHTML(p)}</div>`
-  : `<div class="card flip" style="--gc:var(--mint)"><span class="cat">Ton mot, ${esc(p.name)}</span><div class="word">${esc(p.word)}</div><p class="foot">Décris-le avec un seul mot, sans être trop évident.</p>${ucSpecialHTML(p)}</div>`;
-function ucOrder(){
-  const alive=shuffle(G.ps.filter(p=>p.alive));
-  const k=alive.findIndex(p=>p.role!=="white");
-  G.order = k>0 ? [...alive.slice(k),...alive.slice(0,k)] : alive;
+function ucOrder() {
+  const alive = shuffle(G.ps.filter(p => p.alive));
+  const k = alive.findIndex(p => p.role !== "white");
+  G.order = k > 0 ? [...alive.slice(k), ...alive.slice(0, k)] : alive;
 }
-function ucTalk(){
-  return `${bar("Undercover · manche "+G.round)}
-  <div class="center" style="--gc:var(--mint)"><span class="kicker">Ordre de parole</span><p class="lead">Chacun dit un seul mot pour décrire le sien, dans cet ordre. Mr White ne commence jamais.</p></div>
-  <div class="score">${G.order.map((p,i)=>`<div><b style="font-size:16px;min-width:1.5ch">${i+1}</b><span>${esc(p.name)}</span></div>`).join("")}</div>
-  <button class="btn" style="background:var(--mint)" data-act="ucVoteStart">Débat terminé : voter</button>
-  <button class="link" data-act="ucPeekList">Quelqu'un a oublié son mot ?</button>`;
+function ucTalk() {
+  return screen({
+    title: `Undercover, manche ${G.round}`, color: UCC, body: `
+    <h2 class="h2">Ordre de parole</h2><p class="hint">Chacun dit un seul mot pour décrire le sien, dans cet ordre. Puis débat libre.</p>
+    <ol class="list">${G.order.map((p, i) => `<li class="row-item"><span class="rank">${i + 1}</span>${av(p.name, "s")}<span class="grow">${esc(p.name)}</span></li>`).join("")}</ol>`,
+    foot: btn("Passer au vote", "ucVoteStart", { icon: "vote" }) + `<button class="textbtn" data-act="ucPeekList">Quelqu'un a oublié son mot ?</button>`
+  });
 }
-function ucPeek(){
-  if(G.peek!=null) return `${bar("Revoir un mot")}${ucWordCard(G.ps[G.peek])}<button class="btn" data-act="ucPeekDone">Cacher</button>`;
-  return `${bar("Revoir un mot")}<h2>Qui a oublié ?</h2>
-  <div class="pick">${G.ps.map((p,i)=>`<button data-act="ucPeek" data-arg="${i}">${esc(p.name)}</button>`).join("")}</div>
-  <button class="btn ghost" data-act="ucBack">Retour</button>`;
+function ucPeek() {
+  if (G.peek != null) return screen({ title: "Revoir un mot", color: UCC, body: ucWordCard(G.ps[G.peek]), foot: btn("Cacher", "ucPeekDone", { icon: "eyeOff" }) });
+  return screen({
+    title: "Revoir un mot", color: UCC, body: `<h2 class="h2">Qui a oublié ?</h2><p class="hint">Seule cette personne regarde l'écran.</p>
+    <div class="pickgrid">${G.ps.map((p, i) => `<button class="pickav" data-act="ucPeek" data-arg="${i}">${av(p.name, "m")}<span>${esc(p.name)}</span></button>`).join("")}</div>`,
+    foot: btn("Retour", "ucBack", { kind: "ghost", icon: "back" })
+  });
 }
-const ucVoters = () => G.ps.map((p,i)=>i).filter(i=>G.ps[i].alive || G.ps[i].sp==="ghost");
-function ucVote(){
-  const voters=G.voters;
-  if(G.vi < voters.length){
-    const v=G.ps[voters[G.vi]];
-    return `${bar("Vote "+(G.vi+1)+"/"+voters.length)}
-    <div class="center" style="--gc:var(--bad)"><span class="kicker">${v.alive?"Vote de":"Vote du fantôme"}</span><div class="big">${esc(v.name)}</div><p class="note">À 3, tout le monde pointe quelqu'un. Puis entre le vote de chacun.</p></div>
-    <div class="pick" style="--gc:var(--bad)">${G.ps.map((p,i)=>p.alive&&i!==voters[G.vi]?`<button data-act="ucCast" data-arg="${i}">${esc(p.name)}</button>`:"").join("")}</div>
-    ${G.vi>0?'<button class="link" data-act="ucUncast">‹ Corriger le vote précédent</button>':'<button class="link" data-act="ucBack">Retour au débat</button>'}`;
+const ucVoters = () => G.ps.map((p, i) => i).filter(i => G.ps[i].alive || G.ps[i].sp === "ghost");
+function ucVote() {
+  const voters = G.voters;
+  if (G.vi < voters.length) {
+    const vIdx = voters[G.vi], v = G.ps[vIdx];
+    return screen({
+      title: `Vote ${G.vi + 1} sur ${voters.length}`, color: UCC, body: `
+      <div class="who">${av(v.name, "m")}<div><span class="kicker">${v.alive ? "Vote de" : "Vote du fantôme"}</span><b>${esc(v.name)}</b></div></div>
+      <p class="hint">À trois, tout le monde pointe quelqu'un. Puis entre le vote de chacun ici.</p>
+      <div class="pickgrid">${G.ps.map((p, i) => p.alive && i !== vIdx ? `<button class="pickav" data-act="ucCast" data-arg="${i}">${av(p.name, "m")}<span>${esc(p.name)}</span></button>` : "").join("")}</div>`,
+      foot: G.vi > 0 ? btn("Corriger le vote précédent", "ucUncast", { kind: "ghost", icon: "undo" }) : btn("Retour au débat", "ucBack", { kind: "ghost", icon: "back" })
+    });
   }
-  const tally={}; voters.forEach(vi=>{ const t=G.votes[vi]; tally[t]=(tally[t]||0)+(G.ps[vi].sp==="boss"?2:1); });
-  const rows=Object.entries(tally).sort((a,b)=>b[1]-a[1]);
-  const top=rows[0][1], tied=rows.filter(r=>r[1]===top).map(r=>+r[0]);
-  return `${bar("Résultat du vote")}
-  <div class="score">${rows.map(([i,v])=>`<div class="${v===top?"lead1":""}"><span>${esc(G.ps[i].name)}</span><b>${v} voix</b></div>`).join("")}</div>
-  ${tied.length===1
-    ? `<button class="btn bad" data-act="ucElim" data-arg="${tied[0]}">Éliminer ${esc(G.ps[tied[0]].name)}</button>`
-    : `<div class="center"><span class="kicker" style="color:var(--bad)">Égalité</span><p class="lead">Débat express entre ${tied.map(i=>esc(G.ps[i].name)).join(" et ")}, puis le groupe tranche :</p></div>
-       <div class="pick" style="--gc:var(--bad)">${tied.map(i=>`<button data-act="ucElim" data-arg="${i}">${esc(G.ps[i].name)}</button>`).join("")}</div>`}
-  <button class="link" data-act="ucVoteStart">Refaire le vote</button>`;
+  const tally = {};
+  voters.forEach(vi => { const t = G.votes[vi]; tally[t] = (tally[t] || 0) + (G.ps[vi].sp === "boss" ? 2 : 1); });
+  const rows = Object.entries(tally).sort((a, b) => b[1] - a[1]);
+  const top = rows[0][1], tied = rows.filter(r => r[1] === top).map(r => +r[0]);
+  return screen({
+    title: "Résultat du vote", color: UCC, body: `
+    <ul class="list">${rows.map(([i, v]) => `<li class="row-item${v === top ? " lead" : ""}">${av(G.ps[i].name, "s")}<span class="grow">${esc(G.ps[i].name)}</span><b class="num">${v} voix</b></li>`).join("")}</ul>
+    ${tied.length > 1 ? `<h2 class="h2">Égalité</h2><p class="hint">Débat express entre ${tied.map(i => esc(G.ps[i].name)).join(" et ")}, puis le groupe choisit qui part.</p>
+    <div class="pickgrid">${tied.map(i => `<button class="pickav" data-act="ucElim" data-arg="${i}">${av(G.ps[i].name, "m")}<span>${esc(G.ps[i].name)}</span></button>`).join("")}</div>` : ""}`,
+    foot: (tied.length === 1 ? btn(`Éliminer ${esc(G.ps[tied[0]].name)}`, "ucElim", { arg: tied[0], kind: "danger", icon: "skull" }) : "") + `<button class="textbtn" data-act="ucVoteStart">Refaire le vote</button>`
+  });
 }
-const roleName = r => ({civil:"Civil",under:"Undercover",white:"Mr White"}[r]);
-const roleCol = r => r==="civil"?"var(--sky)":r==="under"?"var(--hot)":"var(--lilac)";
-function ucEliminate(i, cause){ G.queue.push({i,cause}); ucProcess(); }
-function ucProcess(){
-  if(!G.queue.length) return ucCheck();
-  const q=G.queue[0], p=G.ps[q.i];
-  if(!q.started){
-    q.started=true;
-    if(q.cause==="vote" && p.sp==="shield" && !p.shieldUsed){ p.shieldUsed=true; q.saved=true; }
+function ucEliminate(i, cause) { G.queue.push({ i, cause }); ucProcess(); }
+function ucProcess() {
+  if (!G.queue.length) return ucCheck();
+  const q = G.queue[0], p = G.ps[q.i];
+  if (!q.started) {
+    q.started = true;
+    if (q.cause === "vote" && p.sp === "shield" && !p.shieldUsed) { p.shieldUsed = true; q.saved = true; }
     else {
-      p.alive=false;
-      if(p.sp==="clown" && q.cause==="vote" && G.round===1) p.clownWin=true;
-      if(p.lover!=null && G.ps[p.lover].alive && !G.queue.some(x=>x.i===p.lover)) G.queue.push({i:p.lover,cause:"love"});
+      p.alive = false;
+      if (p.sp === "clown" && q.cause === "vote" && G.round === 1) p.clownWin = true;
+      if (p.lover != null && G.ps[p.lover].alive && !G.queue.some(x => x.i === p.lover)) G.queue.push({ i: p.lover, cause: "love" });
     }
   }
   go(ucReveal);
 }
-function ucReveal(){
-  const q=G.queue[0], p=G.ps[q.i];
-  if(q.saved) return `${bar("Révélation")}
-  <div class="card flip" style="--gc:var(--sun)"><span class="cat">Le vote visait ${esc(p.name)}</span><div class="word">Bouclier !</div><p class="foot">${esc(p.name)} était protégé${gOf(p.name)==="h"?"":"e"} et reste en jeu. Son rôle reste secret.</p></div>
-  <button class="btn" data-act="ucNext">Continuer</button>`;
-  const why = q.cause==="love" ? `meurt de chagrin (amoureu${gOf(p.name)==="h"?"x":"se"} de ${esc(G.ps[p.lover].name)})` : q.cause==="revenge" ? "est emporté"+(gOf(p.name)==="h"?"":"e")+" par le Vengeur" : "est éliminé"+(gOf(p.name)==="h"?"":"e")+" par le vote";
-  let body = `<div class="card flip" style="--gc:${roleCol(p.role)}"><span class="cat">${esc(p.name)} ${why}</span><div class="word">${roleName(p.role)}</div>${p.role!=="white"?`<p class="foot">Son mot : ${esc(p.word)}</p>`:""}${p.sp?`<p class="foot">Rôle spécial : <b>${spName(p.sp)}</b>${p.clownWin?" · +3 pts, il voulait se faire éliminer !":""}</p>`:""}</div>`;
-  if(p.role==="white" && !q.wDone){
-    body += q.wShown
-      ? `<div class="center"><span class="kicker">Le mot des civils était</span><div class="big">${esc(G.pair[0])}</div></div>
-         <div class="row"><button class="btn alt" data-act="ucWhite" data-arg="0">Raté</button><button class="btn" style="background:var(--lilac)" data-act="ucWhite" data-arg="1">Trouvé !</button></div>`
-      : `<p class="lead" style="text-align:center;align-self:center">Dernière chance : ${esc(p.name)} annonce à voix haute le mot des civils.</p><button class="btn" style="background:var(--lilac)" data-act="ucWShow">Révéler le mot des civils</button>`;
-  } else if(p.sp==="avenger" && !q.revDone){
-    const alive=G.ps.map((x,i)=>i).filter(i=>G.ps[i].alive && !G.queue.some(y=>y.i===i));
-    body += `<div class="center"><span class="kicker" style="color:var(--hot)">Vengeance</span><p class="lead">${esc(p.name)} choisit qui emporter avec ${gOf(p.name)==="h"?"lui":"elle"} :</p></div>
-      <div class="pick" style="--gc:var(--hot)">${alive.map(i=>`<button data-act="ucRevenge" data-arg="${i}">${esc(G.ps[i].name)}</button>`).join("")}</div>`;
-  } else body += `<button class="btn" data-act="ucNext">Continuer</button>`;
-  return `${bar("Révélation")}${body}`;
-}
-function ucFinish(w){
-  G.winner=w; G.gamePts={};
-  const give=(n,v)=>{ G.gamePts[n]=(G.gamePts[n]||0)+v; };
-  G.ps.forEach(p=>{
-    if(w==="civ" && p.role==="civil") give(p.name, UC_PTS.civil);
-    if(w==="imp" && p.role!=="civil") give(p.name, UC_PTS[p.role]);
-    if(w==="white" && p.role==="white") give(p.name, UC_PTS.white);
-    if(p.clownWin) give(p.name, 3);
-    if(p.sp==="lovers" && p.alive && G.ps[p.lover].alive) give(p.name, 2);
+function ucReveal() {
+  const q = G.queue[0], p = G.ps[q.i];
+  if (q.saved) return screen({
+    title: "Révélation", color: UCC, body: `<div class="hero">${av(p.name, "xl")}<span class="kicker">${ic("shield", 16)} Bouclier</span><h2 class="big">${esc(p.name)} reste en jeu</h2><p class="lead">${fe(p.name, "Elle", "Il")} était ${fe(p.name, "protégée", "protégé")}. Son rôle reste secret.</p></div>`,
+    foot: btn("Continuer", "ucNext", { icon: "play" })
   });
-  Object.entries(G.gamePts).forEach(([n,v])=>{ addPts(n,v); G.ucScores[n]=(G.ucScores[n]||0)+v; });
+  const why = q.cause === "love" ? `meurt de chagrin, ${fe(p.name, "amoureuse", "amoureux")} de ${esc(G.ps[p.lover].name)}` : q.cause === "revenge" ? `est ${fe(p.name, "emportée", "emporté")} par le Vengeur` : `est ${fe(p.name, "éliminée", "éliminé")} par le vote`;
+  const sp = p.sp ? spOf(p.sp) : null;
+  let body = `<div class="hero">${av(p.name, "xl")}<p class="lead">${esc(p.name)} ${why}.</p></div>
+    <div class="card" style="--gc:${roleCol(p.role)}"><span class="card-label">Son rôle</span><div class="word">${roleName(p.role)}</div>${p.role !== "white" ? `<p class="card-foot">Son mot : <b>${esc(p.word)}</b></p>` : ""}
+    ${sp ? `<div class="special"><span class="role-ic">${ic(sp.icon, 20)}</span><div><span class="card-label">Rôle spécial</span><b>${sp.name}</b>${p.clownWin ? `<p>Éliminé au premier vote : 3 points pour ${esc(p.name)}.</p>` : ""}</div></div>` : ""}</div>`;
+  let foot = btn("Continuer", "ucNext", { icon: "play" });
+  if (p.role === "white" && !q.wDone) {
+    if (q.wShown) {
+      body += `<div class="hero"><span class="kicker">Le mot des civils était</span><h2 class="big">${esc(G.pair[0])}</h2></div>`;
+      foot = `<div class="row2">${btn("Raté", "ucWhite", { arg: "0", kind: "ghost", icon: "x" })}${btn("Trouvé", "ucWhite", { arg: "1", icon: "check" })}</div>`;
+    } else {
+      body += `<p class="lead center">Dernière chance : ${esc(p.name)} annonce à voix haute le mot des civils.</p>`;
+      foot = btn("Révéler le mot des civils", "ucWShow", { icon: "eye" });
+    }
+  } else if (p.sp === "avenger" && !q.revDone) {
+    const alive = G.ps.map((x, i) => i).filter(i => G.ps[i].alive && !G.queue.some(y => y.i === i));
+    body += `<h2 class="h2">${ic("swords", 20)} Vengeance</h2><p class="hint">${esc(p.name)} choisit qui emporter avec ${fe(p.name, "elle", "lui")}.</p>
+      <div class="pickgrid">${alive.map(i => `<button class="pickav" data-act="ucRevenge" data-arg="${i}">${av(G.ps[i].name, "m")}<span>${esc(G.ps[i].name)}</span></button>`).join("")}</div>`;
+    foot = "";
+  }
+  return screen({ title: "Révélation", color: UCC, body, foot });
+}
+function ucFinish(w) {
+  G.winner = w; G.gamePts = {};
+  const give = (n, v) => { G.gamePts[n] = (G.gamePts[n] || 0) + v; };
+  G.ps.forEach(p => {
+    if (w === "civ" && p.role === "civil") give(p.name, UC_PTS.civil);
+    if (w === "imp" && p.role !== "civil") give(p.name, UC_PTS[p.role]);
+    if (w === "white" && p.role === "white") give(p.name, UC_PTS.white);
+    if (p.clownWin) give(p.name, 3);
+    if (p.sp === "lovers" && p.alive && G.ps[p.lover].alive) give(p.name, 2);
+  });
+  Object.entries(G.gamePts).forEach(([n, v]) => { addPts(n, v); G.ucScores[n] = (G.ucScores[n] || 0) + v; });
   go(ucEnd);
 }
-function ucEnd(){
-  const civWin = G.winner==="civ";
-  const title = civWin ? "Les civils gagnent" : G.winner==="white" ? "Mr White gagne" : "Les intrus gagnent";
-  const session=Object.entries(G.ucScores).sort((a,b)=>b[1]-a[1]);
-  return `${bar("Fin")}
-  <div class="center" style="--gc:${civWin?"var(--sky)":"var(--hot)"};padding-top:12px"><span class="kicker">Partie terminée</span><div class="big">${title}</div>
-  <p class="lead">Civils : <b>${esc(G.pair[0])}</b> · Undercover : <b>${esc(G.pair[1])}</b></p></div>
-  <div class="score">${G.ps.map(p=>`<div style="--tc:${roleCol(p.role)}"><i class="dot"></i><span>${esc(p.name)} <small class="note">${roleName(p.role)}${p.sp?" · "+spName(p.sp):""}${p.alive?"":" · éliminé"+(gOf(p.name)==="h"?"":"e")}</small></span><b style="font-size:16px">${G.gamePts[p.name]?"+"+G.gamePts[p.name]:"0"}</b></div>`).join("")}</div>
-  ${session.length?`<div class="panel"><span class="label">Points Undercover cumulés</span>${scoreRows(session)}</div>`:""}
-  <button class="btn" style="background:var(--mint)" data-act="ucGo">Rejouer avec d'autres mots</button>
-  <button class="btn ghost" data-act="ucSettings">Changer les réglages</button>
-  <button class="link" data-act="home">Retour aux jeux</button>`;
+function ucEnd() {
+  const civWin = G.winner === "civ";
+  const title = civWin ? "Les civils gagnent" : G.winner === "white" ? "Mr White gagne" : "Les intrus gagnent";
+  const session = Object.entries(G.ucScores).sort((a, b) => b[1] - a[1]);
+  return screen({
+    title: "Fin de la partie", color: UCC, left: null, body: `
+    <div class="hero">${ic("trophy", 44)}<h2 class="big">${title}</h2>
+    <div class="pair"><span><small>Civils</small><b>${esc(G.pair[0])}</b></span><span><small>Undercover</small><b>${esc(G.pair[1])}</b></span></div></div>
+    <ul class="list">${G.ps.map(p => `<li class="row-item" style="--tc:${roleCol(p.role)}">${av(p.name, "s")}<span class="grow"><b>${esc(p.name)}</b><small>${roleName(p.role)}${p.sp ? ", " + spOf(p.sp).name : ""}${p.alive ? "" : ", " + fe(p.name, "éliminée", "éliminé")}</small></span><b class="badge ${G.gamePts[p.name] ? "b-good" : ""}">${G.gamePts[p.name] ? "+" + G.gamePts[p.name] : "0"}</b></li>`).join("")}</ul>
+    ${session.length ? `<span class="label">Points Undercover de la soirée</span>${scoreList(session)}` : ""}`,
+    foot: btn("Rejouer avec d'autres mots", "ucGo", { icon: "undo" }) + `<div class="row2 links"><button class="textbtn" data-act="ucSettings">Réglages</button><button class="textbtn" data-act="home">Retour aux jeux</button></div>`
+  });
 }
-function ucCheck(){
-  const alive=G.ps.filter(p=>p.alive);
-  const imp=alive.filter(p=>p.role!=="civil").length, civ=alive.length-imp;
-  if(imp===0) return ucFinish("civ");
-  if(civ<=1) return ucFinish("imp");
+function ucCheck() {
+  const alive = G.ps.filter(p => p.alive);
+  const imp = alive.filter(p => p.role !== "civil").length, civ = alive.length - imp;
+  if (imp === 0) return ucFinish("civ");
+  if (civ <= 1) return ucFinish("imp");
   G.round++; ucOrder(); go(ucTalk);
 }
 
 /* ---------- Jeu mystère ---------- */
-function mys(){
-  const c=G.card, T=c?MYS_TYPES[c.t]:null;
-  let win="";
-  if(c && !G.scored){
-    if(c.t==="duel") win=`<span class="label">Qui gagne le duel ? (+2)</span><div class="row">${[G.p1,G.p2].map(n=>`<button class="btn alt" data-act="mysWin" data-arg="${esc(n)}|2">${esc(n)}</button>`).join("")}</div>`;
-    else if(c.t==="defi") win=`<div class="row"><button class="btn alt" data-act="mysWin" data-arg="|0">Raté</button><button class="btn good" data-act="mysWin" data-arg="${esc(G.p1)}|2">Réussi (+2)</button></div>`;
-    else if(c.t==="devine"||c.t==="patate") win=`<span class="label">${c.t==="devine"?"Qui a trouvé ? (+1)":"Qui gagne ? (+2)"}</span><div class="pick" style="--gc:var(--lilac)">${(c.t==="devine"?others(G.p1):players).map(n=>`<button data-act="mysWin" data-arg="${esc(n)}|${c.t==="devine"?1:2}">${esc(n)}</button>`).join("")}</div>`;
+function mys() {
+  const c = G.card, T = c ? MYS_TYPES[c.t] : null;
+  let win = "";
+  if (c && !G.scored) {
+    if (c.t === "duel") win = `<span class="label">Qui gagne le duel ? 2 points</span><div class="pickgrid two">${[G.p1, G.p2].map(n => `<button class="pickav" data-act="mysWin" data-arg="${esc(n)}|2">${av(n, "m")}<span>${esc(n)}</span></button>`).join("")}</div>`;
+    else if (c.t === "defi") win = `<span class="label">Défi réussi ? 2 points pour ${esc(G.p1)}</span><div class="row2">${btn("Raté", "mysWin", { arg: "|0", kind: "ghost", icon: "x" })}${btn("Réussi", "mysWin", { arg: G.p1 + "|2", kind: "ghost", icon: "check" })}</div>`;
+    else if (c.t === "devine" || c.t === "patate") win = `<span class="label">${c.t === "devine" ? "Qui a trouvé ? 1 point" : "Qui gagne ? 2 points"}</span><div class="pickgrid">${(c.t === "devine" ? others(G.p1) : players).map(n => `<button class="pickav" data-act="mysWin" data-arg="${esc(n)}|${c.t === "devine" ? 1 : 2}">${av(n, "m")}<span>${esc(n)}</span></button>`).join("")}</div>`;
   }
-  return `${bar("Jeu mystère")}
-  ${c?`<div class="card flip" style="--gc:${T.c}" id="mcard"><span class="cat">${T.label}</span><div class="txt">${G.text}</div><p class="foot">${T.foot}</p></div>
-  ${c.s?`${timerHTML(timer?timer.left:c.s)}<button class="btn alt" data-act="mysTimer">Lancer ${c.s} s</button>`:""}`
-  :`<div class="center secret" style="--gc:var(--lilac)"><span class="kicker">Paquet mystère</span><div class="big">?</div><p class="lead">Qui pourrait, Je n'ai jamais, défis, duels, patate chaude, devinettes et règles absurdes.</p></div>`}
-  ${win?`<div class="stack">${win}</div>`:""}
-  <button class="btn" style="background:var(--lilac)" data-act="mysDraw">${c?"Carte suivante":"Tirer la première carte"}</button>
-  ${G.rule?`<div class="rules"><span class="label">Règle en cours</span><div class="rule">${G.rule}</div></div>`:""}
-  ${G.n?`<p class="note" style="text-align:center">${G.n} carte${G.n>1?"s":""} tirée${G.n>1?"s":""}</p>`:""}`;
+  return screen({
+    title: "Jeu mystère", color: T ? T.c : "var(--c-mys)", body: c ? `
+    <div class="card"><span class="card-label">${ic(T.icon, 16)} ${T.label}</span><div class="txt">${G.text}</div><p class="card-foot">${T.foot}</p></div>
+    ${c.s ? `${timerHTML(timer ? timer.left : c.s)}${btn(`Lancer le chrono, ${c.s} s`, "mysTimer", { kind: "ghost", icon: "timer" })}` : ""}
+    ${win}
+    ${G.rule && c.t !== "regle" ? `<div class="rule"><span class="label">${ic("gavel", 14)} Règle en cours</span><p>${G.rule}</p></div>` : ""}` : `
+    <div class="hero">${ic("dices", 48)}<h2 class="big">Paquet mystère</h2><p class="lead">Qui pourrait, Je n'ai jamais, défis, duels, patate chaude, devinettes et règles absurdes. On tire une carte et on voit.</p></div>`,
+    foot: btn(c ? "Carte suivante" : "Tirer une carte", "mysDraw", { icon: "dices" })
+  });
 }
+
+/* ---------- Classement (écran ouvert depuis un jeu) ---------- */
+function boardScreen() { return screen({ title: "Classement", left: "back", right: null, body: boardBody() }); }
 
 /* ---------- Actions ---------- */
 const A = {
-  home(){ stopTimer(); G=null; msg=""; go(home); },
-  quit(){
-    if(!G || view===playersScreen){ return A.home(); }
-    if(armed){ armed=false; clearTimeout(armT); return A.home(); }
-    armed=true; draw(); armT=setTimeout(()=>{ armed=false; draw(); },3000);
+  tab(t) { tab = t; go(root); },
+  home() { stopTimer(); G = null; tab = "games"; go(root); },
+  askQuit() { confirmSheet({ title: "Quitter la partie ?", text: "Les points déjà gagnés restent au classement.", ok: "Quitter", act: "home", danger: true }); },
+  closeSheet() { sheet = null; draw(); },
+  install() {
+    if (installEvt) { const e = installEvt; installEvt = null; e.prompt(); e.userChoice.finally(() => draw()); return; }
+    sheet = { type: "install" }; draw();
   },
-  players(){ msg=""; G=null; go(playersScreen); },
-  addG(g){ addG=g; draw(); const n=document.getElementById("pname"); n&&n.focus(); },
-  toggleG(i){ const p=players[+i]; genders[p]=gOf(p)==="h"?"f":"h"; savePlayers(); draw(); },
-  rmP(i){ players.splice(+i,1); savePlayers(); draw(); },
-  clearP(){ players=[]; savePlayers(); draw(); },
-  board(){ resetArmed=false; if(view!==board) prevView=view; go(board); },
-  boardBack(){ go(prevView||home); },
-  boardReset(){ if(!resetArmed){ resetArmed=true; return draw(); } scores={}; store.set("scores",scores); resetArmed=false; draw(); },
-  open(id){
-    stopTimer(); armed=false;
-    const g=GAMES.find(x=>x.id===id);
-    if(players.length<g.min){ G={want:id}; msg=`${g.name} se joue à ${g.min} minimum. Ajoute ${g.min-players.length} prénom${g.min-players.length>1?"s":""}.`; return go(playersScreen); }
-    msg="";
-    if(id==="mime"||id==="taboo"){ G={kind:id,nTeams:2,dur:60,round:1}; makeTeams(); return go(teamSetup); }
-    if(id==="av"){ G={kind:"av",order:shuffle(players),i:0,level:store.get("avlvl","fun"),decks:{}}; if(G.level==="x18"&&!adultOk) G.level="hot"; return go(avTurn); }
-    if(id==="tvm"){ G={kind:"tvm",order:shuffle(players),i:0,scores:Object.fromEntries(players.map(p=>[p,0])),step:"prep",theme:pick(TVM_THEMES),sel:[]}; return go(tvm); }
-    if(id==="uc"){ const n=players.length; G={kind:"uc",nU:n>=13?3:n>=7?2:1,nW:n>=11?2:n>=5?1:0,ucScores:{}}; return go(ucSetup); }
-    if(id==="mys"){ G={kind:"mys",d:deck(MYS),card:null,rule:null,n:0}; return go(mys); }
+  hideInstall() { installHidden = true; store.set("installHidden", true); draw(); },
+  board() { prevView = view; go(boardScreen); },
+  boardBack() { go(prevView || root); },
+  askReset() { confirmSheet({ title: "Remettre à zéro ?", text: "Tous les points de la soirée seront effacés.", ok: "Tout effacer", act: "resetScores", danger: true }); },
+  resetScores() { scores = {}; store.set("scores", scores); sheet = null; draw(); },
+  askClear() { confirmSheet({ title: "Vider la liste ?", text: "Tous les joueurs seront retirés.", ok: "Vider la liste", act: "clearP", danger: true }); },
+  clearP() { roster = []; saveRoster(); syncNames(); sheet = null; draw(); },
+  editP(id) {
+    const p = roster.find(x => x.id === id);
+    const used = new Set(roster.map(x => x.av));
+    const g = p ? p.g : "f", free = AVATARS.find(a => a.g === g && !used.has(a.id)) || AVATARS.find(a => a.g === g);
+    sheet = { type: "player", id: p ? p.id : null, draft: p ? { name: p.name, g: p.g, av: p.av } : { name: "", g, av: free.id } };
+    draw(); if (!p) setTimeout(() => { const n = document.getElementById("pname"); n && n.focus(); }, 50);
+  },
+  draftG(g) {
+    const d = sheet.draft; d.g = g;
+    if (!d.av.startsWith(g)) { const used = new Set(roster.map(x => x.av)); d.av = (AVATARS.find(a => a.g === g && !used.has(a.id)) || AVATARS.find(a => a.g === g)).id; }
+    draw();
+  },
+  draftAv(id) { sheet.draft.av = id; draw(); },
+  rmP() { const i = roster.findIndex(x => x.id === sheet.id); if (i >= 0) roster.splice(i, 1); saveRoster(); syncNames(); sheet = null; draw(); },
+  open(id) {
+    stopTimer();
+    const g = GAMES.find(x => x.id === id);
+    if (players.length < g.min) { tab = "players"; go(root); toast(`${g.name} se joue à ${g.min} minimum`); return; }
+    if (id === "mime" || id === "taboo") { G = { kind: id, nTeams: 2, dur: 60, round: 1 }; makeTeams(); return go(teamSetup); }
+    if (id === "av") { G = { kind: "av", order: shuffle(players), i: 0, level: store.get("avlvl", "fun"), decks: {} }; if (G.level === "x18" && !adultOk) G.level = "hot"; return go(avTurn); }
+    if (id === "tvm") { G = { kind: "tvm", order: shuffle(players), i: 0, scores: Object.fromEntries(players.map(p => [p, 0])), step: "prep", theme: pick(TVM_THEMES), sel: [] }; return go(tvm); }
+    if (id === "uc") { const n = players.length; G = { kind: "uc", nU: n >= 13 ? 3 : n >= 7 ? 2 : 1, nW: n >= 11 ? 2 : n >= 5 ? 1 : 0, ucScores: {} }; return go(ucSetup); }
+    if (id === "mys") { G = { kind: "mys", d: deck(MYS), card: null, rule: null }; return go(mys); }
   },
   /* équipes */
-  nTeams(n){ G.nTeams=+n; makeTeams(); draw(); },
-  reTeams(){ makeTeams(); draw(); },
-  dur(n){ G.dur=+n; draw(); },
-  teamsGo(){ G.cur=0; G.round=1; G.deck=deck(G.kind==="mime"?MIME_CARDS:TABOO); go(turnIntro); },
-  turnStart(){ G.log=[]; G.card=G.deck.draw(); go(turnPlay); runTimer(G.dur, A.turnStop); },
-  mark(v){ G.log.push({c:G.card,v:+v}); G.card=G.deck.draw(); beep(+v===1?880:+v===-1?220:440,.08); draw(); },
-  turnStop(){ stopTimer(); if(G.card){ G.log.push({c:G.card,v:0,last:true}); G.card=null; } go(turnEnd); },
-  toggle(i){ const l=G.log[+i]; l.v = G.kind==="mime" ? (l.v===1?0:1) : (l.v===1?0:l.v===0?-1:1); draw(); },
-  turnValidate(){
-    const t=G.teams[G.cur], pts=G.log.reduce((s,l)=>s+l.v,0);
-    t.score += pts; t.members.forEach(m=>addPts(m,pts)); t.k++;
-    G.cur=(G.cur+1)%G.teams.length; if(G.cur===0) G.round++;
-    go(turnIntro); if(pts) toast(`${ptsTxt(pts)} pour ${t.name}`);
+  nTeams(n) { G.nTeams = +n; makeTeams(); draw(); },
+  reTeams() { makeTeams(); draw(); },
+  dur(n) { G.dur = +n; draw(); },
+  teamsGo() { G.cur = 0; G.round = 1; G.deck = deck(G.kind === "mime" ? MIME_CARDS : TABOO); go(turnIntro); },
+  turnStart() { G.log = []; G.card = G.deck.draw(); go(turnPlay); runTimer(G.dur, A.turnStop); },
+  mark(v) { G.log.push({ c: G.card, v: +v }); G.card = G.deck.draw(); beep(+v === 1 ? 880 : +v === -1 ? 220 : 440, .08); draw(); },
+  turnStop() { stopTimer(); if (G.card) { G.log.push({ c: G.card, v: 0, last: true }); G.card = null; } go(turnEnd); },
+  toggle(i) { const l = G.log[+i]; l.v = G.kind === "mime" ? (l.v === 1 ? 0 : 1) : (l.v === 1 ? 0 : l.v === 0 ? -1 : 1); draw(); },
+  turnValidate() {
+    const t = G.teams[G.cur], pts = G.log.reduce((s, l) => s + l.v, 0);
+    t.score += pts; t.members.forEach(m => addPts(m, pts)); t.k++;
+    G.cur = (G.cur + 1) % G.teams.length; if (G.cur === 0) G.round++;
+    go(turnIntro); if (pts) toast(`${ptsTxt(pts)} pour ${t.name}`);
   },
-  teamEnd(){
-    const s=[...G.teams].sort((a,b)=>b.score-a.score);
-    if(!G.bonusGiven && s[0].score>s[1].score){ s[0].members.forEach(m=>addPts(m,3)); }
-    G.bonusGiven=true; go(teamFinal);
+  teamEnd() {
+    const s = [...G.teams].sort((a, b) => b.score - a.score);
+    if (!G.bonusGiven && s[0].score > s[1].score) s[0].members.forEach(m => addPts(m, 3));
+    G.bonusGiven = true; go(teamFinal);
   },
-  teamsAgain(){ G.teams.forEach(t=>t.score=0); G.bonusGiven=false; A.teamsGo(); },
+  teamsAgain() { G.teams.forEach(t => t.score = 0); G.bonusGiven = false; A.teamsGo(); },
   /* action ou vérité */
-  avLevel(k){ if(k==="x18" && !adultOk){ G.gate=true; return draw(); } G.level=k; store.set("avlvl",k); draw(); },
-  avAdult(){ adultOk=true; G.gate=false; G.level="x18"; store.set("avlvl","x18"); draw(); },
-  avGateNo(){ G.gate=false; draw(); },
-  avPick(t){
-    if(t==="r") t=Math.random()<.5?"v":"a";
-    const key=t+G.level; G.decks[key]=G.decks[key]||deck(AV[G.level][t]);
-    const cur=avCur(), o=others(cur);
-    G.type=t; G.text=fill(G.decks[key].draw(), {cur, joueur:pick(o.length?o:players), opp:oppOf(cur)});
+  avLevel(k) { if (k === "x18" && !adultOk) { G.gate = true; return go(avTurn); } G.level = k; store.set("avlvl", k); draw(); },
+  avAdult() { adultOk = true; G.gate = false; G.level = "x18"; store.set("avlvl", "x18"); go(avTurn); },
+  avGateNo() { G.gate = false; go(avTurn); },
+  avPick(t) {
+    if (t === "r") t = Math.random() < .5 ? "v" : "a";
+    const key = t + G.level; G.decks[key] = G.decks[key] || deck(AV[G.level][t]);
+    const cur = avCur(), o = others(cur);
+    G.type = t; G.text = fill(G.decks[key].draw(), { cur, joueur: pick(o.length ? o : players), opp: oppOf(cur) });
     go(avCard);
   },
-  avJoker(){ G.decks.g=G.decks.g||deck(GAGES); G.type="g"; G.text=esc(G.decks.g.draw()); go(avCard); },
-  avNext(){
-    const p=avCur(), pts = G.type==="g" ? 0 : AV_PTS[G.type]+AV_BONUS[G.level];
-    addPts(p,pts); G.i++; go(avTurn); if(pts) toast(`${ptsTxt(pts)} pour ${p}`);
+  avJoker() { G.decks.g = G.decks.g || deck(GAGES); G.type = "g"; G.text = esc(G.decks.g.draw()); go(avCard); },
+  avNext() {
+    const p = avCur(), pts = G.type === "g" ? 0 : AV_PTS[G.type] + AV_BONUS[G.level];
+    addPts(p, pts); G.i++; go(avTurn); if (pts) toast(`${ptsTxt(pts)} pour ${p}`);
   },
-  avSkip(){ G.i++; draw(); },
-  /* 2v1m */
-  tvmTheme(){ let t; do{ t=pick(TVM_THEMES); }while(t===G.theme); G.theme=t; draw(); },
-  tvmReady(){ G.step="talk"; go(tvm); },
-  tvmDebate(){ runTimer(60); },
-  tvmVote(){ stopTimer(); G.step="vote"; G.sel=[]; go(tvm); },
-  tvmSel(n){ G.sel = G.sel.includes(n) ? G.sel.filter(x=>x!==n) : [...G.sel,n]; draw(); },
-  tvmValidate(){
-    const p=tvmCur();
-    if(G.sel.length) G.sel.forEach(n=>{ G.scores[n]++; addPts(n,1); }); else { G.scores[p]+=2; addPts(p,2); }
-    G.i++; G.step="prep"; G.theme=pick(TVM_THEMES); go(tvm);
+  avSkip() { G.i++; draw(); },
+  /* 2 vérités 1 mensonge */
+  tvmTheme() { let t; do { t = pick(TVM_THEMES); } while (t === G.theme); G.theme = t; draw(); },
+  tvmReady() { G.step = "talk"; go(tvm); },
+  tvmDebate() { runTimer(60); },
+  tvmVote() { stopTimer(); G.step = "vote"; G.sel = []; go(tvm); },
+  tvmSel(n) { G.sel = G.sel.includes(n) ? G.sel.filter(x => x !== n) : [...G.sel, n]; draw(); },
+  tvmValidate() {
+    const p = tvmCur();
+    if (G.sel.length) G.sel.forEach(n => { G.scores[n]++; addPts(n, 1); }); else { G.scores[p] += 2; addPts(p, 2); }
+    G.i++; G.step = "prep"; G.theme = pick(TVM_THEMES); go(tvm);
   },
   /* undercover */
-  ucU(d){ const v=G.nU+ +d; if(v>=0 && v+G.nW<=maxImp() && v+G.nW>=1) G.nU=v; draw(); },
-  ucW(d){ const v=G.nW+ +d; if(v>=0 && v+G.nU<=maxImp() && v+G.nU>=1) G.nW=v; draw(); },
-  ucRole(id){ const s=ucSel(); store.set("ucRoles", s.includes(id)?s.filter(x=>x!==id):[...s,id]); draw(); },
-  ucSettings(){ go(ucSetup); },
-  ucGo(){
-    G.deck=G.deck||deck(UC_PAIRS);
-    let pair=G.deck.draw(); if(Math.random()<.5) pair=[pair[1],pair[0]];
-    G.pair=pair;
-    const roles=shuffle([...Array(G.nU).fill("under"),...Array(G.nW).fill("white"),...Array(players.length-G.nU-G.nW).fill("civil")]);
-    G.ps=shuffle(players).map((name,i)=>({name,role:roles[i],word:roles[i]==="civil"?pair[0]:roles[i]==="under"?pair[1]:null,alive:true,sp:null,lover:null}));
-    /* rôles spéciaux : un par joueur maximum */
-    let free=shuffle(G.ps.map((p,i)=>i));
-    for(const id of ucSel()){
-      if(id==="lovers"){
-        if(free.length<2) continue;
-        const a=free.shift(); let k=free.findIndex(i=>gOf(G.ps[i].name)!==gOf(G.ps[a].name)); if(k<0) k=0;
-        const b=free.splice(k,1)[0];
-        Object.assign(G.ps[a],{sp:"lovers",lover:b}); Object.assign(G.ps[b],{sp:"lovers",lover:a});
-      } else if(free.length) G.ps[free.shift()].sp=id;
+  ucU(d) { const v = G.nU + +d; if (v >= 0 && v + G.nW <= maxImp() && v + G.nW >= 1) G.nU = v; draw(); },
+  ucW(d) { const v = G.nW + +d; if (v >= 0 && v + G.nU <= maxImp() && v + G.nU >= 1) G.nW = v; draw(); },
+  ucRole(id) { const s = ucSel(); store.set("ucRoles", s.includes(id) ? s.filter(x => x !== id) : [...s, id]); draw(); },
+  ucSettings() { go(ucSetup); },
+  ucGo() {
+    G.deck = G.deck || deck(UC_PAIRS);
+    let pair = G.deck.draw(); if (Math.random() < .5) pair = [pair[1], pair[0]];
+    G.pair = pair;
+    const roles = shuffle([...Array(G.nU).fill("under"), ...Array(G.nW).fill("white"), ...Array(players.length - G.nU - G.nW).fill("civil")]);
+    G.ps = shuffle(players).map((name, i) => ({ name, role: roles[i], word: roles[i] === "civil" ? pair[0] : roles[i] === "under" ? pair[1] : null, alive: true, sp: null, lover: null }));
+    let free = shuffle(G.ps.map((p, i) => i));
+    for (const id of ucSel()) {
+      if (id === "lovers") {
+        if (free.length < 2) continue;
+        const a = free.shift(); let k = free.findIndex(i => gOf(G.ps[i].name) !== gOf(G.ps[a].name)); if (k < 0) k = 0;
+        const b = free.splice(k, 1)[0];
+        Object.assign(G.ps[a], { sp: "lovers", lover: b }); Object.assign(G.ps[b], { sp: "lovers", lover: a });
+      } else if (free.length) G.ps[free.shift()].sp = id;
     }
-    Object.assign(G,{i:0,show:false,round:1,queue:[],winner:null,peek:null});
+    Object.assign(G, { i: 0, show: false, round: 1, queue: [], winner: null, peek: null });
     go(ucDeal);
   },
-  ucShow(){ G.show=true; draw(); },
-  ucHide(){ G.show=false; G.i++; if(G.i>=G.ps.length){ ucOrder(); go(ucTalk); } else go(ucDeal); },
-  ucVoteStart(){ G.voters=ucVoters(); G.vi=0; G.votes={}; go(ucVote); },
-  ucCast(i){ G.votes[G.voters[G.vi]]=+i; G.vi++; draw(); window.scrollTo(0,0); },
-  ucUncast(){ G.vi--; draw(); },
-  ucElim(i){ ucEliminate(+i,"vote"); },
-  ucBack(){ G.peek=null; go(ucTalk); },
-  ucPeekList(){ G.peek=null; go(ucPeek); },
-  ucPeek(i){ G.peek=+i; draw(); },
-  ucPeekDone(){ G.peek=null; go(ucTalk); },
-  ucWShow(){ G.queue[0].wShown=true; draw(); },
-  ucWhite(ok){ if(+ok){ G.queue=[]; return ucFinish("white"); } G.queue[0].wDone=true; draw(); },
-  ucRevenge(i){ G.queue[0].revDone=true; G.queue.push({i:+i,cause:"revenge"}); draw(); },
-  ucNext(){ G.queue.shift(); ucProcess(); },
+  ucShow() { G.show = true; draw(); },
+  ucHide() { G.show = false; G.i++; if (G.i >= G.ps.length) { ucOrder(); go(ucTalk); } else go(ucDeal); },
+  ucVoteStart() { G.voters = ucVoters(); G.vi = 0; G.votes = {}; go(ucVote); },
+  ucCast(i) { G.votes[G.voters[G.vi]] = +i; G.vi++; go(ucVote); },
+  ucUncast() { G.vi--; draw(); },
+  ucElim(i) { ucEliminate(+i, "vote"); },
+  ucBack() { G.peek = null; go(ucTalk); },
+  ucPeekList() { G.peek = null; go(ucPeek); },
+  ucPeek(i) { G.peek = +i; draw(); },
+  ucPeekDone() { G.peek = null; go(ucTalk); },
+  ucWShow() { G.queue[0].wShown = true; draw(); },
+  ucWhite(ok) { if (+ok) { G.queue = []; return ucFinish("white"); } G.queue[0].wDone = true; draw(); },
+  ucRevenge(i) { G.queue[0].revDone = true; G.queue.push({ i: +i, cause: "revenge" }); draw(); },
+  ucNext() { G.queue.shift(); ucProcess(); },
   /* mystère */
-  mysDraw(){
+  mysDraw() {
     stopTimer();
-    const c=G.d.draw(), p1=pick(players);
-    const o=others(p1), p2 = c.opp ? oppOf(p1) : pick(o.length?o:players);
-    Object.assign(G,{card:c,p1,p2,scored:false}); G.n++;
-    G.text=fill(c.x,{cur:p1,p1,p2});
-    if(c.t==="regle") G.rule=G.text;
-    draw(); beep(520,.06);
+    const c = G.d.draw(), p1 = pick(players);
+    const o = others(p1), p2 = c.opp ? oppOf(p1) : pick(o.length ? o : players);
+    Object.assign(G, { card: c, p1, p2, scored: false });
+    G.text = fill(c.x, { cur: p1, p1, p2 });
+    if (c.t === "regle") G.rule = G.text;
+    go(mys); beep(520, .06);
   },
-  mysWin(arg){ const [n,v]=arg.split("|"); G.scored=true; if(n&&+v){ addPts(n,+v); draw(); toast(`${ptsTxt(+v)} pour ${n}`); } else draw(); },
-  mysTimer(){ runTimer(G.card.s); }
+  mysWin(arg) { const k = arg.lastIndexOf("|"), n = arg.slice(0, k), v = +arg.slice(k + 1); G.scored = true; draw(); if (n && v) { addPts(n, v); toast(`${ptsTxt(v)} pour ${n}`); } },
+  mysTimer() { runTimer(G.card.s); }
 };
 
 document.addEventListener("click", e => {
   keepAwake();
-  const t=e.target.closest("[data-act]"); if(!t || t.disabled) return;
-  const fn=A[t.dataset.act]; if(!fn) return;
+  const t = e.target.closest("[data-act]");
+  if (!t || t.disabled) return;
+  const fn = A[t.dataset.act];
+  if (!fn) return;
   e.preventDefault();
-  if(t.dataset.act!=="quit" && armed){ armed=false; clearTimeout(armT); }
-  fn(t.dataset.arg, t);
+  fn(t.dataset.arg);
 });
+document.addEventListener("input", e => { if (e.target.id === "pname" && sheet && sheet.draft) sheet.draft.name = e.target.value; });
 document.addEventListener("submit", e => {
-  if(e.target.id!=="addform") return;
+  if (e.target.id !== "pform") return;
   e.preventDefault();
-  const inp=document.getElementById("pname"); const v=inp.value.trim();
-  if(v){
-    if(isSample){ players=[]; genders={}; }
-    if(!players.some(p=>p.toLowerCase()===v.toLowerCase())){ players.push(v); genders[v]=addG; }
-    savePlayers(); msg="";
-  }
-  draw(); const n=document.getElementById("pname"); n && n.focus();
+  const d = sheet.draft, name = d.name.trim();
+  if (!name) { sheet.err = "Écris un prénom."; return draw(); }
+  const dup = roster.find(p => p.id !== sheet.id && p.name.toLowerCase() === name.toLowerCase());
+  if (dup) { sheet.err = `${esc(dup.name)} est déjà dans la liste.`; return draw(); }
+  if (isSample) roster = [];
+  const p = sheet.id && roster.find(x => x.id === sheet.id);
+  if (p) {
+    if (p.name !== name) { if (scores[p.name] != null) { scores[name] = (scores[name] || 0) + scores[p.name]; delete scores[p.name]; store.set("scores", scores); } p.name = name; }
+    p.g = d.g; p.av = d.av;
+  } else roster.push({ id: uid(), name, g: d.g, av: d.av });
+  saveRoster(); syncNames(); sheet = null; draw();
 });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && sheet) { sheet = null; draw(); } });
 
-go(home);
+try { registerSW({ immediate: true }); } catch (e) {}
+go(root);
