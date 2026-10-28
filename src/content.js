@@ -57,23 +57,23 @@ export const TVM_THEMES = ["Ton enfance","Tes voyages","Ta vie amoureuse","Tes p
 export const UC_PAIRS = [["Mojito","Caïpirinha"],["Tinder","Hinge"],["Amsterdam","Copenhague"],["Escape game","Laser game"],["Huître","Moule"],["Tiramisu","Panna cotta"],["Se faire ghoster","Se prendre un vent"],["Brunch","Afterwork"],["Bali","Thaïlande"],["Gueule de bois","Mal de mer"],["Speed dating","Blind date"],["Botox","Acide hyaluronique"],["Kiné","Ostéo"],["Sauna","Hammam"],["Club Med","Croisière"],["Ex","Crush"],["Raclette","Fondue"],["Beyoncé","Rihanna"],["Les Marseillais","Koh-Lanta"],["Vinted","Leboncoin"],["Fête des voisins","Crémaillère"],["Enterrement de vie de jeune fille","Baby shower"],["Selfie","Story"],["Prosecco","Champagne"],["Paddle","Kayak"],["Henné","Tatouage éphémère"],["Pilates","Yoga"],["Faux cils","Extensions de cheveux"],["Fond de teint","Anticernes"],["Témoin de mariage","Demoiselle d'honneur"],["Ikea","Maisons du Monde"],["Uber Eats","Deliveroo"],["Coachella","Tomorrowland"],["Love Island","La Villa des cœurs brisés"],["Dubaï","Las Vegas"],["Ibiza","Mykonos"],["Grey's Anatomy","Dr House"],["Friends","How I Met Your Mother"],["Bridget Jones","Le Diable s'habille en Prada"],["Pole dance","Zumba"],["Jacuzzi","Spa"],["Manucure","Pédicure"],["Blind test","Karaoké"],["Bowling","Billard"],["Croque-monsieur","Panini"],["Guacamole","Houmous"],["Lune de miel","Week-end en amoureux"],["Instagram","Pinterest"],["Massage","Gommage"],["Gloss","Baume à lèvres"],["Chantilly","Crème fraîche"],["Jalousie","Possessivité"],["Premier rendez-vous","Entretien d'embauche"],["Rupture","Divorce"],["Demande en mariage","Saint-Valentin"],["Talons aiguilles","Compensées"],["Glamping","Cabane dans les arbres"],["Égypte","Maroc"],["Aya Nakamura","Angèle"],["Squid Game","Hunger Games"],["Barbie","Polly Pocket"],["Cluedo","Loup-garou"],["Uno","Dobble"],["Tequila","Jägermeister"],["Nutella","Pâte de spéculoos"],["Wingman","Entremetteuse"],["Plan cul","Coup d'un soir"],["Nudes","Sextos"]];
 
 export const UC_SPECIALS = [
- {id:"boss",name:"Le Boss",d:"Son vote compte double. Personne ne sait qui c'est."},
- {id:"ghost",name:"Le Fantôme",d:"Continue de voter après son élimination."},
- {id:"lovers",name:"Les Amoureux",d:"Deux joueurs liés, de sexe opposé si possible. Si l'un tombe, l'autre meurt de chagrin. +2 pts chacun s'ils survivent ensemble."},
- {id:"avenger",name:"Le Vengeur",d:"Quand il est éliminé, il emporte la personne de son choix avec lui."},
- {id:"shield",name:"Le Bouclier",d:"Survit au premier vote qui l'élimine."},
- {id:"clown",name:"Le Clown",d:"Gagne 3 points s'il se fait éliminer au premier vote."}
+ {id:"boss",icon:"crown",name:"Le Boss",d:"Son vote compte double. Personne ne sait qui c'est."},
+ {id:"ghost",icon:"ghost",name:"Le Fantôme",d:"Continue de voter après son élimination."},
+ {id:"lovers",icon:"heart",name:"Les Amoureux",d:"Deux joueurs liés, de sexe opposé si possible. Si l'un tombe, l'autre meurt de chagrin. +2 pts chacun s'ils survivent ensemble."},
+ {id:"avenger",icon:"swords",name:"Le Vengeur",d:"Quand il est éliminé, il emporte la personne de son choix avec lui."},
+ {id:"shield",icon:"shield",name:"Le Bouclier",d:"Survit au premier vote qui l'élimine."},
+ {id:"clown",icon:"laugh",name:"Le Clown",d:"Gagne 3 points s'il se fait éliminer au premier vote."}
 ];
 export const UC_PTS = {civil:2, under:5, white:6};
 
 export const MYS_TYPES = {
-  qui:{label:"Qui pourrait…",c:"var(--sun)",foot:"À 3, tout le monde pointe quelqu'un. La personne la plus désignée fait un gage."},
-  jamais:{label:"Je n'ai jamais…",c:"var(--sky)",foot:"Celles et ceux qui l'ont déjà fait se lèvent et racontent."},
-  defi:{label:"Défi",c:"var(--hot)",foot:"Défi raté ? Gage choisi par le groupe."},
-  duel:{label:"Duel",c:"var(--rose)",foot:"La personne qui perd fait un gage choisi par l'autre."},
-  patate:{label:"Patate chaude",c:"var(--mint)",foot:"Chacun son tour dans le sens des aiguilles d'une montre. Plus de 5 secondes d'hésitation et c'est perdu."},
-  regle:{label:"Nouvelle règle",c:"var(--lilac)",foot:"Valable jusqu'à la prochaine carte « Nouvelle règle ». Qui craque fait un gage."},
-  devine:{label:"Devinette",c:"var(--sun)",foot:"La première personne qui trouve marque le point."}
+  qui:{label:"Qui pourrait…",icon:"hand",c:"var(--c-tvm)",foot:"À 3, tout le monde pointe quelqu'un. La personne la plus désignée fait un gage."},
+  jamais:{label:"Je n'ai jamais…",icon:"quote",c:"var(--c-taboo)",foot:"Celles et ceux qui l'ont déjà fait se lèvent et racontent."},
+  defi:{label:"Défi",icon:"zap",c:"var(--c-mime)",foot:"Défi raté ? Gage choisi par le groupe."},
+  duel:{label:"Duel",icon:"swords",c:"var(--c-av)",foot:"La personne qui perd fait un gage choisi par l'autre."},
+  patate:{label:"Patate chaude",icon:"timer",c:"var(--c-uc)",foot:"Chacun son tour dans le sens des aiguilles d'une montre. Plus de 5 secondes d'hésitation et c'est perdu."},
+  regle:{label:"Nouvelle règle",icon:"gavel",c:"var(--c-mys)",foot:"Valable jusqu'à la prochaine carte « Nouvelle règle ». Qui craque fait un gage."},
+  devine:{label:"Devinette",icon:"lightbulb",c:"var(--c-tvm)",foot:"La première personne qui trouve marque le point."}
 };
 export const MYS = [
  ...["devenir célèbre","se marier en premier","oublier son propre anniversaire","mourir en premier dans un film d'horreur","partir vivre à l'autre bout du monde sur un coup de tête","écrire à son ex ce soir","finir au poste pour une bêtise","pleurer devant un dessin animé","claquer tout son salaire en un week-end","devenir influenceur ou influenceuse","avoir 10 chats à 60 ans","se perdre même avec un GPS","s'endormir en premier ce soir","rire à un enterrement"].map(x=>({t:"qui",x:"…"+x+" ?"})),
@@ -121,12 +121,12 @@ export const MYS = [
 ];
 
 export const TEAM_NAMES = ["Les Paillettes","Les Cactus","Les Disco","Les Pirates"];
-export const TEAM_COLORS = ["var(--hot)","var(--sky)","var(--sun)","var(--mint)"];
+export const TEAM_COLORS = ["var(--c-mime)","var(--c-taboo)","var(--c-tvm)","var(--c-uc)"];
 export const GAMES = [
- {id:"mime",name:"Mimes",tag:"Par équipes",min:2,c:"var(--hot)",desc:"Fais deviner sans parler. 60 secondes par tour."},
- {id:"taboo",name:"Mot interdit",tag:"Par équipes",min:2,c:"var(--sky)",desc:"Fais deviner le mot sans dire les 4 mots interdits."},
- {id:"av",name:"Action ou Vérité",tag:"Chill → +18",min:2,c:"var(--rose)",desc:"Quatre niveaux, de Chill à +18."},
- {id:"tvm",name:"2 vérités, 1 mensonge",tag:"Aux points",min:2,c:"var(--sun)",desc:"Trois anecdotes, une fausse. Qui la repère ?"},
- {id:"uc",name:"Undercover",tag:"Rôles secrets",min:3,c:"var(--mint)",desc:"Même mot pour tous, sauf l'intrus. Avec rôles spéciaux."},
- {id:"mys",name:"Jeu mystère",tag:"Cartes surprises",min:2,c:"var(--lilac)",desc:"Défis, duels, règles absurdes. On tire et on voit."}
+ {id:"mime",name:"Mimes",icon:"drama",tag:"Par équipes",min:2,c:"var(--c-mime)",desc:"Fais deviner sans parler."},
+ {id:"taboo",name:"Mot interdit",icon:"ban",tag:"Par équipes",min:2,c:"var(--c-taboo)",desc:"Fais deviner sans les mots en rouge."},
+ {id:"av",name:"Action ou Vérité",icon:"flame",tag:"Quatre niveaux",min:2,c:"var(--c-av)",desc:"De Chill jusqu'à +18."},
+ {id:"tvm",name:"2 vérités, 1 mensonge",icon:"scanSearch",tag:"Aux points",min:2,c:"var(--c-tvm)",desc:"Trouve l'anecdote inventée."},
+ {id:"uc",name:"Undercover",icon:"mask",tag:"Rôles secrets",min:3,c:"var(--c-uc)",desc:"Démasque l'intrus parmi vous."},
+ {id:"mys",name:"Jeu mystère",icon:"dices",tag:"Cartes surprises",min:2,c:"var(--c-mys)",desc:"Défis, duels et règles absurdes."}
 ];

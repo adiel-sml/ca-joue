@@ -1,27 +1,8 @@
-# Ça Joue !
+# Ça Joue
 
-Six jeux de soirée sur un seul téléphone qu'on se passe : **Mimes**, **Mot interdit**, **Action ou Vérité** (de Chill à +18), **2 vérités, 1 mensonge**, **Undercover** (avec rôles spéciaux) et **Jeu mystère**. Classement de la soirée commun à tous les jeux. Gratuit, sans compte, sans pub, fonctionne hors ligne.
+Six jeux de soirée sur un seul téléphone qu'on se passe : **Mimes**, **Mot interdit**, **Action ou Vérité** (de Chill à +18), **2 vérités, 1 mensonge**, **Undercover** avec rôles spéciaux et **Jeu mystère**. Un classement additionne les points de tous les jeux. Gratuit, sans compte, sans publicité, utilisable hors ligne.
 
-Le code est une appli web (HTML/CSS/JavaScript, sans framework) construite avec [Vite](https://vitejs.dev) et emballée en appli iPhone et Android avec [Capacitor](https://capacitorjs.com).
-
-## Structure
-
-| Dossier / fichier | Rôle |
-|---|---|
-| `src/content.js` | Tout le contenu : mots des mimes, cartes Mot interdit, Action ou Vérité, paires Undercover, cartes mystère. C'est ici qu'on ajoute des cartes. |
-| `src/main.js` | La logique des écrans et des jeux. |
-| `src/styles.css` | Le design. |
-| `android/`, `ios/` | Projets natifs générés par Capacitor. |
-| `assets/` | Icône et écran de démarrage sources (régénérer avec `npm run icons`). |
-
-### Gabarits des cartes
-
-Dans `src/content.js` :
-
-- `{joueur}` : un autre joueur au hasard ;
-- `{opp}` : un joueur du sexe opposé (sinon un autre joueur) ;
-- `{p1}`, `{p2}` : joueurs tirés pour les cartes mystère ;
-- `{forme féminine|forme masculine}` : accord selon le joueur concerné, par ex. `{la reine|le roi}`. Pour un autre joueur : `{elle|il:opp}`.
+L'appli s'installe sur l'écran d'accueil du téléphone (iPhone et Android) comme une appli classique : plein écran, icône, fonctionnement sans réseau.
 
 ## Lancer en local
 
@@ -29,40 +10,44 @@ Il faut [Node.js](https://nodejs.org) 20 ou plus.
 
 ```bash
 npm install
-npm run dev        # ouvre http://localhost:5173, accessible aussi depuis le téléphone sur le même Wi-Fi
+npm run dev        # http://localhost:5173, accessible aussi depuis un téléphone sur le même Wi-Fi
 npm run build      # version de production dans dist/
+npm run preview    # teste la version de production (installation et hors ligne compris)
 ```
 
-## Site web gratuit (GitHub Pages)
+## Mise en ligne avec Vercel
 
-Le workflow `.github/workflows/pages.yml` publie l'appli à chaque push sur `main`.
-Activer une fois : **Settings → Pages → Source : GitHub Actions**.
-GitHub Pages sur un dépôt privé demande un compte GitHub payant ; sinon, rendre le dépôt public.
+1. Sur [vercel.com](https://vercel.com), **Add New → Project**, puis importer le dépôt `ca-joue`.
+2. Vercel détecte Vite tout seul : commande `npm run build`, dossier `dist`. Cliquer sur **Deploy**.
+3. Chaque push sur `main` met le site à jour. L'appli installée se met à jour à la prochaine ouverture.
 
-## Android (Google Play)
+## Installer sur le téléphone
 
-Prérequis : [Android Studio](https://developer.android.com/studio).
+- **iPhone** : ouvrir le site dans Safari, bouton Partager, puis **Sur l'écran d'accueil**.
+- **Android** : ouvrir le site dans Chrome, puis le bouton **Installer** de l'appli, ou le menu, puis **Installer l'application**.
 
-```bash
-npm run android    # build web + synchronisation + ouvre Android Studio
-```
+## Structure
 
-Dans Android Studio : **Build → Generate Signed App Bundle** pour obtenir le `.aab` à envoyer sur la [Google Play Console](https://play.google.com/console) (inscription unique : 25 $).
-Le workflow CI produit aussi un APK de test à chaque push (onglet *Actions* → artefact `ca-joue-debug-apk`), installable directement sur un Android.
+| Fichier | Rôle |
+|---|---|
+| `src/content.js` | Tout le contenu : mots, cartes, paires Undercover, cartes mystère, rôles spéciaux. |
+| `src/main.js` | Écrans, navigation et règles des jeux. |
+| `src/styles.css` | Le design. |
+| `src/avatars.js` | Les personnages des joueurs. |
+| `src/icons.js` | Les icônes utilisées. |
+| `android/`, `ios/` | Projets natifs Capacitor, pour une future publication sur les stores. |
 
-## iPhone (App Store)
+### Écrire des cartes
 
-Prérequis : un Mac avec Xcode et [CocoaPods](https://cocoapods.org) (`sudo gem install cocoapods`), et un compte Apple Developer (99 $/an).
+Dans `src/content.js` :
 
-```bash
-npm run ios        # build web + synchronisation + ouvre Xcode
-```
+- `{joueur}` : un autre joueur au hasard ;
+- `{opp}` : un joueur du sexe opposé, sinon un autre joueur ;
+- `{p1}`, `{p2}` : les joueurs tirés pour une carte mystère ;
+- `{forme féminine|forme masculine}` : accord selon le joueur concerné, par exemple `{la reine|le roi}`. Pour un autre joueur : `{elle|il:opp}`.
 
-Dans Xcode : choisir l'équipe de signature, puis **Product → Archive** et envoyer sur App Store Connect.
+## Crédits
 
-## Avant la publication sur les stores
-
-- **Identifiant** : `app.cajoue.soiree` dans `capacitor.config.json`. À changer avant la première publication si besoin (impossible ensuite).
-- **Contenu +18** : le niveau +18 d'Action ou Vérité contient du contenu sexuel explicite. Apple refuse le contenu « ouvertement sexuel » (règle 1.1.4) et Google Play encadre fortement le contenu sexuel. Pour les stores, prévoir une version sans le niveau +18 (ou adoucie) et une classification 17+ / PEGI 18 au questionnaire d'âge. Le site web peut garder la version complète.
-- **Politique de confidentialité** : obligatoire sur les deux stores. L'appli ne collecte rien (prénoms et scores restent sur le téléphone), une page simple suffit.
-- **Captures d'écran** : téléphone, 3 à 8 par store.
+- Personnages : [Open Peeps](https://www.openpeeps.com) de Pablo Stanley, licence CC0, assemblés avec [DiceBear](https://www.dicebear.com).
+- Icônes : [Lucide](https://lucide.dev), licence ISC.
+- Polices : Dela Gothic One et Figtree, licence SIL Open Font License.
