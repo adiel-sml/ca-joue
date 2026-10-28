@@ -126,13 +126,20 @@ const MYS_BASE = [
 export const TEAM_NAMES = ["Les Paillettes","Les Cactus","Les Disco","Les Pirates"];
 export const TEAM_COLORS = ["var(--c-mime)","var(--c-taboo)","var(--c-tvm)","var(--c-uc)"];
 export const GAMES = [
- {id:"mime",name:"Mimes",icon:"drama",tag:"Par équipes",min:2,c:"var(--c-mime)",desc:"Fais deviner sans parler."},
- {id:"taboo",name:"Mot interdit",icon:"ban",tag:"Par équipes",min:2,c:"var(--c-taboo)",desc:"Fais deviner sans les mots en rouge."},
- {id:"av",name:"Action ou Vérité",icon:"flame",tag:"Quatre niveaux",min:2,c:"var(--c-av)",desc:"De Chill jusqu'à +18."},
- {id:"tvm",name:"2 vérités, 1 mensonge",icon:"scanSearch",tag:"Aux points",min:2,c:"var(--c-tvm)",desc:"Trouve l'anecdote inventée."},
- {id:"uc",name:"Undercover",icon:"mask",tag:"Rôles secrets",min:3,c:"var(--c-uc)",desc:"Démasque l'intrus parmi vous."},
- {id:"mys",name:"Jeu mystère",icon:"dices",tag:"Cartes surprises",min:2,c:"var(--c-mys)",desc:"Défis, duels et règles absurdes."}
+ {id:"mime",cat:"team",name:"Mimes",icon:"drama",min:2,c:"var(--c-mime)",desc:"Fais deviner sans parler."},
+ {id:"taboo",cat:"team",name:"Mot interdit",icon:"ban",min:2,c:"var(--c-taboo)",desc:"Fais deviner sans les mots en rouge."},
+ {id:"tu",cat:"team",name:"Time's Up",icon:"hourglass",min:4,c:"var(--c-tu)",desc:"Trois manches avec les mêmes mots."},
+ {id:"quiz",cat:"team",name:"Quiz",icon:"brain",min:2,c:"var(--c-quiz)",desc:"Culture générale, cinéma, musique."},
+ {id:"av",cat:"all",name:"Action ou Vérité",icon:"flame",min:2,c:"var(--c-av)",desc:"De Chill jusqu'à +18."},
+ {id:"nhie",cat:"all",name:"Je n'ai jamais",icon:"wine",min:3,c:"var(--c-nhie)",desc:"Les aveux, de Soft à +18."},
+ {id:"wyr",cat:"all",name:"Tu préfères",icon:"split",min:3,c:"var(--c-wyr)",desc:"Choisis ton camp. La minorité perd."},
+ {id:"bomb",cat:"all",name:"La Bombe",icon:"bomb",min:3,c:"var(--c-bomb)",desc:"Réponds vite et passe le téléphone."},
+ {id:"tvm",cat:"all",name:"2 vérités, 1 mensonge",icon:"scanSearch",min:2,c:"var(--c-tvm)",desc:"Trouve l'anecdote inventée."},
+ {id:"mys",cat:"all",name:"Jeu mystère",icon:"dices",min:2,c:"var(--c-mys)",desc:"Défis, duels et règles absurdes."},
+ {id:"uc",cat:"secret",name:"Undercover",icon:"mask",min:3,c:"var(--c-uc)",desc:"Démasque l'intrus parmi vous."},
+ {id:"lg",cat:"secret",name:"Loup-garou",icon:"moon",min:5,c:"var(--c-lg)",desc:"L'appli fait le meneur de jeu."}
 ];
+export const GAME_CATS = [["team", "En équipes"], ["all", "Tous ensemble"], ["secret", "Rôles secrets"]];
 
 export const TABOO = [...TABOO_BASE, ...TABOO_PLUS];
 export const AV = Object.fromEntries(Object.entries(AV_BASE).map(([k, l]) => [k, { v: [...l.v, ...AV_PLUS[k].v], a: [...l.a, ...AV_PLUS[k].a] }]));

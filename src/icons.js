@@ -3,7 +3,8 @@ import {
   LayoutGrid, Users, Trophy, Drama, Ban, Flame, ScanSearch, VenetianMask, Dices, X, ChevronLeft,
   Plus, Pencil, Trash2, Check, RotateCcw, Timer, Play, Eye, EyeOff, Share, SquarePlus, Download,
   Crown, Ghost, Heart, Swords, Shield, Laugh, Hourglass, Lightbulb, Shuffle, Info, Hand, Zap, Gavel,
-  MessageSquareQuote, Square, Minus, UserPlus, Vote, Medal, Smartphone, Skull, HeartCrack, SkipForward
+  MessageSquareQuote, Square, Minus, UserPlus, Vote, Medal, Smartphone, Skull, HeartCrack, SkipForward,
+  Bomb, Brain, Wine, Split, Moon, Sun, PawPrint, FlaskConical, Crosshair, House, Volume2, VolumeX
 } from "lucide";
 
 const I = {
@@ -14,7 +15,8 @@ const I = {
   shield: Shield, laugh: Laugh, hourglass: Hourglass, lightbulb: Lightbulb, shuffle: Shuffle, info: Info,
   hand: Hand, zap: Zap, gavel: Gavel, quote: MessageSquareQuote, stop: Square, minus: Minus,
   userPlus: UserPlus, vote: Vote, medal: Medal, phone: Smartphone, skull: Skull, heartCrack: HeartCrack,
-  skip: SkipForward
+  skip: SkipForward, bomb: Bomb, brain: Brain, wine: Wine, split: Split, moon: Moon, sun: Sun, paw: PawPrint,
+  flask: FlaskConical, crosshair: Crosshair, house: House, volume: Volume2, volumeOff: VolumeX
 };
 
 const attrs = o => Object.entries(o).map(([k, v]) => `${k}="${v}"`).join(" ");

@@ -4,7 +4,8 @@ import "@fontsource/figtree/latin-600.css";
 import "@fontsource/figtree/latin-800.css";
 import "./styles.css";
 import { registerSW } from "virtual:pwa-register";
-import { MIME_EASY, MIME_HARD, TABOO, AV, GAGES, AV_LEVELS, AV_PTS, AV_BONUS, TVM_THEMES, UC_PAIRS, UC_SPECIALS, UC_PTS, MYS_TYPES, MYS, TEAM_NAMES, TEAM_COLORS, GAMES } from "./content.js";
+import { MIME_EASY, MIME_HARD, TABOO, AV, GAGES, AV_LEVELS, AV_PTS, AV_BONUS, TVM_THEMES, UC_PAIRS, UC_SPECIALS, UC_PTS, MYS_TYPES, MYS, TEAM_NAMES, TEAM_COLORS, GAMES, GAME_CATS } from "./content.js";
+import { TU_WORDS, BOMB_THEMES, WYR, NHIE, QUIZ, LG_ROLES, LG_SPECIALS } from "./content-games.js";
 import { ic } from "./icons.js";
 import { AVATARS, avatarSvg } from "./avatars.js";
 
@@ -73,7 +74,7 @@ function beep(f, d) { try { actx = actx || new (window.AudioContext || window.we
 const vib = () => { try { navigator.vibrate && navigator.vibrate([200, 80, 200]); } catch (e) {} };
 
 let timer = null;
-function stopTimer() { if (timer) { clearInterval(timer.id); timer = null; } }
+function stopTimer() { if (timer) { clearInterval(timer.id); timer = null; } stopBomb(); }
 function runTimer(sec, onEnd) {
   stopTimer();
   const end = Date.now() + sec * 1000;
@@ -113,8 +114,10 @@ let adultOk = false;
 let installHidden = store.get("installHidden", false);
 
 function go(fn) { view = fn; sheet = null; draw(); window.scrollTo(0, 0); }
+/* Espaces insécables de la typographie française devant ? ! : ; » et après « */
+const frSpaces = h => h.replace(/ ([?!:;»])/g, "&nbsp;$1").replace(/« /g, "«&nbsp;");
 function draw() {
-  $app.innerHTML = view() + sheetHTML() + '<div id="toast" class="toast" role="status" hidden></div>';
+  $app.innerHTML = frSpaces(view() + sheetHTML()) + '<div id="toast" class="toast" role="status" hidden></div>';
   document.body.classList.toggle("locked", !!sheet);
 }
 function toast(t) { const el = document.getElementById("toast"); if (!el) return; el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 1800); }
@@ -155,13 +158,13 @@ function root() {
       ${ic("pencil", 18)}
     </button>
     ${showInstall ? `<div class="install"><span class="install-ic">${ic("phone", 22)}</span><span class="grow"><b>Installer l'appli</b><small>Plein écran, même sans réseau.</small></span><button class="pill" data-act="install">Installer</button><button class="iconbtn sm" data-act="hideInstall" aria-label="Masquer">${ic("x", 18)}</button></div>` : ""}
-    <h2 class="section">Choisis un jeu</h2>
-    <div class="games">${GAMES.map(g => `<button class="tile" style="--tc:${g.c}" data-act="open" data-arg="${g.id}">
+    ${GAME_CATS.map(([cat, label]) => `<h2 class="section">${label}</h2>
+    <div class="games">${GAMES.filter(g => g.cat === cat).map(g => `<button class="tile" style="--tc:${g.c}" data-act="open" data-arg="${g.id}">
       <span class="tile-ic">${ic(g.icon, 28)}</span>
       <span class="tile-name">${esc(g.name)}</span>
       <span class="tile-desc">${esc(g.desc)}</span>
       <span class="tile-meta">${ic("users", 14)} Dès ${g.min} joueurs</span>
-    </button>`).join("")}</div>`
+    </button>`).join("")}</div>`).join("")}`
   });
 }
 function playersBody() {
@@ -222,24 +225,33 @@ function makeTeams() {
   G.teams = Array.from({ length: G.nTeams }, (_, i) => ({ name: TEAM_NAMES[i], c: TEAM_COLORS[i], members: [], score: 0, k: 0 }));
   sh.forEach((p, i) => G.teams[i % G.nTeams].members.push(p));
 }
-const teamName = () => G.kind === "mime" ? "Mimes" : "Mot interdit";
+const teamName = () => ({ mime: "Mimes", taboo: "Mot interdit", tu: "Time's Up", quiz: "Quiz" })[G.kind];
+const TEAM_LEADS = {
+  mime: "Une personne mime, son équipe devine. Interdit de parler, de faire des bruits ou de montrer un objet.",
+  taboo: "Une personne fait deviner le mot avec des phrases, sans dire le mot ni les mots en rouge. L'équipe adverse surveille.",
+  tu: "Les mêmes mots reviennent pendant trois manches : on les décrit, puis on les fait deviner avec un seul mot, puis on les mime.",
+  quiz: "Chaque équipe répond à son tour. Une bonne réponse rapporte un point."
+};
 const gameColor = id => GAMES.find(g => g.id === id).c;
 function teamSetup() {
   const max = Math.min(4, players.length), solo = G.teams.some(t => t.members.length === 1);
   return screen({
     title: teamName(), color: gameColor(G.kind), body: `
-    <p class="lead">${G.kind === "mime" ? "Une personne mime, son équipe devine. Interdit de parler, de faire des bruits ou de montrer un objet." : "Une personne fait deviner le mot avec des phrases, sans dire le mot ni les mots en rouge. L'équipe adverse surveille."}</p>
+    <p class="lead">${TEAM_LEADS[G.kind]}</p>
     <div class="panel"><div class="panel-head"><span class="label">Équipes</span><button class="pill ghost" data-act="reTeams">${ic("shuffle", 16)} Mélanger</button></div>
       <div class="seg">${[2, 3, 4].map(n => `<button class="${G.nTeams === n ? "on" : ""}" data-act="nTeams" data-arg="${n}" ${n > max ? "disabled" : ""}>${n} équipes</button>`).join("")}</div>
       <div class="teams">${G.teams.map(t => `<div class="team" style="--tc:${t.c}"><b>${esc(t.name)}</b><div class="team-members">${t.members.map(m => `<span class="mini">${av(m, "xs")}${esc(m)}</span>`).join("")}</div></div>`).join("")}</div>
-      ${solo ? `<p class="hint">Dans une équipe d'une personne, ce sont les autres qui devinent. Les points vont à celle ou celui qui fait deviner.</p>` : ""}
+      ${solo && G.kind !== "quiz" ? `<p class="hint">Dans une équipe d'une personne, ce sont les autres qui devinent. Les points vont à celle ou celui qui fait deviner.</p>` : ""}
     </div>
     ${G.kind === "mime" ? `<div class="panel"><span class="label">Mots</span>
       <div class="seg">${[["easy", "Faciles"], ["hard", "Difficiles"], ["mix", "Mélange"]].map(([k, l]) => `<button class="${G.diff === k ? "on" : ""}" data-act="diff" data-arg="${k}">${l}</button>`).join("")}</div>
       <p class="hint">${G.diff === "easy" ? "Animaux, objets, métiers, sports : des mots simples à mimer." : G.diff === "hard" ? "Films, personnages et actions détaillées : pour les pros du mime." : "Un peu de tout."}</p></div>` : ""}
-    <div class="panel"><span class="label">Durée d'un tour</span>
-      <div class="seg">${[45, 60, 90].map(n => `<button class="${G.dur === n ? "on" : ""}" data-act="dur" data-arg="${n}">${n} s</button>`).join("")}</div>
-    </div>`,
+    ${G.kind === "tu" ? `<div class="panel"><span class="label">Nombre de mots</span>
+      <div class="seg">${[30, 40, 50].map(n => `<button class="${G.nWords === n ? "on" : ""}" data-act="tuWords" data-arg="${n}">${n} mots</button>`).join("")}</div></div>` : ""}
+    ${G.kind === "quiz" ? `<div class="panel"><span class="label">Questions par équipe</span>
+      <div class="seg">${[5, 10, 15].map(n => `<button class="${G.nQ === n ? "on" : ""}" data-act="quizN" data-arg="${n}">${n}</button>`).join("")}</div></div>` : `<div class="panel"><span class="label">Durée d'un tour</span>
+      <div class="seg">${(G.kind === "tu" ? [30, 45, 60] : [45, 60, 90]).map(n => `<button class="${G.dur === n ? "on" : ""}" data-act="dur" data-arg="${n}">${n} s</button>`).join("")}</div>
+    </div>`}`,
     foot: btn("Commencer", "teamsGo", { icon: "play" })
   });
 }
@@ -537,13 +549,351 @@ function mys() {
   });
 }
 
+/* ---------- Time's Up ---------- */
+const TU_ROUNDS = [
+  { name: "Manche 1 : décrire", short: "Décrire", icon: "quote", rule: "Fais deviner avec autant de mots que tu veux, sans dire le mot ni un mot de la même famille." },
+  { name: "Manche 2 : un seul mot", short: "Un seul mot", icon: "zap", rule: "Un seul mot pour faire deviner. Ton équipe n'a droit qu'à une proposition par mot." },
+  { name: "Manche 3 : mimer", short: "Mimer", icon: "drama", rule: "Uniquement des gestes et des bruitages, aucun mot." }
+];
+function tuRoundIntro() {
+  const r = TU_ROUNDS[G.round];
+  return screen({
+    title: "Time's Up", color: "var(--c-tu)", body: `
+    <div class="hero">${ic(r.icon, 44)}<span class="kicker">${G.round + 1} sur 3</span><h2 class="big">${r.short}</h2><p class="lead">${r.rule}</p></div>
+    <p class="hint center">Les ${G.words.length} mots de la partie reviennent dans chaque manche. Une manche se termine quand tous les mots ont été trouvés.</p>
+    <span class="label">Scores</span>${teamScore()}`,
+    foot: btn("Commencer la manche", "tuRoundStart", { icon: "play" }) + `<button class="textbtn" data-act="teamEnd">Terminer la partie</button>`
+  });
+}
+function tuTurnIntro() {
+  const t = G.teams[G.cur], a = actorOf(t);
+  return screen({
+    title: TU_ROUNDS[G.round].name, color: t.c, body: `
+    <div class="hero">${av(a, "xl")}<span class="kicker">${esc(t.name)}</span><h2 class="big">${esc(a)}</h2>
+    <p class="lead">${t.members.length === 1 ? "fait deviner aux autres joueurs." : "fait deviner à son équipe."} ${plural(G.pool.length, "mot")} à trouver dans cette manche.</p></div>
+    <span class="label">Scores</span>${teamScore()}`,
+    foot: btn(`Lancer le chrono, ${G.dur} s`, "tuStart", { icon: "timer" }) + `<button class="textbtn" data-act="teamEnd">Terminer la partie</button>`
+  });
+}
+function tuPlay() {
+  const t = G.teams[G.cur];
+  return screen({
+    title: actorOf(t), color: t.c, left: null, right: `<button class="iconbtn" data-act="tuStop" aria-label="Arrêter le tour">${ic("stop")}</button>`, body: `
+    ${timerHTML(timer ? timer.left : G.dur)}
+    <div class="meta-row"><span class="kicker">${TU_ROUNDS[G.round].short}</span><span class="kicker">${plural(G.pool.length + 1, "mot")} restant${G.pool.length ? "s" : ""}</span></div>
+    <div class="card"><span class="card-label">${plural(G.log.length, "trouvé")}</span><div class="word">${esc(G.card)}</div></div>`,
+    foot: `<div class="row2">${btn("Passer", "tuMark", { arg: "0", kind: "ghost", icon: "skip" })}${btn("Trouvé", "tuMark", { arg: "1", icon: "check" })}</div>`
+  });
+}
+function tuTurnEnd() {
+  const t = G.teams[G.cur], pts = G.log.filter(l => l.ok).length;
+  return screen({
+    title: "Fin du tour", color: t.c, left: null, body: `
+    <div class="hero"><span class="kicker">${esc(t.name)}</span><h2 class="big">${ptsTxt(pts)}</h2><p class="hint">Touche un mot pour l'annuler s'il n'a pas été trouvé correctement : il reviendra dans la manche.</p></div>
+    ${G.log.length ? `<ul class="list">${G.log.map((l, i) => `<li><button class="row-item" data-act="tuToggle" data-arg="${i}"><span class="grow">${esc(l.w)}</span><b class="badge ${l.ok ? "b-good" : ""}">${l.ok ? "+1" : "0"}</b></button></li>`).join("")}</ul>` : `<p class="hint">Aucun mot trouvé cette fois.</p>`}`,
+    foot: btn(G.pool.length || G.log.some(l => !l.ok) ? "Valider et équipe suivante" : "Valider et finir la manche", "tuValidate", { icon: "check" })
+  });
+}
+
+/* ---------- Quiz ---------- */
+function quizQ() {
+  const t = G.teams[G.cur], q = G.q, done = G.ans != null;
+  return screen({
+    title: `Question ${G.asked + 1} sur ${G.total}`, color: t.c, body: `
+    <div class="who"><i class="dot" style="--tc:${t.c};width:16px;height:16px"></i><div><span class="kicker">Au tour de</span><b>${esc(t.name)}</b></div></div>
+    <div class="card"><span class="card-label">${esc(q.cat)}</span><div class="txt">${esc(q.q)}</div></div>
+    <ul class="list">${G.opts.map((o, i) => {
+      const cls = !done ? "" : o === q.a ? " right" : i === G.ans ? " wrong" : " dim";
+      return `<li><button class="row-item answer${cls}" data-act="quizAns" data-arg="${i}" ${done ? "disabled" : ""}><span class="opt">${"ABCD"[i]}</span><span class="grow">${esc(o)}</span>${done && o === q.a ? ic("check", 20) : done && i === G.ans ? ic("x", 20) : ""}</button></li>`;
+    }).join("")}</ul>
+    ${done ? `<p class="lead center">${G.opts[G.ans] === q.a ? `Bonne réponse, un point pour ${esc(t.name)}.` : `Raté. La bonne réponse était ${esc(q.a.replace(/^(L'|Le |La |Les )/, m => m.toLowerCase()))}.`}</p>` : ""}`,
+    foot: done ? btn(G.asked + 1 >= G.total ? "Voir les résultats" : "Question suivante", "quizNext", { icon: "play" }) : `<p class="hint center">${esc(t.name)} se met d'accord, puis touche sa réponse.</p>`
+  });
+}
+
+/* ---------- La Bombe ---------- */
+let bombT = null;
+function stopBomb() { if (bombT) { clearTimeout(bombT); bombT = null; } }
+function bomb() {
+  const C = "var(--c-bomb)";
+  if (G.state === "ticking") return screen({
+    title: "La Bombe", color: C, body: `
+    <div class="hero bomb-live">${ic("bomb", 72)}<span class="kicker">La mèche est allumée</span><h2 class="big">${esc(G.theme)}</h2>
+    <p class="lead">Donne une réponse puis passe vite le téléphone à ta gauche. Pas de répétition !</p></div>`
+  });
+  if (G.state === "boom") return screen({
+    title: "La Bombe", color: C, body: G.loser == null ? `
+    <div class="hero">${ic("bomb", 56)}<h2 class="big boom">Boum !</h2><p class="lead">Qui tenait la bombe ?</p></div>
+    <div class="pickgrid">${players.map(n => `<button class="pickav" data-act="bombLoser" data-arg="${esc(n)}">${av(n, "m")}<span>${esc(n)}</span></button>`).join("")}</div>` : `
+    <div class="hero">${av(G.loser, "xl")}<span class="kicker">Perdu</span><h2 class="big">${esc(G.loser)}</h2><p class="lead">Les autres gagnent 1 point.</p></div>
+    <div class="card"><span class="card-label">Gage</span><div class="txt">${esc(G.gage)}</div></div>`,
+    foot: G.loser == null ? "" : btn("Nouvelle manche", "bombNew", { icon: "undo" })
+  });
+  return screen({
+    title: "La Bombe", color: C, body: `
+    <div class="card"><span class="card-label">${ic("bomb", 16)} Thème</span><div class="word">${esc(G.theme)}</div></div>
+    <p class="lead">Chacun son tour, donne une réponse qui colle au thème, puis passe le téléphone à ta gauche. La bombe explose à un moment au hasard : celle ou celui qui la tient a perdu.</p>`,
+    foot: btn("Allumer la mèche", "bombStart", { icon: "flame" }) + `<button class="textbtn" data-act="bombTheme">${ic("shuffle", 18)} Autre thème</button>`
+  });
+}
+
+/* ---------- Tu préfères ---------- */
+const WYR_LEVELS = [["normal", "Normal"], ["hot", "Épicé"], ["x18", "+18"]];
+function gateScreen(title, color, okAct, noAct) {
+  return screen({
+    title, color, body: `
+    <div class="hero">${ic("flame", 44)}<span class="kicker">Niveau +18</span><h2 class="big">Contenu sexuel explicite</h2>
+    <p class="lead">Réservé aux adultes. Tout le monde doit être majeur et partant. Chacun peut passer une carte sans se justifier.</p></div>`,
+    foot: btn("Tout le monde est majeur", okAct, { kind: "danger" }) + `<button class="textbtn" data-act="${noAct}">Rester au niveau actuel</button>`
+  });
+}
+function wyr() {
+  const C = "var(--c-wyr)";
+  if (G.gate) return gateScreen("Tu préfères", C, "wyrAdult", "wyrGateNo");
+  const [a, b] = G.card;
+  if (G.step === "result") {
+    const A_ = G.sel, B_ = players.filter(n => !G.sel.includes(n));
+    const minority = A_.length === B_.length ? null : A_.length < B_.length ? A_ : B_;
+    const col = (lab, txt, list) => `<div class="panel"><span class="label">${lab}</span><b>${esc(txt)}</b><div class="team-members">${list.length ? list.map(n => `<span class="mini">${av(n, "xs")}${esc(n)}</span>`).join("") : `<small>Personne</small>`}</div></div>`;
+    return screen({
+      title: "Tu préfères", color: C, body: `
+      <h2 class="h2">${minority ? (minority.length ? "La minorité prend un gage" : "Tout le monde est d'accord") : "Égalité parfaite"}</h2>
+      <p class="hint">${minority && minority.length ? "La majorité gagne 1 point. La minorité boit une gorgée ou prend un gage." : "Personne ne gagne de point sur ce dilemme."}</p>
+      ${col("Choix A", a, A_)}${col("Choix B", b, B_)}`,
+      foot: btn("Dilemme suivant", "wyrNext", { icon: "play" })
+    });
+  }
+  return screen({
+    title: "Tu préfères", color: C, body: `
+    <div class="seg">${WYR_LEVELS.map(([k, l]) => `<button class="${G.level === k ? "on" : ""}" data-act="wyrLevel" data-arg="${k}">${l}</button>`).join("")}</div>
+    <div class="dilemma"><div class="choice"><span class="opt">A</span><b>${esc(a)}</b></div><span class="or">ou</span><div class="choice"><span class="opt">B</span><b>${esc(b)}</b></div></div>
+    <span class="label">À trois, levez la main pour A. Touche les personnes qui ont choisi A.</span>
+    <div class="pickgrid">${players.map(n => `<button class="pickav${G.sel.includes(n) ? " on" : ""}" data-act="wyrSel" data-arg="${esc(n)}" aria-pressed="${G.sel.includes(n)}">${av(n, "m")}<span>${esc(n)}</span></button>`).join("")}</div>`,
+    foot: btn(`Valider <small>${G.sel.length} pour A, ${players.length - G.sel.length} pour B</small>`, "wyrValidate", { icon: "check" }) + `<button class="textbtn" data-act="wyrNext">${ic("skip", 18)} Passer ce dilemme</button>`
+  });
+}
+
+/* ---------- Je n'ai jamais ---------- */
+const NHIE_LEVELS = [["soft", "Soft"], ["fun", "Fun"], ["hot", "Épicé"], ["x18", "+18"]];
+function nhie() {
+  const C = "var(--c-nhie)";
+  if (G.gate) return gateScreen("Je n'ai jamais", C, "nhieAdult", "nhieGateNo");
+  return screen({
+    title: "Je n'ai jamais", color: C, body: `
+    <div class="seg">${NHIE_LEVELS.map(([k, l]) => `<button class="${G.level === k ? "on" : ""}" data-act="nhieLevel" data-arg="${k}">${l}</button>`).join("")}</div>
+    <div class="card"><span class="card-label">${ic("wine", 16)} Je n'ai jamais…</span><div class="txt">${esc(G.card)}.</div></div>
+    <span class="label">Qui l'a déjà fait ? 1 point par aveu</span>
+    <div class="pickgrid">${players.map(n => `<button class="pickav${G.sel.includes(n) ? " on" : ""}" data-act="nhieSel" data-arg="${esc(n)}" aria-pressed="${G.sel.includes(n)}">${av(n, "m")}<span>${esc(n)}</span></button>`).join("")}</div>`,
+    foot: btn(G.sel.length ? `Carte suivante <small>${plural(G.sel.length, "aveu")}</small>` : "Carte suivante", "nhieNext", { icon: "play" })
+  });
+}
+
+/* ---------- Loup-garou ---------- */
+const LGC = "var(--c-lg)";
+let voiceOn = store.get("voice", true);
+function say(t) {
+  try {
+    if (!voiceOn || !window.speechSynthesis) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t); u.lang = "fr-FR"; u.rate = 0.95;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+const lgSel = () => store.get("lgRoles", ["seer", "witch"]);
+const lgMaxW = () => Math.max(1, Math.ceil(players.length / 2) - 1);
+const lgOk = () => G.nW >= 1 && G.nW <= lgMaxW() && G.nW + lgSel().length <= players.length;
+const lgRole = p => LG_ROLES[p.role];
+const lgAlive = () => G.ps.filter(p => p.alive);
+const lgIdx = p => G.ps.indexOf(p);
+function lgSetup() {
+  const n = players.length, sel = lgSel(), vill = n - G.nW - sel.length;
+  return screen({
+    title: "Loup-garou", color: LGC, body: `
+    <p class="lead">Chaque nuit, les loups dévorent un villageois. Chaque jour, le village vote pour éliminer un suspect. L'appli fait le meneur : posez le téléphone au centre pendant la nuit et suivez la voix.</p>
+    <div class="panel"><div class="stepper"><span class="grow"><b>Loups-garous</b><small>Au maximum ${lgMaxW()} pour ${n} joueurs</small></span><button class="iconbtn round" data-act="lgW" data-arg="-1" aria-label="Moins">${ic("minus", 20)}</button><b class="num">${G.nW}</b><button class="iconbtn round" data-act="lgW" data-arg="1" aria-label="Plus">${ic("plus", 20)}</button></div>
+      <p class="hint">${n} joueurs : ${plural(G.nW, "loup")}, ${sel.length} rôle${sel.length > 1 ? "s" : ""} spécia${sel.length > 1 ? "ux" : "l"}, ${Math.max(0, vill)} villageois.</p></div>
+    <div class="panel"><span class="label">Rôles spéciaux du village</span>
+      <ul class="list">${LG_SPECIALS.map(id => { const r = LG_ROLES[id], on = sel.includes(id); return `<li><button class="row-item toggle${on ? " on" : ""}" data-act="lgRole" data-arg="${id}" aria-pressed="${on}"><span class="role-ic">${ic(r.icon, 20)}</span><span class="grow"><b>${r.name}</b><small>${r.d}</small></span><span class="check">${ic("check", 16)}</span></button></li>`; }).join("")}</ul>
+      ${G.nW + sel.length > n ? `<p class="hint warn">Trop de rôles pour ${n} joueurs. Retires-en un.</p>` : ""}</div>
+    <button class="row-item toggle${voiceOn ? " on" : ""}" data-act="lgVoice" aria-pressed="${voiceOn}"><span class="role-ic">${ic(voiceOn ? "volume" : "volumeOff", 20)}</span><span class="grow"><b>Voix du meneur</b><small>Le téléphone lit les annonces de la nuit à voix haute.</small></span><span class="check">${ic("check", 16)}</span></button>`,
+    foot: btn("Distribuer les rôles", "lgGo", { icon: "play", dis: !lgOk() })
+  });
+}
+function lgRoleCard(p) {
+  const r = lgRole(p), wolves = G.ps.filter(x => x.role === "wolf" && x !== p);
+  return `<div class="card"><span class="card-label">${esc(p.name)}, tu es</span><span class="role-big">${ic(r.icon, 40)}</span><div class="word">${r.name}</div><p class="card-foot">${r.d}</p>
+  ${p.role === "wolf" && wolves.length ? `<div class="special"><span class="role-ic">${ic("paw", 20)}</span><div><span class="card-label">Ta meute</span><b>${wolves.map(w => esc(w.name)).join(", ")}</b></div></div>` : ""}</div>`;
+}
+function lgDeal() {
+  const p = G.ps[G.i], t = `Distribution ${G.i + 1} sur ${G.ps.length}`;
+  if (!G.show) return screen({
+    title: t, color: LGC, body: `<div class="hero">${av(p.name, "xl")}<span class="kicker">Passe le téléphone à</span><h2 class="big">${esc(p.name)}</h2><p class="lead">Les autres ne regardent pas l'écran.</p></div>`,
+    foot: btn(`Je suis ${esc(p.name)}, voir mon rôle`, "lgShow", { icon: "eye" })
+  });
+  return screen({ title: t, color: LGC, body: lgRoleCard(p), foot: btn("J'ai retenu, je cache", "lgHide", { icon: "eyeOff" }) });
+}
+const LG_STEP = {
+  cupid: { who: "Cupidon", wake: "Cupidon, ouvre les yeux et désigne deux amoureux.", sleep: "Cupidon, ferme les yeux." },
+  lovers: { who: "Les amoureux", wake: "Cupidon touche l'épaule des deux amoureux. Amoureux, ouvrez les yeux et regardez l'écran.", sleep: "Amoureux, fermez les yeux." },
+  wolves: { who: "Les loups-garous", wake: "Loups-garous, ouvrez les yeux et choisissez votre victime.", sleep: "Loups-garous, fermez les yeux." },
+  seer: { who: "La voyante", wake: "Voyante, ouvre les yeux et choisis un joueur dont tu veux connaître le rôle.", sleep: "Voyante, ferme les yeux." },
+  witch: { who: "La sorcière", wake: "Sorcière, ouvre les yeux.", sleep: "Sorcière, ferme les yeux." }
+};
+const lgPickGrid = (list, act, sel = []) => `<div class="pickgrid">${list.map(p => `<button class="pickav${sel.includes(lgIdx(p)) ? " on" : ""}" data-act="${act}" data-arg="${lgIdx(p)}">${av(p.name, "m")}<span>${esc(p.name)}</span></button>`).join("")}</div>`;
+function lgNight() {
+  const title = `Nuit ${G.night}`;
+  if (G.si < 0) return screen({
+    title, color: LGC, body: `<div class="hero">${ic("moon", 56)}<h2 class="big">La nuit tombe</h2><p class="lead">Tout le monde ferme les yeux. Pose le téléphone au centre, écran visible. Seules les personnes appelées ouvrent les yeux.</p></div>`,
+    foot: btn("Commencer la nuit", "lgNightNext", { icon: "moon" })
+  });
+  const step = G.steps[G.si], S = LG_STEP[step];
+  if (G.sub === "sleep") return screen({
+    title, color: LGC, body: `<div class="hero">${ic("moon", 48)}<span class="kicker">${S.who}</span><h2 class="big">${S.sleep}</h2></div>`,
+    foot: btn("Suivant", "lgNightNext", { icon: "play" })
+  });
+  let body = `<div class="hero"><span class="kicker">${S.who}</span><p class="lead">${S.wake}</p></div>`, foot = "";
+  if (step === "cupid") {
+    body += lgPickGrid(lgAlive(), "lgPick", G.pick);
+    foot = btn("Valider les amoureux", "lgCupid", { icon: "heart", dis: G.pick.length !== 2 });
+  } else if (step === "lovers") {
+    const [a, b] = G.ps.filter(p => p.lover != null);
+    body += `<div class="pair-av">${av(a.name, "l")}${ic("heart", 28)}${av(b.name, "l")}</div><h2 class="big center">${esc(a.name)} et ${esc(b.name)}</h2><p class="hint center">Si l'un de vous meurt, l'autre meurt aussi. Si vous êtes les deux derniers en vie, vous gagnez ensemble.</p>`;
+    foot = btn("Nous avons vu", "lgSleep", { icon: "eyeOff" });
+  } else if (step === "wolves") {
+    body += lgPickGrid(lgAlive().filter(p => p.role !== "wolf"), "lgPick", G.pick);
+    foot = btn("Valider la victime", "lgWolves", { icon: "paw", dis: G.pick.length !== 1 });
+  } else if (step === "seer") {
+    if (G.seen != null) {
+      const p = G.ps[G.seen];
+      body = `<div class="hero">${av(p.name, "xl")}<span class="kicker">Rôle de ${esc(p.name)}</span><h2 class="big">${lgRole(p).name}</h2></div>`;
+      foot = btn("J'ai vu", "lgSleep", { icon: "eyeOff" });
+    } else {
+      const seer = G.ps.find(p => p.role === "seer");
+      body += lgPickGrid(lgAlive().filter(p => p !== seer), "lgSeer");
+    }
+  } else if (step === "witch") {
+    const v = G.victim != null ? G.ps[G.victim] : null;
+    if (G.wmode === "poison") {
+      body = `<div class="hero"><span class="kicker">Potion de mort</span><p class="lead">Qui veux-tu empoisonner ?</p></div>${lgPickGrid(lgAlive().filter(p => p.role !== "witch"), "lgPoison")}`;
+      foot = btn("Retour", "lgWitchBack", { kind: "ghost", icon: "back" });
+    } else {
+      body += v ? `<div class="hero">${av(v.name, "l")}<p class="lead">Les loups ont attaqué <b>${esc(v.name)}</b>.</p></div>` : `<p class="lead center">Personne n'a été attaqué cette nuit.</p>`;
+      foot = (v && G.potions.life ? btn(`Sauver ${esc(v.name)}`, "lgSave", { icon: "flask" }) : "")
+        + (G.potions.death ? btn("Utiliser la potion de mort", "lgWitchPoison", { kind: "ghost", icon: "skull" }) : "")
+        + `<button class="textbtn" data-act="lgSleep">Ne rien faire</button>`;
+      body += `<p class="hint center">Potion de vie : ${G.potions.life ? "disponible" : "utilisée"}. Potion de mort : ${G.potions.death ? "disponible" : "utilisée"}.</p>`;
+    }
+  }
+  return screen({ title, color: LGC, body, foot });
+}
+function lgDayIntro() {
+  const dead = G.queue.map(q => G.ps[q.i]);
+  return screen({
+    title: `Jour ${G.night}`, color: LGC, body: `<div class="hero">${ic("sun", 56)}<h2 class="big">Le village se réveille</h2>
+    <p class="lead">${dead.length ? `Cette nuit, ${dead.map(p => esc(p.name)).join(" et ")} ${dead.length > 1 ? "ont été retrouvés morts" : `a été ${fe(dead[0].name, "retrouvée morte", "retrouvé mort")}`}.` : "Personne n'est mort cette nuit."}</p></div>`,
+    foot: dead.length ? btn("Révéler les rôles", "lgProcess", { icon: "eye" }) : btn("Passer au débat", "lgDebate", { icon: "play" })
+  });
+}
+function lgReveal() {
+  const q = G.queue[0], p = G.ps[q.i], r = lgRole(p);
+  const why = { wolves: "dévoré par les loups", poison: "empoisonné par la sorcière", love: "mort de chagrin", hunter: "abattu par le chasseur", vote: "éliminé par le village" }[q.cause];
+  const whyF = { wolves: "dévorée par les loups", poison: "empoisonnée par la sorcière", love: "morte de chagrin", hunter: "abattue par le chasseur", vote: "éliminée par le village" }[q.cause];
+  let body = `<div class="hero">${av(p.name, "xl")}<p class="lead">${esc(p.name)} a été ${fe(p.name, whyF, why)}.</p></div>
+    <div class="card"><span class="card-label">Son rôle</span><span class="role-big">${ic(r.icon, 40)}</span><div class="word">${r.name}</div></div>`;
+  let foot = btn("Continuer", "lgNext", { icon: "play" });
+  if (p.role === "hunter" && !q.shot) {
+    body += `<h2 class="h2">${ic("crosshair", 20)} Dernier tir</h2><p class="hint">${esc(p.name)} choisit qui éliminer.</p>${lgPickGrid(lgAlive().filter(x => !G.queue.some(y => y.i === lgIdx(x))), "lgShoot")}`;
+    foot = "";
+  }
+  return screen({ title: "Révélation", color: LGC, body, foot });
+}
+function lgDebateScreen() {
+  return screen({
+    title: `Jour ${G.night}`, color: LGC, body: `
+    <h2 class="h2">Débat</h2><p class="hint">Discutez, accusez, défendez-vous. Puis le village vote à main levée.</p>
+    ${timerHTML(timer ? timer.left : 120)}
+    ${timer ? btn("Arrêter le chrono", "stopClock", { kind: "ghost", icon: "stop" }) : btn("Lancer 2 minutes de débat", "lgClock", { kind: "ghost", icon: "timer" })}
+    <span class="label">Encore en vie</span>
+    <ul class="list">${lgAlive().map(p => `<li class="row-item">${av(p.name, "s")}<span class="grow">${esc(p.name)}</span></li>`).join("")}</ul>`,
+    foot: btn("Passer au vote", "lgVote", { icon: "vote" })
+  });
+}
+function lgVoteScreen() {
+  return screen({
+    title: `Vote du jour ${G.night}`, color: LGC, body: `
+    <h2 class="h2">Qui le village élimine ?</h2><p class="hint">À trois, tout le monde pointe un suspect. Touche la personne qui a le plus de voix.</p>
+    ${lgPickGrid(lgAlive(), "lgPick", G.pick)}`,
+    foot: btn(G.pick.length ? `Éliminer ${esc(G.ps[G.pick[0]].name)}` : "Choisis une personne", "lgElim", { kind: "danger", icon: "skull", dis: !G.pick.length }) + `<button class="textbtn" data-act="lgNoElim">Égalité, personne n'est éliminé</button>`
+  });
+}
+function lgWinner() {
+  const alive = lgAlive(), w = alive.filter(p => p.role === "wolf").length;
+  if (!alive.length) return "nobody";
+  if (alive.length === 2 && alive[0].lover === lgIdx(alive[1])) return "lovers";
+  if (w === 0) return "village";
+  if (w >= alive.length - w) return "wolves";
+  return null;
+}
+function lgEnd() {
+  const t = { village: "Le village gagne", wolves: "Les loups-garous gagnent", lovers: "Les amoureux gagnent", nobody: "Personne ne survit" }[G.win];
+  return screen({
+    title: "Fin de la partie", color: LGC, left: null, body: `
+    <div class="hero">${ic(G.win === "wolves" ? "paw" : G.win === "lovers" ? "heart" : "sun", 48)}<h2 class="big">${t}</h2></div>
+    <ul class="list">${G.ps.map(p => `<li class="row-item">${av(p.name, "s")}<span class="grow"><b>${esc(p.name)}</b><small>${lgRole(p).name}${p.lover != null ? ", " + fe(p.name, "amoureuse", "amoureux") : ""}${p.alive ? "" : ", " + fe(p.name, "morte", "mort")}</small></span><b class="badge ${G.pts[p.name] ? "b-good" : ""}">${G.pts[p.name] ? "+" + G.pts[p.name] : "0"}</b></li>`).join("")}</ul>`,
+    foot: btn("Rejouer", "lgGo", { icon: "undo" }) + `<div class="row2 links"><button class="textbtn" data-act="lgSettings">Réglages</button><button class="textbtn" data-act="home">Retour aux jeux</button></div>`
+  });
+}
+function lgStartNight() {
+  G.steps = [];
+  const has = r => G.ps.some(p => p.alive && p.role === r);
+  if (G.night === 1 && has("cupid")) G.steps.push("cupid", "lovers");
+  G.steps.push("wolves");
+  if (has("seer")) G.steps.push("seer");
+  if (has("witch") && (G.potions.life || G.potions.death)) G.steps.push("witch");
+  Object.assign(G, { si: -1, sub: null, pick: [], victim: null, poison: null, saved: false, seen: null, wmode: null });
+  go(lgNight);
+  say("La nuit tombe sur le village. Tout le monde ferme les yeux.");
+}
+function lgDawn() {
+  const deaths = [];
+  if (G.victim != null && !G.saved) deaths.push({ i: G.victim, cause: "wolves" });
+  if (G.poison != null && !deaths.some(d => d.i === G.poison)) deaths.push({ i: G.poison, cause: "poison" });
+  G.queue = deaths; G.after = "debate";
+  go(lgDayIntro);
+  say(deaths.length ? `Le village se réveille. Cette nuit, ${deaths.map(d => G.ps[d.i].name).join(" et ")} ${deaths.length > 1 ? "sont morts" : fe(G.ps[deaths[0].i].name, "est morte", "est mort")}.` : "Le village se réveille. Personne n'est mort cette nuit.");
+}
+function lgProcessQueue() {
+  if (!G.queue.length) {
+    const w = lgWinner();
+    if (w) return lgFinish(w);
+    if (G.after === "debate") return go(lgDebateScreen);
+    G.night++; return lgStartNight();
+  }
+  const q = G.queue[0], p = G.ps[q.i];
+  if (!q.started) {
+    q.started = true; p.alive = false;
+    if (p.lover != null && G.ps[p.lover].alive && !G.queue.some(x => x.i === p.lover)) G.queue.push({ i: p.lover, cause: "love" });
+  }
+  go(lgReveal);
+  say(`${p.name} était ${lgRole(p).name}.`);
+}
+function lgFinish(w) {
+  G.win = w; G.pts = {};
+  G.ps.forEach(p => {
+    const v = w === "village" && p.role !== "wolf" ? 3 : w === "wolves" && p.role === "wolf" ? 5 : w === "lovers" && p.lover != null ? 6 : 0;
+    if (v) { G.pts[p.name] = v; addPts(p.name, v); }
+  });
+  go(lgEnd);
+  say({ village: "Le village a gagné.", wolves: "Les loups-garous ont gagné.", lovers: "Les amoureux ont gagné.", nobody: "Personne n'a survécu." }[w]);
+}
+
 /* ---------- Classement (écran ouvert depuis un jeu) ---------- */
 function boardScreen() { return screen({ title: "Classement", left: "back", right: null, body: boardBody() }); }
 
 /* ---------- Actions ---------- */
 const A = {
   tab(t) { tab = t; go(root); },
-  home() { stopTimer(); G = null; tab = "games"; go(root); },
+  home() { stopTimer(); try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) {} G = null; tab = "games"; go(root); },
   askQuit() { confirmSheet({ title: "Quitter la partie ?", text: "Les points déjà gagnés restent au classement.", ok: "Quitter", act: "home", danger: true }); },
   closeSheet() { sheet = null; draw(); },
   install() {
@@ -579,6 +929,12 @@ const A = {
     if (id === "av") { G = { kind: "av", order: shuffle(players), i: 0, level: store.get("avlvl", "fun"), decks: {} }; if (G.level === "x18" && !adultOk) G.level = "hot"; return go(avTurn); }
     if (id === "tvm") { G = { kind: "tvm", order: shuffle(players), i: 0, scores: Object.fromEntries(players.map(p => [p, 0])), step: "prep", theme: pick(TVM_THEMES), sel: [] }; return go(tvm); }
     if (id === "uc") { const n = players.length; G = { kind: "uc", nU: n >= 13 ? 3 : n >= 7 ? 2 : 1, nW: n >= 11 ? 2 : n >= 5 ? 1 : 0, ucScores: {} }; return go(ucSetup); }
+    if (id === "tu") { G = { kind: "tu", nTeams: 2, dur: 45, nWords: 40, round: 0 }; makeTeams(); return go(teamSetup); }
+    if (id === "quiz") { G = { kind: "quiz", nTeams: 2, nQ: 10, round: 1 }; makeTeams(); return go(teamSetup); }
+    if (id === "bomb") { G = { kind: "bomb", d: pdeck("bomb", BOMB_THEMES), gd: pdeck("gages", GAGES), state: "idle", loser: null }; G.theme = G.d.draw(); return go(bomb); }
+    if (id === "wyr") { let l = store.get("wyrlvl", "normal"); if (l === "x18" && !adultOk) l = "hot"; G = { kind: "wyr", level: l, decks: {} }; wyrDraw(); return go(wyr); }
+    if (id === "nhie") { let l = store.get("nhielvl", "fun"); if (l === "x18" && !adultOk) l = "hot"; G = { kind: "nhie", level: l, decks: {} }; nhieDraw(); return go(nhie); }
+    if (id === "lg") { const n = players.length; G = { kind: "lg", nW: n >= 16 ? 4 : n >= 12 ? 3 : n >= 7 ? 2 : 1 }; return go(lgSetup); }
     if (id === "mys") { G = { kind: "mys", d: pdeck("mys", MYS), card: null, rule: null }; return go(mys); }
   },
   /* équipes */
@@ -586,7 +942,7 @@ const A = {
   reTeams() { makeTeams(); draw(); },
   dur(n) { G.dur = +n; draw(); },
   diff(k) { G.diff = k; store.set("mimeDiff", k); draw(); },
-  teamsGo() { G.cur = 0; G.round = 1; G.deck = G.kind === "mime" ? pdeck("mime-" + G.diff, MIME_SETS[G.diff]) : pdeck("taboo", TABOO); go(turnIntro); },
+  teamsGo() { if (G.kind === "tu") return A.tuGo(); if (G.kind === "quiz") return A.quizGo(); G.cur = 0; G.round = 1; G.deck = G.kind === "mime" ? pdeck("mime-" + G.diff, MIME_SETS[G.diff]) : pdeck("taboo", TABOO); go(turnIntro); },
   turnStart() { G.log = []; G.card = G.deck.draw(); go(turnPlay); runTimer(G.dur, A.turnStop); },
   mark(v) { G.log.push({ c: G.card, v: +v }); G.card = G.deck.draw(); beep(+v === 1 ? 880 : +v === -1 ? 220 : 440, .08); draw(); },
   turnStop() { stopTimer(); if (G.card) { G.log.push({ c: G.card, v: 0, last: true }); G.card = null; } go(turnEnd); },
@@ -602,7 +958,7 @@ const A = {
     if (!G.bonusGiven && s[0].score > s[1].score) s[0].members.forEach(m => addPts(m, 3));
     G.bonusGiven = true; go(teamFinal);
   },
-  teamsAgain() { G.teams.forEach(t => t.score = 0); G.bonusGiven = false; A.teamsGo(); },
+  teamsAgain() { G.teams.forEach(t => { t.score = 0; t.k = 0; }); G.bonusGiven = false; A.teamsGo(); },
   /* action ou vérité */
   avLevel(k) { if (k === "x18" && !adultOk) { G.gate = true; return go(avTurn); } G.level = k; store.set("avlvl", k); draw(); },
   avAdult() { adultOk = true; G.gate = false; G.level = "x18"; store.set("avlvl", "x18"); go(avTurn); },
@@ -682,6 +1038,152 @@ const A = {
   mysTimer() { runTimer(G.card.s, draw); draw(); },
   stopClock() { stopTimer(); draw(); }
 };
+
+/* ---------- Actions des nouveaux jeux ---------- */
+function quizDrawQ() { G.q = G.qd.draw(); G.opts = shuffle([G.q.a, ...G.q.w]); G.ans = null; }
+function wyrDraw() { const k = G.level; G.decks[k] = G.decks[k] || pdeck("wyr-" + k, WYR[k]); G.card = G.decks[k].draw(); G.sel = []; G.step = "ask"; }
+function nhieDraw() { const k = G.level; G.decks[k] = G.decks[k] || pdeck("nhie-" + k, NHIE[k]); G.card = G.decks[k].draw(); G.sel = []; }
+const toggleIn = (list, n) => list.includes(n) ? list.filter(x => x !== n) : [...list, n];
+function lgSleepNow() { G.sub = "sleep"; draw(); say(LG_STEP[G.steps[G.si]].sleep); }
+
+Object.assign(A, {
+  /* Time's Up */
+  tuWords(n) { G.nWords = +n; draw(); },
+  tuGo() {
+    const d = pdeck("tu", TU_WORDS), set = new Set();
+    for (let k = 0; set.size < G.nWords && k < G.nWords * 4; k++) set.add(d.draw());
+    Object.assign(G, { cur: 0, round: 0, words: [...set], card: null, log: [] });
+    G.pool = shuffle(G.words);
+    go(tuRoundIntro);
+  },
+  tuRoundStart() { go(tuTurnIntro); },
+  tuStart() { G.log = []; G.card = G.pool.shift(); go(tuPlay); runTimer(G.dur, A.tuStop); },
+  tuMark(v) {
+    if (+v === 1) { G.log.push({ w: G.card, ok: true }); beep(880, .08); } else { G.pool.push(G.card); beep(440, .08); }
+    if (!G.pool.length) { G.card = null; return A.tuStop(); }
+    G.card = G.pool.shift(); draw();
+  },
+  tuStop() { stopTimer(); if (G.card) { G.pool.push(G.card); G.card = null; } go(tuTurnEnd); },
+  tuToggle(i) { const l = G.log[+i]; l.ok = !l.ok; draw(); },
+  tuValidate() {
+    const t = G.teams[G.cur], found = G.log.filter(l => l.ok);
+    G.log.filter(l => !l.ok).forEach(l => G.pool.push(l.w));
+    t.score += found.length; t.members.forEach(m => addPts(m, found.length)); t.k++;
+    G.cur = (G.cur + 1) % G.teams.length;
+    if (found.length) toast(`${ptsTxt(found.length)} pour ${t.name}`);
+    if (!G.pool.length) {
+      G.round++;
+      if (G.round >= 3) return A.teamEnd();
+      G.pool = shuffle(G.words);
+      return go(tuRoundIntro);
+    }
+    go(tuTurnIntro);
+  },
+  /* Quiz */
+  quizN(n) { G.nQ = +n; draw(); },
+  quizGo() {
+    Object.assign(G, { cur: 0, asked: 0, total: G.nQ * G.teams.length, qd: pdeck("quiz", QUIZ) });
+    quizDrawQ(); go(quizQ);
+  },
+  quizAns(i) {
+    if (G.ans != null) return;
+    G.ans = +i;
+    const t = G.teams[G.cur];
+    if (G.opts[G.ans] === G.q.a) { t.score++; t.members.forEach(m => addPts(m, 1)); beep(880, .12); } else beep(220, .25);
+    draw();
+  },
+  quizNext() {
+    G.asked++;
+    if (G.asked >= G.total) return A.teamEnd();
+    G.cur = (G.cur + 1) % G.teams.length;
+    quizDrawQ(); go(quizQ);
+  },
+  /* La Bombe */
+  bombTheme() { G.theme = G.d.draw(); draw(); },
+  bombStart() {
+    stopBomb();
+    G.state = "ticking";
+    const end = Date.now() + 20000 + Math.random() * 40000;
+    const tick = () => {
+      const left = end - Date.now();
+      if (left <= 0) {
+        bombT = null; G.state = "boom"; G.loser = null;
+        beep(70, 1.2); try { navigator.vibrate && navigator.vibrate([500, 100, 500]); } catch (e) {}
+        return draw();
+      }
+      beep(left < 5000 ? 1046 : left < 15000 ? 880 : 740, .04);
+      bombT = setTimeout(tick, left < 5000 ? 220 : left < 15000 ? 450 : 800);
+    };
+    draw(); tick();
+  },
+  bombLoser(n) { G.loser = n; G.gage = G.gd.draw(); others(n).forEach(o => addPts(o, 1)); draw(); },
+  bombNew() { G.state = "idle"; G.loser = null; G.theme = G.d.draw(); draw(); },
+  /* Tu préfères */
+  wyrLevel(k) { if (k === "x18" && !adultOk) { G.gate = true; return draw(); } G.level = k; store.set("wyrlvl", k); wyrDraw(); draw(); },
+  wyrAdult() { adultOk = true; G.gate = false; G.level = "x18"; store.set("wyrlvl", "x18"); wyrDraw(); draw(); },
+  wyrGateNo() { G.gate = false; draw(); },
+  wyrSel(n) { G.sel = toggleIn(G.sel, n); draw(); },
+  wyrValidate() {
+    const a = G.sel, b = players.filter(n => !a.includes(n));
+    if (a.length !== b.length && a.length && b.length) (a.length > b.length ? a : b).forEach(n => addPts(n, 1));
+    G.step = "result"; go(wyr);
+  },
+  wyrNext() { wyrDraw(); go(wyr); },
+  /* Je n'ai jamais */
+  nhieLevel(k) { if (k === "x18" && !adultOk) { G.gate = true; return draw(); } G.level = k; store.set("nhielvl", k); nhieDraw(); draw(); },
+  nhieAdult() { adultOk = true; G.gate = false; G.level = "x18"; store.set("nhielvl", "x18"); nhieDraw(); draw(); },
+  nhieGateNo() { G.gate = false; draw(); },
+  nhieSel(n) { G.sel = toggleIn(G.sel, n); draw(); },
+  nhieNext() {
+    const s = G.sel;
+    s.forEach(n => addPts(n, 1));
+    nhieDraw(); go(nhie);
+    if (s.length) toast(`+1 pour ${s.join(", ")}`);
+  },
+  /* Loup-garou */
+  lgW(d) { const v = G.nW + +d; if (v >= 1 && v <= lgMaxW()) G.nW = v; draw(); },
+  lgRole(id) { const s = lgSel(); store.set("lgRoles", s.includes(id) ? s.filter(x => x !== id) : [...s, id]); draw(); },
+  lgVoice() { voiceOn = !voiceOn; store.set("voice", voiceOn); draw(); if (voiceOn) say("La voix du meneur est activée."); },
+  lgSettings() { go(lgSetup); },
+  lgGo() {
+    if (!lgOk()) return;
+    const sel = lgSel();
+    const roles = shuffle([...Array(G.nW).fill("wolf"), ...sel, ...Array(players.length - G.nW - sel.length).fill("villager")]);
+    G.ps = shuffle(players).map((name, i) => ({ name, role: roles[i], alive: true, lover: null }));
+    Object.assign(G, { i: 0, show: false, night: 1, potions: { life: true, death: true }, win: null, queue: [], pick: [] });
+    go(lgDeal);
+  },
+  lgShow() { G.show = true; draw(); },
+  lgHide() { G.show = false; G.i++; if (G.i >= G.ps.length) lgStartNight(); else go(lgDeal); },
+  lgNightNext() {
+    G.si++; G.sub = null; G.pick = []; G.wmode = null;
+    if (G.si >= G.steps.length) return lgDawn();
+    go(lgNight); say(LG_STEP[G.steps[G.si]].wake);
+  },
+  lgSleep() { lgSleepNow(); },
+  lgPick(i) {
+    i = +i;
+    const cupid = view === lgNight && G.steps[G.si] === "cupid";
+    if (cupid) { if (G.pick.includes(i)) G.pick = G.pick.filter(x => x !== i); else if (G.pick.length < 2) G.pick = [...G.pick, i]; }
+    else G.pick = G.pick[0] === i ? [] : [i];
+    draw();
+  },
+  lgCupid() { const [a, b] = G.pick; G.ps[a].lover = b; G.ps[b].lover = a; G.pick = []; lgSleepNow(); },
+  lgWolves() { G.victim = G.pick[0]; G.pick = []; lgSleepNow(); },
+  lgSeer(i) { G.seen = +i; draw(); },
+  lgSave() { G.saved = true; G.potions.life = false; lgSleepNow(); },
+  lgWitchPoison() { G.wmode = "poison"; draw(); },
+  lgWitchBack() { G.wmode = null; draw(); },
+  lgPoison(i) { G.poison = +i; G.potions.death = false; G.wmode = null; lgSleepNow(); },
+  lgProcess() { lgProcessQueue(); },
+  lgNext() { G.queue.shift(); lgProcessQueue(); },
+  lgShoot(i) { G.queue[0].shot = true; G.queue.push({ i: +i, cause: "hunter" }); draw(); },
+  lgDebate() { go(lgDebateScreen); },
+  lgClock() { runTimer(120, draw); draw(); },
+  lgVote() { stopTimer(); G.pick = []; go(lgVoteScreen); },
+  lgElim() { if (!G.pick.length) return; G.after = "night"; G.queue = [{ i: G.pick[0], cause: "vote" }]; G.pick = []; lgProcessQueue(); },
+  lgNoElim() { G.night++; lgStartNight(); }
+});
 
 document.addEventListener("click", e => {
   keepAwake();
