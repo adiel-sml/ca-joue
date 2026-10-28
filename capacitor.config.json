@@ -1,0 +1,8 @@
+{
+  "appId": "app.cajoue.soiree",
+  "appName": "Ça Joue",
+  "webDir": "dist",
+  "backgroundColor": "#16132b",
+  "android": { "backgroundColor": "#16132b" },
+  "ios": { "backgroundColor": "#16132b", "contentInset": "never" }
+}
