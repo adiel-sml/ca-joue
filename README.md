@@ -2,7 +2,7 @@
 
 Douze jeux de soirée sur un seul téléphone qu'on se passe. Gratuit, sans compte, sans publicité, utilisable hors ligne.
 
-L'appli s'installe sur l'écran d'accueil du téléphone (iPhone et Android) comme une appli classique : plein écran, icône, fonctionnement sans réseau.
+L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPhone, iPad, Android) comme une appli classique : plein écran, icône, fonctionnement sans réseau. Sur tablette, la mise en page s'élargit et l'appli fonctionne en portrait comme en paysage.
 
 ## Les jeux
 
@@ -36,7 +36,8 @@ L'appli s'installe sur l'écran d'accueil du téléphone (iPhone et Android) com
 
 ## Installer sur le téléphone
 
-- **iPhone** : ouvrir le site dans Safari, bouton Partager, puis **Sur l'écran d'accueil**.
+- **iPhone** : ouvrir le site dans Safari, bouton Partager en bas de l'écran, puis **Sur l'écran d'accueil**.
+- **iPad** : ouvrir le site dans Safari, bouton Partager en haut à droite, puis **Sur l'écran d'accueil**.
 - **Android** : ouvrir le site dans Chrome, puis le bouton **Installer** de l'appli, ou le menu, puis **Installer l'application**.
 
 ## Lancer en local
