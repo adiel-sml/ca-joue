@@ -930,6 +930,9 @@ const A = {
   gagePick(i) { sheet.chosen = +i === 2 ? "group" : sheet.opts[+i]; draw(); },
   gageReroll() { sheet.opts = gageOpts(sheet.spicy); draw(); },
   gageDone() { const then = sheet && sheet.then; sheet = null; if (then) A[then](); else draw(); },
+  gagePick(i) { sheet.chosen = +i === 2 ? "group" : sheet.opts[+i]; draw(); },
+  gageReroll() { sheet.opts = gageOpts(sheet.spicy); draw(); },
+  gageDone() { const then = sheet && sheet.then; sheet = null; if (then) A[then](); else draw(); },
   install() {
     if (installEvt) { const e = installEvt; installEvt = null; e.prompt(); e.userChoice.finally(() => draw()); return; }
     sheet = { type: "install" }; draw();
