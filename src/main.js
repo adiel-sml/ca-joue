@@ -4,7 +4,7 @@ import "@fontsource/figtree/latin-600.css";
 import "@fontsource/figtree/latin-800.css";
 import "./styles.css";
 import { registerSW } from "virtual:pwa-register";
-import { MIME_CARDS, TABOO, AV, GAGES, AV_LEVELS, AV_PTS, AV_BONUS, TVM_THEMES, UC_PAIRS, UC_SPECIALS, UC_PTS, MYS_TYPES, MYS, TEAM_NAMES, TEAM_COLORS, GAMES } from "./content.js";
+import { MIME_EASY, MIME_HARD, TABOO, AV, GAGES, AV_LEVELS, AV_PTS, AV_BONUS, TVM_THEMES, UC_PAIRS, UC_SPECIALS, UC_PTS, MYS_TYPES, MYS, TEAM_NAMES, TEAM_COLORS, GAMES } from "./content.js";
 import { ic } from "./icons.js";
 import { AVATARS, avatarSvg } from "./avatars.js";
 
@@ -13,13 +13,26 @@ const $app = document.getElementById("app");
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const pick = a => a[Math.random() * a.length | 0];
-const deck = arr => { let pool = []; return { draw() { if (!pool.length) pool = shuffle(arr); return pool.pop(); } }; };
 const store = {
   get(k, d) { try { const v = localStorage.getItem("cajoue:" + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem("cajoue:" + k, JSON.stringify(v)); } catch (e) {} }
 };
 const plural = (n, w) => `${n} ${w}${Math.abs(n) > 1 ? "s" : ""}`;
 const ptsTxt = v => `${v > 0 ? "+" : ""}${plural(v, "pt")}`;
+
+/* Paquet mémorisé sur le téléphone : une carte ne revient qu'une fois tout le paquet passé, même d'une partie à l'autre */
+function pdeck(key, arr) {
+  return {
+    draw() {
+      let st = store.get("deck:" + key, null);
+      if (!st || st.n !== arr.length || !Array.isArray(st.left) || !st.left.length) st = { n: arr.length, left: shuffle(arr.map((_, i) => i)) };
+      const i = st.left.pop();
+      store.set("deck:" + key, st);
+      return arr[i];
+    }
+  };
+}
+const MIME_SETS = { easy: MIME_EASY, hard: MIME_HARD, mix: [...MIME_EASY, ...MIME_HARD] };
 
 /* ---------- Joueurs ---------- */
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -221,6 +234,9 @@ function teamSetup() {
       <div class="teams">${G.teams.map(t => `<div class="team" style="--tc:${t.c}"><b>${esc(t.name)}</b><div class="team-members">${t.members.map(m => `<span class="mini">${av(m, "xs")}${esc(m)}</span>`).join("")}</div></div>`).join("")}</div>
       ${solo ? `<p class="hint">Dans une équipe d'une personne, ce sont les autres qui devinent. Les points vont à celle ou celui qui fait deviner.</p>` : ""}
     </div>
+    ${G.kind === "mime" ? `<div class="panel"><span class="label">Mots</span>
+      <div class="seg">${[["easy", "Faciles"], ["hard", "Difficiles"], ["mix", "Mélange"]].map(([k, l]) => `<button class="${G.diff === k ? "on" : ""}" data-act="diff" data-arg="${k}">${l}</button>`).join("")}</div>
+      <p class="hint">${G.diff === "easy" ? "Animaux, objets, métiers, sports : des mots simples à mimer." : G.diff === "hard" ? "Films, personnages et actions détaillées : pour les pros du mime." : "Un peu de tout."}</p></div>` : ""}
     <div class="panel"><span class="label">Durée d'un tour</span>
       <div class="seg">${[45, 60, 90].map(n => `<button class="${G.dur === n ? "on" : ""}" data-act="dur" data-arg="${n}">${n} s</button>`).join("")}</div>
     </div>`,
@@ -326,7 +342,7 @@ function tvm() {
     <div class="who">${av(p, "m")}<div><span class="kicker">Raconte</span><b>${esc(p)}</b></div></div>
     <p class="lead">Annonce tes trois phrases. Les autres posent des questions pour te piéger.</p>
     ${timerHTML(timer ? timer.left : 60)}
-    ${btn("Lancer 60 s de questions", "tvmDebate", { kind: "ghost", icon: "timer" })}`,
+    ${timer ? btn("Arrêter le chrono", "stopClock", { kind: "ghost", icon: "stop" }) : btn("Lancer 60 s de questions", "tvmDebate", { kind: "ghost", icon: "timer" })}`,
     foot: btn("Révéler le mensonge", "tvmVote", { icon: "eye" })
   });
   return screen({
@@ -513,7 +529,7 @@ function mys() {
   return screen({
     title: "Jeu mystère", color: T ? T.c : "var(--c-mys)", body: c ? `
     <div class="card"><span class="card-label">${ic(T.icon, 16)} ${T.label}</span><div class="txt">${G.text}</div><p class="card-foot">${T.foot}</p></div>
-    ${c.s ? `${timerHTML(timer ? timer.left : c.s)}${btn(`Lancer le chrono, ${c.s} s`, "mysTimer", { kind: "ghost", icon: "timer" })}` : ""}
+    ${c.s ? `${timerHTML(timer ? timer.left : c.s)}${timer ? btn("Arrêter le chrono", "stopClock", { kind: "ghost", icon: "stop" }) : btn(`Lancer le chrono, ${c.s} s`, "mysTimer", { kind: "ghost", icon: "timer" })}` : ""}
     ${win}
     ${G.rule && c.t !== "regle" ? `<div class="rule"><span class="label">${ic("gavel", 14)} Règle en cours</span><p>${G.rule}</p></div>` : ""}` : `
     <div class="hero">${ic("dices", 48)}<h2 class="big">Paquet mystère</h2><p class="lead">Qui pourrait, Je n'ai jamais, défis, duels, patate chaude, devinettes et règles absurdes. On tire une carte et on voit.</p></div>`,
@@ -559,17 +575,18 @@ const A = {
     stopTimer();
     const g = GAMES.find(x => x.id === id);
     if (players.length < g.min) { tab = "players"; go(root); toast(`${g.name} se joue à ${g.min} minimum`); return; }
-    if (id === "mime" || id === "taboo") { G = { kind: id, nTeams: 2, dur: 60, round: 1 }; makeTeams(); return go(teamSetup); }
+    if (id === "mime" || id === "taboo") { G = { kind: id, nTeams: 2, dur: 60, round: 1, diff: store.get("mimeDiff", "easy") }; makeTeams(); return go(teamSetup); }
     if (id === "av") { G = { kind: "av", order: shuffle(players), i: 0, level: store.get("avlvl", "fun"), decks: {} }; if (G.level === "x18" && !adultOk) G.level = "hot"; return go(avTurn); }
     if (id === "tvm") { G = { kind: "tvm", order: shuffle(players), i: 0, scores: Object.fromEntries(players.map(p => [p, 0])), step: "prep", theme: pick(TVM_THEMES), sel: [] }; return go(tvm); }
     if (id === "uc") { const n = players.length; G = { kind: "uc", nU: n >= 13 ? 3 : n >= 7 ? 2 : 1, nW: n >= 11 ? 2 : n >= 5 ? 1 : 0, ucScores: {} }; return go(ucSetup); }
-    if (id === "mys") { G = { kind: "mys", d: deck(MYS), card: null, rule: null }; return go(mys); }
+    if (id === "mys") { G = { kind: "mys", d: pdeck("mys", MYS), card: null, rule: null }; return go(mys); }
   },
   /* équipes */
   nTeams(n) { G.nTeams = +n; makeTeams(); draw(); },
   reTeams() { makeTeams(); draw(); },
   dur(n) { G.dur = +n; draw(); },
-  teamsGo() { G.cur = 0; G.round = 1; G.deck = deck(G.kind === "mime" ? MIME_CARDS : TABOO); go(turnIntro); },
+  diff(k) { G.diff = k; store.set("mimeDiff", k); draw(); },
+  teamsGo() { G.cur = 0; G.round = 1; G.deck = G.kind === "mime" ? pdeck("mime-" + G.diff, MIME_SETS[G.diff]) : pdeck("taboo", TABOO); go(turnIntro); },
   turnStart() { G.log = []; G.card = G.deck.draw(); go(turnPlay); runTimer(G.dur, A.turnStop); },
   mark(v) { G.log.push({ c: G.card, v: +v }); G.card = G.deck.draw(); beep(+v === 1 ? 880 : +v === -1 ? 220 : 440, .08); draw(); },
   turnStop() { stopTimer(); if (G.card) { G.log.push({ c: G.card, v: 0, last: true }); G.card = null; } go(turnEnd); },
@@ -592,12 +609,12 @@ const A = {
   avGateNo() { G.gate = false; go(avTurn); },
   avPick(t) {
     if (t === "r") t = Math.random() < .5 ? "v" : "a";
-    const key = t + G.level; G.decks[key] = G.decks[key] || deck(AV[G.level][t]);
+    const key = t + G.level; G.decks[key] = G.decks[key] || pdeck("av-" + key, AV[G.level][t]);
     const cur = avCur(), o = others(cur);
     G.type = t; G.text = fill(G.decks[key].draw(), { cur, joueur: pick(o.length ? o : players), opp: oppOf(cur) });
     go(avCard);
   },
-  avJoker() { G.decks.g = G.decks.g || deck(GAGES); G.type = "g"; G.text = esc(G.decks.g.draw()); go(avCard); },
+  avJoker() { G.decks.g = G.decks.g || pdeck("gages", GAGES); G.type = "g"; G.text = esc(G.decks.g.draw()); go(avCard); },
   avNext() {
     const p = avCur(), pts = G.type === "g" ? 0 : AV_PTS[G.type] + AV_BONUS[G.level];
     addPts(p, pts); G.i++; go(avTurn); if (pts) toast(`${ptsTxt(pts)} pour ${p}`);
@@ -606,7 +623,7 @@ const A = {
   /* 2 vérités 1 mensonge */
   tvmTheme() { let t; do { t = pick(TVM_THEMES); } while (t === G.theme); G.theme = t; draw(); },
   tvmReady() { G.step = "talk"; go(tvm); },
-  tvmDebate() { runTimer(60); },
+  tvmDebate() { runTimer(60, draw); draw(); },
   tvmVote() { stopTimer(); G.step = "vote"; G.sel = []; go(tvm); },
   tvmSel(n) { G.sel = G.sel.includes(n) ? G.sel.filter(x => x !== n) : [...G.sel, n]; draw(); },
   tvmValidate() {
@@ -620,7 +637,7 @@ const A = {
   ucRole(id) { const s = ucSel(); store.set("ucRoles", s.includes(id) ? s.filter(x => x !== id) : [...s, id]); draw(); },
   ucSettings() { go(ucSetup); },
   ucGo() {
-    G.deck = G.deck || deck(UC_PAIRS);
+    G.deck = G.deck || pdeck("uc", UC_PAIRS);
     let pair = G.deck.draw(); if (Math.random() < .5) pair = [pair[1], pair[0]];
     G.pair = pair;
     const roles = shuffle([...Array(G.nU).fill("under"), ...Array(G.nW).fill("white"), ...Array(players.length - G.nU - G.nW).fill("civil")]);
@@ -661,8 +678,9 @@ const A = {
     if (c.t === "regle") G.rule = G.text;
     go(mys); beep(520, .06);
   },
-  mysWin(arg) { const k = arg.lastIndexOf("|"), n = arg.slice(0, k), v = +arg.slice(k + 1); G.scored = true; draw(); if (n && v) { addPts(n, v); toast(`${ptsTxt(v)} pour ${n}`); } },
-  mysTimer() { runTimer(G.card.s); }
+  mysWin(arg) { stopTimer(); const k = arg.lastIndexOf("|"), n = arg.slice(0, k), v = +arg.slice(k + 1); G.scored = true; draw(); if (n && v) { addPts(n, v); toast(`${ptsTxt(v)} pour ${n}`); } },
+  mysTimer() { runTimer(G.card.s, draw); draw(); },
+  stopClock() { stopTimer(); draw(); }
 };
 
 document.addEventListener("click", e => {
