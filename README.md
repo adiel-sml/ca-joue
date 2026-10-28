@@ -30,7 +30,7 @@ npm run preview    # teste la version de production (installation et hors ligne 
 
 | Fichier | Rôle |
 |---|---|
-| `src/content.js` | Tout le contenu : mots, cartes, paires Undercover, cartes mystère, rôles spéciaux. |
+| `src/content.js`, `src/content-plus.js` | Tout le contenu : mots, cartes, paires Undercover, cartes mystère, rôles spéciaux. Une carte ne revient qu'une fois tout le paquet passé, même d'une partie à l'autre. |
 | `src/main.js` | Écrans, navigation et règles des jeux. |
 | `src/styles.css` | Le design. |
 | `src/avatars.js` | Les personnages des joueurs. |
