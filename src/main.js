@@ -5,9 +5,10 @@ import "@fontsource/figtree/latin-800.css";
 import "./styles.css";
 import { registerSW } from "virtual:pwa-register";
 import { MIME_EASY, MIME_HARD, TABOO, AV, GAGES, GAGES_HOT, GAGES_X18, AV_LEVELS, AV_PTS, AV_BONUS, TVM_THEMES, UC_PAIRS, UC_SPECIALS, UC_PTS, MYS_TYPES, MYS, TEAM_NAMES, TEAM_COLORS, GAMES, GAME_CATS } from "./content.js";
-import { TU_WORDS, BOMB_THEMES, WYR, NHIE, QUIZ, LG_ROLES, LG_SPECIALS } from "./content-games.js";
+import { TU_WORDS, BOMB_THEMES, WYR, NHIE, QUIZ, QUIZ_THEMES, LG_ROLES, LG_SPECIALS } from "./content-games.js";
 import { SPY_PLACES, MOST, NUM_Q, DICO, CHAIN_WORDS } from "./content-party.js";
 import { KNOW, FUTURE, WHO2, DARE2, TALK } from "./content-couple.js";
+import { RULES } from "./content-rules.js";
 import { ic } from "./icons.js";
 import { AVATARS, avatarSvg } from "./avatars.js";
 
@@ -167,7 +168,7 @@ function screen({ title = "", left = "close", right = "board", color = "", body 
     : right === "stop" ? `<button class="iconbtn" data-act="turnStop" aria-label="Arrêter le tour">${ic("stop")}</button>` : (right || "");
   const rep = G && G.kind === "lg" && voiceOn && lastSay && view !== lgSetup && view !== lgDeal ? `<button class="iconbtn" data-act="lgRepeat" aria-label="Répéter l'annonce">${ic("volume")}</button>` : "";
   return `<div class="screen${tabs ? " has-tabs" : ""}${foot ? " has-foot" : ""}" style="${color ? "--gc:" + color : ""}">
-    ${title || l || r ? `<header class="appbar">${l}<h1 class="appbar-title">${esc(title)}</h1>${rep}${r}</header>` : ""}
+    ${title || l || r ? `<header class="appbar">${l}<h1 class="appbar-title">${esc(title)}</h1>${rep}${G && RULES[G.kind] && left !== "back" ? `<button class="iconbtn" data-act="rules" aria-label="Règles du jeu">${ic("info")}</button>` : ""}${r}</header>` : ""}
     <main class="content">${body}</main>
     ${foot ? `<footer class="foot">${foot}</footer>` : ""}
     ${tabs ? tabbar() : ""}
@@ -263,6 +264,14 @@ function sheetHTML() {
         ${sheet.who.length ? "" : `<span class="label">Qui fait le gage ?</span><div class="pick">${players.map(n => `<button class="${sheet.pick.includes(n) ? "on" : ""}" data-act="gageWho" data-arg="${esc(n)}">${esc(n)}</button>`).join("")}</div>`}
         <div class="row2">${btn(`Refusé <small>−${GAGE_PENALTY} pts</small>`, "gageRefuse", { kind: "ghost", icon: "x" })}${btn("Gage fait", "gageDone", { icon: "check" })}</div>
         <p class="hint center">Refuser un gage coûte ${GAGE_PENALTY} points. Tout est noté dans le classement.</p>`;
+  } else if (sheet.type === "rules") {
+    const g = GAMES.find(x => x.id === sheet.id), r = RULES[sheet.id];
+    inner = `<div class="rules-head" style="--tc:${g.c}"><span class="tile-ic">${ic(g.icon, 26)}</span><div><span class="label">Règles du jeu</span><h2 class="sheet-title">${esc(g.name)}</h2></div></div>
+      <p class="sheet-text">${r.but}</p>
+      <span class="label">${ic(g.cat === "couple" ? "heart" : "users", 14)} ${g.cat === "couple" ? "À deux" : `Dès ${g.min} joueurs`}</span>
+      <ol class="steps">${r.steps.map((t, i) => `<li><span class="stepn" style="background:${g.c}">${i + 1}</span><span>${t}</span></li>`).join("")}</ol>
+      <div class="rules-pts"><span class="label">${ic("trophy", 14)} Points</span><p>${r.pts}</p></div>
+      ${btn("C'est parti", "closeSheet", { icon: "play", style: `background:${g.c}` })}`;
   } else if (sheet.type === "install") {
     inner = isIos()
       ? `<h2 class="sheet-title">Installer sur ${isIpad() ? "iPad" : "iPhone"}</h2>
@@ -320,6 +329,8 @@ function teamSetup() {
       <p class="hint">${G.diff === "easy" ? "Animaux, objets, métiers, sports : des mots simples à mimer." : G.diff === "hard" ? "Films, personnages et actions détaillées : pour les pros du mime." : "Un peu de tout."}</p></div>` : ""}
     ${G.kind === "tu" ? `<div class="panel"><span class="label">Nombre de mots</span>
       <div class="seg">${[30, 40, 50].map(n => `<button class="${G.nWords === n ? "on" : ""}" data-act="tuWords" data-arg="${n}">${n} mots</button>`).join("")}</div></div>` : ""}
+    ${G.kind === "quiz" ? `<div class="panel"><span class="label">Thème</span>
+      <div class="pick themes">${[["all", "Tous les thèmes", QUIZ.length], ...QUIZ_THEMES.map(t => [t, t, QUIZ.filter(q => q.cat === t).length])].map(([k, l, n]) => `<button class="${G.qtheme === k ? "on" : ""}" data-act="quizTheme" data-arg="${esc(k)}" aria-pressed="${G.qtheme === k}">${esc(l)} <small>${n}</small></button>`).join("")}</div></div>` : ""}
     ${G.kind === "quiz" || G.kind === "num" ? `<div class="panel"><span class="label">${G.kind === "num" ? "Questions" : "Questions par équipe"}</span>
       <div class="seg">${[5, 10, 15].map(n => `<button class="${G.nQ === n ? "on" : ""}" data-act="quizN" data-arg="${n}">${n}</button>`).join("")}</div></div>` : `<div class="panel"><span class="label">Durée d'un tour</span>
       <div class="seg">${(G.kind === "tu" ? [30, 45, 60] : [45, 60, 90]).map(n => `<button class="${G.dur === n ? "on" : ""}" data-act="dur" data-arg="${n}">${n} s</button>`).join("")}</div>
@@ -678,7 +689,7 @@ function quizQ() {
       const cls = !done ? "" : o === q.a ? " right" : i === G.ans ? " wrong" : " dim";
       return `<li><button class="row-item answer${cls}" data-act="quizAns" data-arg="${i}" ${done ? "disabled" : ""}><span class="opt">${"ABCD"[i]}</span><span class="grow">${esc(o)}</span>${done && o === q.a ? ic("check", 20) : done && i === G.ans ? ic("x", 20) : ""}</button></li>`;
     }).join("")}</ul>
-    ${done ? `<p class="lead center">${G.opts[G.ans] === q.a ? `Bonne réponse, un point pour ${esc(t.name)}.` : `Raté. La bonne réponse était ${esc(q.a.replace(/^(L'|Le |La |Les )/, m => m.toLowerCase()))}.`}</p>` : ""}`,
+    ${done ? `<p class="lead center">${G.opts[G.ans] === q.a ? `Bonne réponse, un point pour ${esc(t.name)}.` : `Raté. Bonne réponse : <strong>${esc(q.a)}</strong>`}</p>` : ""}`,
     foot: done ? btn(G.asked + 1 >= G.total ? "Voir les résultats" : "Question suivante", "quizNext", { icon: "play" }) : `<p class="hint center">${esc(t.name)} se met d'accord, puis touche sa réponse.</p>`
   });
 }
@@ -1404,6 +1415,12 @@ const A = {
   draftAv(id) { sheet.draft.av = id; draw(); },
   rmP() { const i = roster.findIndex(x => x.id === sheet.id); if (i >= 0) roster.splice(i, 1); saveRoster(); syncNames(); sheet = null; draw(); },
   open(id) {
+    A.openGame(id);
+    const seen = store.get("rulesSeen", []);
+    if (G && G.kind === id && RULES[id] && !seen.includes(id)) { store.set("rulesSeen", [...seen, id]); sheet = { type: "rules", id }; draw(); }
+  },
+  rules() { if (G && RULES[G.kind]) { sheet = { type: "rules", id: G.kind }; draw(); } },
+  openGame(id) {
     stopTimer();
     const g = GAMES.find(x => x.id === id);
     if (players.length < g.min) { tab = "players"; go(root); toast(`${g.name} se joue à ${g.min} minimum`); return; }
@@ -1412,7 +1429,7 @@ const A = {
     if (id === "tvm") { G = { kind: "tvm", order: shuffle(players), i: 0, scores: Object.fromEntries(players.map(p => [p, 0])), step: "prep", theme: pick(TVM_THEMES), sel: [] }; return go(tvm); }
     if (id === "uc") { const n = players.length; G = { kind: "uc", nU: n >= 13 ? 3 : n >= 7 ? 2 : 1, nW: n >= 11 ? 2 : n >= 5 ? 1 : 0, ucScores: {} }; return go(ucSetup); }
     if (id === "tu") { G = { kind: "tu", nTeams: 2, dur: 45, nWords: 40, round: 0 }; makeTeams(); return go(teamSetup); }
-    if (id === "quiz") { G = { kind: "quiz", nTeams: 2, nQ: 10, round: 1 }; makeTeams(); return go(teamSetup); }
+    if (id === "quiz") { G = { kind: "quiz", nTeams: 2, nQ: 10, round: 1, qtheme: store.get("quizTheme", "all") }; makeTeams(); return go(teamSetup); }
     if (id === "bomb") { G = { kind: "bomb", d: pdeck("bomb", BOMB_THEMES), gd: pdeck("gages", GAGES), state: "idle", loser: null }; G.theme = G.d.draw(); return go(bomb); }
     if (id === "wyr") { let l = store.get("wyrlvl", "normal"); if (l === "x18" && !adultOk) l = "hot"; G = { kind: "wyr", level: l, decks: {} }; wyrDraw(); return go(wyr); }
     if (id === "nhie") { let l = store.get("nhielvl", "fun"); if (l === "x18" && !adultOk) l = "hot"; G = { kind: "nhie", level: l, decks: {} }; nhieDraw(); return go(nhie); }
@@ -1583,8 +1600,10 @@ Object.assign(A, {
   },
   /* Quiz */
   quizN(n) { G.nQ = +n; draw(); },
+  quizTheme(t) { G.qtheme = t; store.set("quizTheme", t); draw(); },
   quizGo() {
-    Object.assign(G, { cur: 0, asked: 0, total: G.nQ * G.teams.length, qd: pdeck("quiz", QUIZ) });
+    const all = G.qtheme === "all" || !QUIZ_THEMES.includes(G.qtheme);
+    Object.assign(G, { cur: 0, asked: 0, total: G.nQ * G.teams.length, qd: all ? pdeck("quiz", QUIZ) : pdeck("quiz-" + G.qtheme, QUIZ.filter(q => q.cat === G.qtheme)) });
     quizDrawQ(); go(quizQ);
   },
   quizAns(i) {

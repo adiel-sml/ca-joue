@@ -359,6 +359,14 @@ button.wyr-choice:active { transform: scale(.99); }
 .answer-b .who b { font-size: 17px; }
 .answer-b p { font-size: 18px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
 @media (max-width: 420px) { .answers { grid-template-columns: 1fr; } }
+/* Règles du jeu */
+.rules-head { display: flex; align-items: center; gap: 12px; }
+.rules-head .tile-ic { background: var(--tc); color: var(--ink); margin: 0; flex: none; }
+.rules-head .sheet-title { line-height: 1.15; }
+.rules-pts { background: var(--surface-2); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.rules-pts p { font-size: 15px; }
+.sheet .steps li span:last-child { padding-top: 3px; }
+.themes button small { color: inherit; opacity: .6; margin-left: 2px; }
 
 @keyframes up { from { transform: translateY(24px); opacity: 0; } }
 @keyframes fade { from { opacity: 0; } }
