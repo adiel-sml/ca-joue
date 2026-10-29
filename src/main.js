@@ -67,10 +67,42 @@ const fe = (n, f, h) => gOf(n) === "h" ? h : f;
 /* ---------- Classement ---------- */
 let scores = store.get("scores", {});
 function addPts(name, v) { if (!v) return; scores[name] = (scores[name] || 0) + v; store.set("scores", scores); }
+/* Gages faits et refusés, par joueur. Refuser un gage coûte 2 points. */
+let gstats = store.get("gagestats", {});
+const GAGE_PENALTY = 2;
+function gageResolve(ok) {
+  if (!sheet) return;
+  const names = sheet.who.length ? sheet.who : sheet.pick, then = sheet.then;
+  names.forEach(n => {
+    const st = gstats[n] = gstats[n] || { done: 0, ref: 0 };
+    if (ok) st.done++; else { st.ref++; addPts(n, -GAGE_PENALTY); }
+  });
+  store.set("gagestats", gstats);
+  sheet = null;
+  if (then) A[then](); else draw();
+  if (names.length) toast(ok ? `Gage fait par ${names.join(", ")}` : `Gage refusé : −${GAGE_PENALTY} pts pour ${names.join(", ")}`);
+}
 
 /* ---------- Son, chrono, écran allumé ---------- */
 let actx;
 function beep(f, d) { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.type = "triangle"; o.frequency.value = f; g.gain.setValueAtTime(.22, actx.currentTime); g.gain.exponentialRampToValueAtTime(.001, actx.currentTime + d); o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime + d); } catch (e) {} }
+/* Explosion : souffle de bruit filtré qui s'éteint, plus un grondement grave */
+function explosion() {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const t0 = actx.currentTime, len = 2.2, sr = actx.sampleRate;
+    const buf = actx.createBuffer(1, Math.floor(sr * len), sr), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 1.5);
+    const noise = actx.createBufferSource(); noise.buffer = buf;
+    const lp = actx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.setValueAtTime(4000, t0); lp.frequency.exponentialRampToValueAtTime(90, t0 + 1.8);
+    const ng = actx.createGain(); ng.gain.setValueAtTime(0.001, t0); ng.gain.exponentialRampToValueAtTime(1, t0 + 0.02); ng.gain.exponentialRampToValueAtTime(0.001, t0 + len);
+    noise.connect(lp).connect(ng).connect(actx.destination); noise.start(t0);
+    const o = actx.createOscillator(), og = actx.createGain(); o.type = "sine";
+    o.frequency.setValueAtTime(120, t0); o.frequency.exponentialRampToValueAtTime(28, t0 + 1.2);
+    og.gain.setValueAtTime(0.9, t0); og.gain.exponentialRampToValueAtTime(0.001, t0 + 1.4);
+    o.connect(og).connect(actx.destination); o.start(t0); o.stop(t0 + 1.5);
+  } catch (e) {}
+}
 const vib = () => { try { navigator.vibrate && navigator.vibrate([200, 80, 200]); } catch (e) {} };
 
 let timer = null;
@@ -175,14 +207,24 @@ function playersBody() {
   <ul class="list two-col">${roster.map(p => `<li><button class="row-item" data-act="editP" data-arg="${p.id}">${av(p.name, "m")}<span class="grow"><b>${esc(p.name)}</b><small>${p.g === "h" ? "Garçon" : "Fille"}</small></span>${ic("pencil", 18)}</button></li>`).join("")}</ul>
   ${roster.length ? `<button class="textbtn danger" data-act="askClear">Vider la liste</button>` : ""}`;
 }
+function gagesBlock() {
+  const g = Object.entries(gstats).filter(([, v]) => v.done + v.ref > 0);
+  if (!g.length) return "";
+  const brave = [...g].sort((a, b) => b[1].done - a[1].done)[0], chicken = [...g].sort((a, b) => b[1].ref - a[1].ref)[0];
+  return `<h2 class="section">Les gages de la soirée</h2>
+  <div class="awards">${brave[1].done ? `<div class="award">${av(brave[0], "m")}<span><small>Le plus de gages faits</small><b>${esc(brave[0])}</b></span><b class="num">${brave[1].done}</b></div>` : ""}
+  ${chicken[1].ref ? `<div class="award bad">${av(chicken[0], "m")}<span><small>Le plus de gages refusés</small><b>${esc(chicken[0])}</b></span><b class="num">${chicken[1].ref}</b></div>` : ""}</div>
+  <ul class="list">${g.sort((a, b) => b[1].done - a[1].done).map(([n, v]) => `<li class="row-item">${av(n, "s")}<span class="grow">${esc(n)}</span><span class="badge b-good">${v.done} fait${v.done > 1 ? "s" : ""}</span><span class="badge ${v.ref ? "b-bad" : ""}">${v.ref} refusé${v.ref > 1 ? "s" : ""}</span></li>`).join("")}</ul>`;
+}
 function boardBody() {
   const s = Object.entries(scores).filter(([n]) => n).sort((a, b) => b[1] - a[1]);
-  if (!s.length) return `<div class="empty">${ic("trophy", 40)}<b>Aucun point pour l'instant</b><p>Les points de tous les jeux s'additionnent ici.</p></div>`;
+  if (!s.length) return `<div class="empty">${ic("trophy", 40)}<b>Aucun point pour l'instant</b><p>Les points de tous les jeux s'additionnent ici.</p></div>${gagesBlock()}`;
   const top = s.slice(0, 3), order = [1, 0, 2].filter(i => top[i]);
   return `<div class="podium">${order.map(i => `<div class="step s${i + 1}">${av(top[i][0], i === 0 ? "l" : "m")}<b>${esc(top[i][0])}</b><span class="num">${top[i][1]} pts</span><i>${i + 1}</i></div>`).join("")}</div>
   ${s.length > 3 ? scoreList(s.slice(3), false, 3) : ""}
+  ${gagesBlock()}
   <details class="howto"><summary>${ic("info", 18)} Comment on gagne des points</summary>
-  <p>Mimes et Mot interdit : chaque membre de l'équipe gagne les points du tour, et 3 points de plus pour l'équipe gagnante. Action ou Vérité : 1 point par vérité, 2 par action, bonus en Épicé et en +18. Undercover : 2 points par civil gagnant, 5 par Undercover, 6 pour Mr White. 2 vérités 1 mensonge et Jeu mystère : les points de chaque manche.</p></details>
+  <p>Mimes et Mot interdit : chaque membre de l'équipe gagne les points du tour, et 3 points de plus pour l'équipe gagnante. Action ou Vérité : 1 point par vérité, 2 par action, bonus en Épicé et en +18. Undercover : 2 points par civil gagnant, 5 par Undercover, 6 pour Mr White. 2 vérités 1 mensonge et Jeu mystère : les points de chaque manche. Gages : chaque gage fait ou refusé est noté, et un gage refusé coûte 2 points.</p></details>
   <button class="textbtn danger" data-act="askReset">Remettre le classement à zéro</button>`;
 }
 
@@ -206,7 +248,7 @@ function sheetHTML() {
     inner = `<h2 class="sheet-title">${sheet.title}</h2><p class="sheet-text">${sheet.text}</p>
     <div class="stack">${btn(sheet.ok, sheet.act, { kind: sheet.danger ? "danger" : "" })}<button class="btn ghost" data-act="closeSheet">Annuler</button></div>`;
   } else if (sheet.type === "gage") {
-    const who = sheet.who ? esc(sheet.who) : "";
+    const who = sheet.who.map(esc).join(", ");
     inner = sheet.chosen == null
       ? `<h2 class="sheet-title">${who ? `Gage pour ${who}` : "Choisis un gage"}</h2><p class="sheet-text">Choisis parmi ces trois propositions.</p>
         <ul class="list">${sheet.opts.map((o, i) => `<li><button class="row-item gage-opt" data-act="gagePick" data-arg="${i}"><span class="opt">${i + 1}</span><span class="grow">${esc(o)}</span></button></li>`).join("")}
@@ -214,7 +256,9 @@ function sheetHTML() {
         <button class="textbtn" data-act="gageReroll">${ic("shuffle", 18)} Deux autres propositions</button>`
       : `<h2 class="sheet-title">${who ? `Gage de ${who}` : "Le gage"}</h2>
         <div class="card"><span class="card-label">Gage</span><div class="txt">${sheet.chosen === "group" ? "Le groupe invente le gage. À vous de jouer !" : esc(sheet.chosen)}</div></div>
-        ${btn("C'est fait", "gageDone", { icon: "check" })}`;
+        ${sheet.who.length ? "" : `<span class="label">Qui fait le gage ?</span><div class="pick">${players.map(n => `<button class="${sheet.pick.includes(n) ? "on" : ""}" data-act="gageWho" data-arg="${esc(n)}">${esc(n)}</button>`).join("")}</div>`}
+        <div class="row2">${btn(`Refusé <small>−${GAGE_PENALTY} pts</small>`, "gageRefuse", { kind: "ghost", icon: "x" })}${btn("Gage fait", "gageDone", { icon: "check" })}</div>
+        <p class="hint center">Refuser un gage coûte ${GAGE_PENALTY} points. Tout est noté dans le classement.</p>`;
   } else if (sheet.type === "install") {
     inner = isIos()
       ? `<h2 class="sheet-title">Installer sur ${isIpad() ? "iPad" : "iPhone"}</h2>
@@ -236,7 +280,10 @@ function gageOpts(spicy) {
   let b = n.draw(); if (b === a) b = n.draw();
   return [a, b];
 }
-function openGage(who, spicy = false, then = null) { sheet = { type: "gage", who, spicy, opts: gageOpts(spicy), chosen: null, then }; draw(); }
+function openGage(who, spicy = false, then = null) {
+  const list = who == null ? [] : Array.isArray(who) ? who : [who];
+  sheet = { type: "gage", who: list, pick: [], spicy, opts: gageOpts(spicy), chosen: null, then }; draw();
+}
 
 /* ---------- Mimes & Mot interdit ---------- */
 function makeTeams() {
@@ -311,8 +358,8 @@ function turnEnd() {
   const lbl = v => v === 1 ? "+1" : v === -1 ? "−1" : "0";
   return screen({
     title: "Fin du tour", color: t.c, left: null, body: `
-    <div class="hero"><span class="kicker">${esc(t.name)}</span><h2 class="big">${ptsTxt(pts)}</h2><p class="hint">Touche un mot pour corriger. Le dernier mot compte s'il a été trouvé au buzzer.</p></div>
-    ${G.log.length ? `<ul class="list">${G.log.map((l, i) => `<li><button class="row-item" data-act="toggle" data-arg="${i}"><span class="grow">${esc(l.c.w)}${l.last ? `<small>Dernier mot</small>` : ""}</span><b class="badge ${l.v === 1 ? "b-good" : l.v === -1 ? "b-bad" : ""}">${lbl(l.v)}</b></button></li>`).join("")}</ul>` : `<p class="hint">Aucun mot cette fois.</p>`}`,
+    <div class="hero"><span class="kicker">${esc(t.name)}</span><h2 class="big">${ptsTxt(pts)}</h2><p class="hint">Touche un mot pour corriger. Le dernier mot compte s'il a été trouvé au buzzer.${G.kind === "taboo" ? " Les mots interdits de chaque carte sont rappelés en rouge." : ""}</p></div>
+    ${G.log.length ? `<ul class="list">${G.log.map((l, i) => `<li><button class="row-item" data-act="toggle" data-arg="${i}"><span class="grow">${esc(l.c.w)}${l.last ? `<small>Dernier mot</small>` : ""}${G.kind === "taboo" ? `<span class="forbid-mini">${l.c.f.map(f => `<span>${esc(f)}</span>`).join("")}</span>` : ""}</span><b class="badge ${l.v === 1 ? "b-good" : l.v === -1 ? "b-bad" : ""}">${lbl(l.v)}</b></button></li>`).join("")}</ul>` : `<p class="hint">Aucun mot cette fois.</p>`}`,
     foot: btn("Valider et équipe suivante", "turnValidate", { icon: "check" })
   });
 }
@@ -669,25 +716,33 @@ function wyr() {
   const C = "var(--c-wyr)";
   if (G.gate) return gateScreen("Tu préfères", C, "wyrAdult", "wyrGateNo");
   const [a, b] = G.card;
+  const A_ = players.filter(n => G.votes[n] === "A"), B_ = players.filter(n => G.votes[n] === "B");
   if (G.step === "result") {
-    const A_ = G.sel, B_ = players.filter(n => !G.sel.includes(n));
     const minority = A_.length === B_.length ? null : A_.length < B_.length ? A_ : B_;
-    const col = (lab, txt, list) => `<div class="panel"><span class="label">${lab}</span><b>${esc(txt)}</b><div class="team-members">${list.length ? list.map(n => `<span class="mini">${av(n, "xs")}${esc(n)}</span>`).join("") : `<small>Personne</small>`}</div></div>`;
+    const side = (k, txt, list, cls) => `<div class="wyr-side ${cls}${minority === list && list.length ? " lose" : ""}"><span class="wyr-tag">${k}</span><b class="wyr-count">${list.length}</b><p>${esc(txt)}</p><div class="team-members">${list.map(n => `<span class="mini">${av(n, "xs")}${esc(n)}</span>`).join("") || `<small>Personne</small>`}</div></div>`;
     return screen({
       title: "Tu préfères", color: C, body: `
-      <h2 class="h2">${minority ? (minority.length ? "La minorité prend un gage" : "Tout le monde est d'accord") : "Égalité parfaite"}</h2>
-      <p class="hint">${minority && minority.length ? "La majorité gagne 1 point. La minorité boit une gorgée ou prend un gage." : "Personne ne gagne de point sur ce dilemme."}</p>
-      ${col("Choix A", a, A_)}${col("Choix B", b, B_)}`,
-      foot: btn("Dilemme suivant", "wyrNext", { icon: "play" }) + (minority && minority.length ? `<button class="textbtn" data-act="wyrGage">Choisir le gage de la minorité</button>` : "")
+      <h2 class="h2">${!minority ? "Égalité parfaite" : minority.length ? `Gage pour ${minority.map(esc).join(", ")}` : "Tout le monde est d'accord"}</h2>
+      <p class="hint">${minority && minority.length ? "La majorité gagne 1 point. La minorité prend un gage." : "Personne ne gagne de point sur ce dilemme."}</p>
+      <div class="wyr-result">${side("A", a, A_, "a")}${side("B", b, B_, "b")}</div>`,
+      foot: minority && minority.length
+        ? `<div class="row2">${btn("Le gage", "wyrGage", { kind: "ghost", icon: "flame" })}${btn("Suivant", "wyrNext", { icon: "play" })}</div>`
+        : btn("Dilemme suivant", "wyrNext", { icon: "play" })
     });
   }
+  const voted = A_.length + B_.length;
   return screen({
     title: "Tu préfères", color: C, body: `
     <div class="seg">${WYR_LEVELS.map(([k, l]) => `<button class="${G.level === k ? "on" : ""}" data-act="wyrLevel" data-arg="${k}">${l}</button>`).join("")}</div>
-    <div class="dilemma"><div class="choice"><span class="opt">A</span><b>${esc(a)}</b></div><span class="or">ou</span><div class="choice"><span class="opt">B</span><b>${esc(b)}</b></div></div>
-    <span class="label">À trois, levez la main pour A. Touche les personnes qui ont choisi A.</span>
-    <div class="pickgrid">${players.map(n => `<button class="pickav${G.sel.includes(n) ? " on" : ""}" data-act="wyrSel" data-arg="${esc(n)}" aria-pressed="${G.sel.includes(n)}">${av(n, "m")}<span>${esc(n)}</span></button>`).join("")}</div>`,
-    foot: btn(`Valider <small>${G.sel.length} pour A, ${players.length - G.sel.length} pour B</small>`, "wyrValidate", { icon: "check" }) + `<button class="textbtn" data-act="wyrNext">${ic("skip", 18)} Passer ce dilemme</button>`
+    <div class="wyr">
+      <div class="wyr-choice a"><span class="wyr-tag">A</span><p>${esc(a)}</p></div>
+      <span class="wyr-or">ou</span>
+      <div class="wyr-choice b"><span class="wyr-tag">B</span><p>${esc(b)}</p></div>
+    </div>
+    <span class="label">Chacun choisit son camp</span>
+    <ul class="list">${players.map(n => `<li class="row-item wyr-vote">${av(n, "s")}<span class="grow">${esc(n)}</span>
+      <span class="ab">${["A", "B"].map(k => `<button class="${G.votes[n] === k ? "on " + k.toLowerCase() : ""}" data-act="wyrVote" data-arg="${esc(n)}|${k}" aria-pressed="${G.votes[n] === k}">${k}</button>`).join("")}</span></li>`).join("")}</ul>`,
+    foot: `<div class="row2">${btn("Passer", "wyrNext", { kind: "ghost", icon: "skip" })}${btn(`Résultat <small>${voted}/${players.length}</small>`, "wyrValidate", { icon: "check", dis: !voted })}</div>`
   });
 }
 
@@ -930,10 +985,9 @@ const A = {
   closeSheet() { sheet = null; draw(); },
   gagePick(i) { sheet.chosen = +i === 2 ? "group" : sheet.opts[+i]; draw(); },
   gageReroll() { sheet.opts = gageOpts(sheet.spicy); draw(); },
-  gageDone() { const then = sheet && sheet.then; sheet = null; if (then) A[then](); else draw(); },
-  gagePick(i) { sheet.chosen = +i === 2 ? "group" : sheet.opts[+i]; draw(); },
-  gageReroll() { sheet.opts = gageOpts(sheet.spicy); draw(); },
-  gageDone() { const then = sheet && sheet.then; sheet = null; if (then) A[then](); else draw(); },
+  gageWho(n) { sheet.pick = toggleIn(sheet.pick, n); draw(); },
+  gageDone() { gageResolve(true); },
+  gageRefuse() { gageResolve(false); },
   install() {
     if (installEvt) { const e = installEvt; installEvt = null; e.prompt(); e.userChoice.finally(() => draw()); return; }
     sheet = { type: "install" }; draw();
@@ -941,8 +995,8 @@ const A = {
   hideInstall() { installHidden = true; store.set("installHidden", true); draw(); },
   board() { prevView = view; go(boardScreen); },
   boardBack() { go(prevView || root); },
-  askReset() { confirmSheet({ title: "Remettre à zéro ?", text: "Tous les points de la soirée seront effacés.", ok: "Tout effacer", act: "resetScores", danger: true }); },
-  resetScores() { scores = {}; store.set("scores", scores); sheet = null; draw(); },
+  askReset() { confirmSheet({ title: "Remettre à zéro ?", text: "Tous les points et les gages de la soirée seront effacés.", ok: "Tout effacer", act: "resetScores", danger: true }); },
+  resetScores() { scores = {}; gstats = {}; store.set("scores", scores); store.set("gagestats", gstats); sheet = null; draw(); },
   askClear() { confirmSheet({ title: "Vider la liste ?", text: "Tous les joueurs seront retirés.", ok: "Vider la liste", act: "clearP", danger: true }); },
   clearP() { roster = []; saveRoster(); syncNames(); sheet = null; draw(); },
   editP(id) {
@@ -1089,7 +1143,7 @@ const A = {
 
 /* ---------- Actions des nouveaux jeux ---------- */
 function quizDrawQ() { G.q = G.qd.draw(); G.opts = shuffle([G.q.a, ...G.q.w]); G.ans = null; }
-function wyrDraw() { const k = G.level; G.decks[k] = G.decks[k] || pdeck("wyr-" + k, WYR[k]); G.card = G.decks[k].draw(); G.sel = []; G.step = "ask"; }
+function wyrDraw() { const k = G.level; G.decks[k] = G.decks[k] || pdeck("wyr-" + k, WYR[k]); G.card = G.decks[k].draw(); G.votes = {}; G.step = "ask"; }
 function nhieDraw() { const k = G.level; G.decks[k] = G.decks[k] || pdeck("nhie-" + k, NHIE[k]); G.card = G.decks[k].draw(); G.sel = []; }
 const toggleIn = (list, n) => list.includes(n) ? list.filter(x => x !== n) : [...list, n];
 function lgSleepNow() { G.sub = "sleep"; draw(); say(LG_STEP[G.steps[G.si]].sleep); }
@@ -1156,7 +1210,7 @@ Object.assign(A, {
       const left = end - Date.now();
       if (left <= 0) {
         bombT = null; G.state = "boom"; G.loser = null;
-        beep(70, 1.2); try { navigator.vibrate && navigator.vibrate([500, 100, 500]); } catch (e) {}
+        explosion(); try { navigator.vibrate && navigator.vibrate([600, 80, 300, 80, 200]); } catch (e) {}
         return draw();
       }
       beep(left < 5000 ? 1046 : left < 15000 ? 880 : 740, .04);
@@ -1171,14 +1225,16 @@ Object.assign(A, {
   wyrLevel(k) { if (k === "x18" && !adultOk) { G.gate = true; return draw(); } G.level = k; store.set("wyrlvl", k); wyrDraw(); draw(); },
   wyrAdult() { adultOk = true; G.gate = false; G.level = "x18"; store.set("wyrlvl", "x18"); wyrDraw(); draw(); },
   wyrGateNo() { G.gate = false; draw(); },
-  wyrSel(n) { G.sel = toggleIn(G.sel, n); draw(); },
+  wyrVote(arg) { const k = arg.lastIndexOf("|"), n = arg.slice(0, k), v = arg.slice(k + 1); G.votes[n] = G.votes[n] === v ? undefined : v; draw(); },
   wyrValidate() {
-    const a = G.sel, b = players.filter(n => !a.includes(n));
+    const a = players.filter(n => G.votes[n] === "A"), b = players.filter(n => G.votes[n] === "B");
+    if (!a.length && !b.length) return;
     if (a.length !== b.length && a.length && b.length) (a.length > b.length ? a : b).forEach(n => addPts(n, 1));
     G.step = "result"; go(wyr);
   },
+
   wyrNext() { wyrDraw(); go(wyr); },
-  wyrGage() { const a = G.sel, b = players.filter(n => !a.includes(n)); openGage((a.length < b.length ? a : b).join(", "), G.level !== "normal"); },
+  wyrGage() { const a = players.filter(n => G.votes[n] === "A"), b = players.filter(n => G.votes[n] === "B"); openGage(a.length < b.length ? a : b, G.level !== "normal"); },
   /* Je n'ai jamais */
   nhieLevel(k) { if (k === "x18" && !adultOk) { G.gate = true; return draw(); } G.level = k; store.set("nhielvl", k); nhieDraw(); draw(); },
   nhieAdult() { adultOk = true; G.gate = false; G.level = "x18"; store.set("nhielvl", "x18"); nhieDraw(); draw(); },

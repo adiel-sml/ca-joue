@@ -1,5 +1,6 @@
 /* Contenu des jeux Time's Up, La Bombe, Tu préfères, Je n'ai jamais, Quiz et Loup-garou */
-import { TU_MORE, BOMB_MORE, WYR_MORE, NHIE_MORE, QUIZ_MORE } from "./content-more.js";
+import { TU_MORE, BOMB_MORE, WYR_MORE, QUIZ_MORE } from "./content-more.js";
+import { NHIE_SOFT, NHIE_FUN, NHIE_HOT, NHIE_X18 } from "./content-nhie.js";
 const uniq = l => { const s = new Set(); return l.filter(x => { const k = (typeof x === "string" ? x : x.q || x.join("|")).toLowerCase(); if (s.has(k)) return false; s.add(k); return true; }); };
 
 /* ---------- Time's Up : personnalités, personnages et objets connus ---------- */
@@ -139,128 +140,6 @@ Une nuit torride sans bisou|Une heure de bisous sans rien d'autre`)
 
 /* ---------- Je n'ai jamais (la carte commence par « Je n'ai jamais… ») ---------- */
 const nhie = s => s.trim().split("\n").map(x => x.trim());
-const NHIE_BASE = {
-  soft: nhie(`mangé de sushis
-pris le train sans billet
-oublié l'anniversaire d'un proche
-dormi à la belle étoile
-fait de karaoké
-raté un bus en courant derrière
-fait une chute en public
-eu de plâtre
-fait de saut en parachute
-été filmé pour la télé
-perdu mes clés
-pleuré devant un dessin animé
-raté un examen
-fait un repas entier de bonbons
-dormi plus de 14 heures d'affilée
-eu de poisson rouge
-fait une nuit blanche
-écrit une lettre à la main
-appelé un prof « maman » ou « papa »
-rencontré une célébrité
-cassé l'écran de mon téléphone
-parlé à mes plantes
-fait un selfie avec un inconnu
-volé un objet dans un hôtel
-monté sur une moto
-fait du camping
-gagné un concours
-eu peur du noir
-chanté devant un public
-mangé un insecte`),
-  fun: nhie(`stalké un ex sur les réseaux
-fait semblant d'être malade pour ne pas aller travailler
-menti pour quitter un rendez-vous
-été viré d'un cours
-bu au point d'oublier la soirée
-envoyé un message à la mauvaise personne
-ghosté quelqu'un
-été refoulé d'une boîte
-dansé sur une table
-fait un date avec quelqu'un rencontré sur une appli
-donné un faux prénom en soirée
-dormi dans une baignoire
-menti à mes parents sur l'endroit où j'étais
-lu les messages de quelqu'un en cachette
-liké une vieille photo par erreur en stalkant
-répété un secret qu'on m'avait confié
-été en retard au travail à cause d'une soirée
-vomi en soirée
-appelé mon ex en ayant trop bu
-fait semblant de rire à une blague nulle de mon patron
-annulé au dernier moment avec une fausse excuse
-dit « je t'aime » sans le penser
-eu un crush sur un prof
-menti pendant une partie de Je n'ai jamais
-eu un fou rire dans un moment très sérieux
-fait le mur
-été sur une photo gênante qui a circulé
-passé plus de 8 heures sur mon téléphone en une journée
-fait semblant de ne pas reconnaître quelqu'un
-inventé une histoire pour impressionner quelqu'un`),
-  hot: nhie(`embrassé quelqu'un dans cette pièce
-embrassé deux personnes dans la même soirée
-flirté pour obtenir quelque chose gratuitement
-eu un coup d'un soir
-envoyé de photo osée
-embrassé quelqu'un de plus de 10 ans mon aîné
-craqué pour l'ex d'un ami
-dragué quelqu'un qui était en couple
-été en couple avec deux personnes en même temps
-embrassé un inconnu en boîte
-menti sur mon nombre d'ex
-écrit à mon ex à 3 heures du matin
-accepté un rendez-vous juste pour le repas gratuit
-embrassé quelqu'un du même sexe
-eu un crush sur quelqu'un ici
-pris une douche à deux
-joué au strip-poker
-dormi chez quelqu'un après un premier date
-été surpris en train d'embrasser quelqu'un
-eu une histoire avec un collègue
-embrassé quelqu'un pour gagner un pari
-fait de massage sensuel
-envoyé un message coquin à la mauvaise personne
-fait semblant d'être célibataire
-eu deux dates différents dans la même semaine
-embrassé quelqu'un pendant un Action ou Vérité
-rêvé de quelqu'un ici
-eu un suçon visible au travail ou en cours
-dansé collé-serré avec un inconnu
-dragué quelqu'un sur une appli pendant que j'étais en couple`),
-  x18: nhie(`fait l'amour dans une voiture
-couché le premier soir
-fait un plan à trois
-fait l'amour dans un lieu public
-utilisé de sextoy
-simulé
-envoyé de nudes
-fait l'amour dans le lit de quelqu'un d'autre
-couché avec un ex après la rupture
-fait l'amour sous la douche
-regardé un film porno avec quelqu'un
-fait de strip-tease
-couché avec quelqu'un rencontré le soir même
-été surpris en plein acte
-fait l'amour plus de trois fois dans la même nuit
-utilisé de menottes
-eu de sex friend
-couché avec un collègue
-fait l'amour à la plage
-filmé un moment intime
-couché avec quelqu'un dont j'ai oublié le prénom
-fait l'amour dans un avion ou un train
-été attiré par quelqu'un du même sexe
-fait de jeu de rôle au lit
-couché avec quelqu'un de plus de 15 ans mon aîné
-fait l'amour chez mes parents
-acheté de la lingerie pour séduire
-fait l'amour dehors, la nuit
-couché avec deux personnes différentes le même week-end
-fantasmé sur quelqu'un de cette pièce`)
-};
 
 /* ---------- Quiz : [question, bonne réponse, 3 mauvaises réponses, catégorie] ---------- */
 const Q = (cat, list) => list.map(([q, a, ...w]) => ({ q, a, w, cat }));
@@ -397,7 +276,8 @@ const QUIZ_BASE = [
 export const TU_WORDS = uniq([...TU_BASE, ...TU_MORE]);
 export const BOMB_THEMES = uniq([...BOMB_BASE, ...BOMB_MORE]);
 export const WYR = Object.fromEntries(Object.keys(WYR_BASE).map(k => [k, uniq([...WYR_BASE[k], ...WYR_MORE[k]])]));
-export const NHIE = Object.fromEntries(Object.keys(NHIE_BASE).map(k => [k, uniq([...NHIE_BASE[k], ...NHIE_MORE[k]])]));
+/* Je n'ai jamais : listes réécrites dans content-nhie.js (au moins 250 cartes par niveau) */
+export const NHIE = { soft: uniq(NHIE_SOFT), fun: uniq(NHIE_FUN), hot: uniq(NHIE_HOT), x18: uniq(NHIE_X18) };
 export const QUIZ = uniq([...QUIZ_BASE, ...QUIZ_MORE]);
 
 /* ---------- Loup-garou ---------- */
