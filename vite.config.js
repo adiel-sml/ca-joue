@@ -13,7 +13,7 @@ export default defineConfig({
       manifest: {
         name: "Ça Joue",
         short_name: "Ça Joue",
-        description: "Douze jeux de soirée sur un seul téléphone.",
+        description: "Vingt-trois jeux de soirée sur un seul téléphone, dont six jeux pour les couples.",
         lang: "fr",
         start_url: "./",
         scope: "./",

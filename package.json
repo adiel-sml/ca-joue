@@ -2,7 +2,7 @@
   "name": "ca-joue",
   "version": "1.0.0",
   "private": true,
-  "description": "Douze jeux de soirée sur un seul téléphone : Mimes, Mot interdit, Time's Up, Quiz, Action ou Vérité, Je n'ai jamais, Tu préfères, La Bombe, 2 vérités 1 mensonge, Jeu mystère, Undercover, Loup-garou.",
+  "description": "Vingt-trois jeux de soirée sur un seul téléphone, dont une section de jeux pour les couples.",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
