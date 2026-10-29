@@ -313,7 +313,6 @@ Appelle quelqu'un et chante-lui une chanson.
 Fais un discours de 30 secondes sur les chaussettes.
 Fais un défilé de mode avec 3 objets de la pièce.
 Tiens-toi sur un pied jusqu'à ton prochain tour.
-Parle à la 3e personne jusqu'à ton prochain tour.
 Interdit de dire « oui » jusqu'à ton prochain tour.
 Interdit de rire pendant 2 minutes.
 Fais une grimace sur une photo que le groupe garde.
@@ -369,7 +368,6 @@ Fais trois vœux à voix haute.`);
 
 export const GAGES_HOT = lines(`Fais un bisou dans le cou de la personne de ton choix.
 Fais un massage des épaules de 30 secondes à la personne de ton choix.
-Enlève un vêtement jusqu'à la fin de la partie, sous-vêtements exclus.
 Fais une danse sensuelle de 20 secondes.
 Murmure quelque chose de coquin à l'oreille de quelqu'un.
 Envoie « Je pense à toi » à ton crush.
@@ -381,16 +379,12 @@ Raconte ton meilleur bisou en détail.
 Fais un compliment osé à la personne à ta droite.
 Mange une fraise de la façon la plus sexy possible.
 Fais semblant de draguer la personne à ta gauche pendant 30 secondes.
-Laisse quelqu'un te faire un suçon sur le bras.
 Montre la photo la plus sexy de ta galerie à une personne de ton choix.
 Fais un bisou sur la joue de chaque personne du sexe opposé.
 Raconte ton fantasme le plus avouable.
-Fais un strip-tease d'une chaussette, très lentement.
+Retire une chaussette très lentement, comme dans un film.
 Laisse la personne de ton choix te faire un bisou où elle veut sur le visage.
-Imite ton expression du matin au réveil après une nuit torride.
-Fais un body shot avec la boisson de ton choix.
 Mordille l'oreille de la personne de ton choix pendant 3 secondes.
-Fais un lap dance de 15 secondes à la personne de ton choix.
 Embrasse quelqu'un sur la bouche, ou bois deux fois.`);
 
 export const MYS_MORE = [
@@ -701,7 +695,7 @@ Une déclaration en public|Une déclaration par lettre
 Sortir avec quelqu'un qui ne sait pas danser|Avec quelqu'un qui ne sait pas cuisiner
 Être en couple avec un acteur|Avec un chanteur
 Un week-end romantique à Venise|Un week-end festif à Ibiza
-Que ton crush lise ton journal intime|Qu'il écoute tes vocaux
+Que ton crush lise ton journal intime|Que ton crush écoute tes vocaux
 Rompre par message|Te faire larguer en public
 Un ex jaloux|Un ex qui t'a oublié
 Un partenaire qui chante tout le temps|Un partenaire qui ronfle fort
