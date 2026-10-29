@@ -38,6 +38,7 @@ L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPho
 
 ## Fonctionnalités
 
+- **Accueil par catégories** : une barre en haut de l'accueil permet de choisir Tous les jeux, Récents (les six derniers jeux lancés), En équipes, Tous ensemble, Rôles secrets ou En couple. Elle reste visible pendant le défilement, défile à l'horizontale si d'autres catégories s'ajoutent, et l'appli retient la dernière catégorie choisie.
 - **Règles de chaque jeu** : le but, le déroulement étape par étape et les points. Elles s'affichent la première fois qu'on ouvre un jeu, puis à tout moment avec le bouton d'information en haut de l'écran.
 - **Quiz par thèmes** : Culture générale (283 questions), Géographie (294), Histoire (275), Sciences et nature (286), Cinéma et séries (280), Musique (268), Sport (284) et Pop culture (280). L'appli retient le dernier thème choisi.
 - **Joueurs** avec prénom, sexe et personnage illustré. Le sexe sert à adapter les cartes : bisous entre fille et garçon, accords « la reine » ou « le roi ».

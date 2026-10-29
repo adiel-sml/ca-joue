@@ -48,7 +48,7 @@
 * { box-sizing: border-box; }
 html { background: var(--bg); }
 body {
-  background: var(--bg); color: var(--text);
+  margin: 0; background: var(--bg); color: var(--text);
   font-family: var(--f-body); font-size: 16px; line-height: 1.45;
   -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
@@ -148,6 +148,19 @@ small { font-size: 13px; color: var(--muted); }
 .install [data-act=hideInstall] { position: absolute; top: 6px; right: 6px; }
 @media (max-width: 380px) { .stack-av .av:nth-child(n+5) { display: none; } .install-ic { display: none; } }
 .install-ic { width: 40px; height: 40px; border-radius: 12px; background: var(--bg); display: grid; place-items: center; color: var(--accent); flex: none; }
+/* Barre des catégories de l'accueil : elle défile à l'horizontale et reste collée en haut */
+.cats {
+  position: sticky; top: 0; z-index: 4; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+  margin: -8px -16px; padding: 8px 16px; scroll-padding-inline: 16px;
+  background: var(--bg); box-shadow: 0 0 0 100vmax var(--bg); clip-path: inset(0 -100vmax);
+  border-bottom: 1px solid transparent;
+}
+.cats::-webkit-scrollbar { display: none; }
+.cats.stuck { padding-top: calc(8px + env(safe-area-inset-top, 0px)); margin-top: calc(-8px - env(safe-area-inset-top, 0px)); border-bottom-color: var(--line); }
+.cats button { flex: none; white-space: nowrap; background: var(--surface-2); border-radius: 999px; padding: 10px 16px; font-weight: 700; font-size: 15px; }
+.cats button.on { background: var(--accent); color: var(--ink); }
+.cats button small { color: inherit; opacity: .6; margin-left: 2px; }
+.cats-top { height: 0; margin-bottom: -16px; }
 .games { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .tile {
   background: var(--tc); color: var(--ink); text-align: left; border-radius: 20px;
