@@ -176,6 +176,7 @@ const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.
 /* ---------- État de l'interface ---------- */
 let G = null;          // partie en cours
 let tab = "games";     // onglet de l'accueil
+let homeCat = store.get("homeCat", "*");   // catégorie de jeux affichée à l'accueil
 let view = root;       // écran affiché
 let prevView = null;   // écran à rouvrir après le classement
 let sheet = null;      // panneau du bas ouvert
@@ -188,6 +189,7 @@ const frSpaces = h => h.replace(/ ([?!:;»])/g, "&nbsp;$1").replace(/« /g, "«&
 function draw() {
   $app.innerHTML = frSpaces(view() + sheetHTML()) + '<div id="toast" class="toast" role="status" hidden></div>';
   document.body.classList.toggle("locked", !!sheet);
+  catsSync();
 }
 function toast(t) { const el = document.getElementById("toast"); if (!el) return; el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 1800); }
 
@@ -219,6 +221,7 @@ function root() {
   if (tab === "players") return screen({ title: "Joueurs", left: null, right: null, tabs: true, body: playersBody() });
   if (tab === "board") return screen({ title: "Classement", left: null, right: null, tabs: true, body: boardBody() });
   const showInstall = !installHidden && !isStandalone();
+  const cats = homeCats(), cur = cats.some(c => c[0] === homeCat) ? homeCat : "*";
   return screen({
     left: null, right: null, tabs: true, body: `
     <div class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-name">Ça Joue</span></div>
@@ -228,15 +231,34 @@ function root() {
       ${ic("pencil", 18)}
     </button>
     ${showInstall ? `<div class="install"><span class="install-ic">${ic("phone", 22)}</span><span class="grow"><b>Installer l'appli</b><small>Plein écran, même sans réseau.</small></span><button class="pill" data-act="install">Installer</button><button class="iconbtn sm" data-act="hideInstall" aria-label="Masquer">${ic("x", 18)}</button></div>` : ""}
-    ${GAME_CATS.map(([cat, label]) => `<h2 class="section">${label}</h2>
-    <div class="games">${GAMES.filter(g => g.cat === cat).map(g => `<button class="tile" style="--tc:${g.c}" data-act="open" data-arg="${g.id}">
+    <div class="cats-top"></div>
+    <nav class="cats" aria-label="Catégories de jeux">${cats.map(([k, l, n]) => `<button class="${cur === k ? "on" : ""}" data-act="homeCat" data-arg="${k}" aria-pressed="${cur === k}">${l} <small>${n}</small></button>`).join("")}</nav>
+    ${cur === "*" ? GAME_CATS.map(([cat, label]) => `<h2 class="section">${label}</h2>${tiles(GAMES.filter(g => g.cat === cat))}`).join("")
+      : cur === "recent" ? tiles(recentGames()) : tiles(GAMES.filter(g => g.cat === cur))}`
+  });
+}
+/* Catégories de l'accueil : tous les jeux, les derniers joués, puis chaque catégorie */
+const recentGames = () => store.get("recent", []).map(id => GAMES.find(g => g.id === id)).filter(Boolean);
+function homeCats() {
+  const r = recentGames();
+  return [["*", "Tous les jeux", GAMES.length], ...(r.length ? [["recent", "Récents", r.length]] : []), ...GAME_CATS.map(([k, l]) => [k, l, GAMES.filter(g => g.cat === k).length])];
+}
+const tiles = list => `<div class="games">${list.map(g => `<button class="tile" style="--tc:${g.c}" data-act="open" data-arg="${g.id}">
       <span class="tile-ic">${ic(g.icon, 28)}</span>
       <span class="tile-name">${esc(g.name)}</span>
       <span class="tile-desc">${esc(g.desc)}</span>
       <span class="tile-meta">${ic(g.cat === "couple" ? "heart" : "users", 14)} ${g.cat === "couple" ? "À deux" : `Dès ${g.min} joueurs`}</span>
-    </button>`).join("")}</div>`).join("")}`
-  });
+    </button>`).join("")}</div>`;
+/* La barre des catégories reste en haut de l'écran : on garde la catégorie choisie visible et on gère l'encoche quand elle est collée en haut */
+function catsSync() {
+  const nav = $app.querySelector(".cats");
+  if (!nav) return;
+  const on = nav.querySelector(".on");
+  if (on && on.offsetLeft + on.offsetWidth > nav.clientWidth - 16) nav.scrollLeft = on.offsetLeft + on.offsetWidth - nav.clientWidth + 16;
+  const top = $app.querySelector(".cats-top");
+  nav.classList.toggle("stuck", !!top && top.getBoundingClientRect().top < 0);
 }
+window.addEventListener("scroll", catsSync, { passive: true });
 function playersBody() {
   return `${isSample ? `<p class="hint">Ce sont des prénoms d'exemple. Ajoute tes amis, la liste d'exemple disparaîtra.</p>` : `<p class="hint">Le sexe sert à adapter les cartes : bisous entre fille et garçon, « la reine » ou « le roi ».</p>`}
   ${btn("Ajouter un joueur", "editP", { icon: "userPlus" })}
@@ -1447,10 +1469,16 @@ const A = {
   rmP() { const i = roster.findIndex(x => x.id === sheet.id); if (i >= 0) roster.splice(i, 1); saveRoster(); syncNames(); sheet = null; draw(); },
   open(id) {
     A.openGame(id);
+    if (G && G.kind === id) store.set("recent", [id, ...store.get("recent", []).filter(x => x !== id)].slice(0, 6));
     const seen = store.get("rulesSeen", []);
     if (G && G.kind === id && RULES[id] && !seen.includes(id)) { store.set("rulesSeen", [...seen, id]); sheet = { type: "rules", id }; draw(); }
   },
   rules() { if (G && RULES[G.kind]) { sheet = { type: "rules", id: G.kind }; draw(); } },
+  homeCat(k) {
+    const top = $app.querySelector(".cats-top"), y = top ? top.getBoundingClientRect().top + window.scrollY : 0, stuck = top && window.scrollY > y;
+    homeCat = k; store.set("homeCat", k); draw();
+    if (stuck) window.scrollTo(0, y);
+  },
   openGame(id) {
     stopTimer();
     const g = GAMES.find(x => x.id === id);

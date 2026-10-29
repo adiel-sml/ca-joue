@@ -133,7 +133,7 @@ export const GAMES = [
  {id:"mime",cat:"team",name:"Mimes",icon:"drama",min:2,c:"var(--c-mime)",desc:"Fais deviner sans parler."},
  {id:"taboo",cat:"team",name:"Mot interdit",icon:"ban",min:2,c:"var(--c-taboo)",desc:"Fais deviner sans les mots en rouge."},
  {id:"tu",cat:"team",name:"Time's Up",icon:"hourglass",min:4,c:"var(--c-tu)",desc:"Trois manches avec les mêmes mots."},
- {id:"quiz",cat:"team",name:"Quiz",icon:"brain",min:2,c:"var(--c-quiz)",desc:"Culture générale, cinéma, musique."},
+ {id:"quiz",cat:"team",name:"Quiz",icon:"brain",min:2,c:"var(--c-quiz)",desc:"Huit thèmes, de l'histoire au sport."},
  {id:"av",cat:"all",name:"Action ou Vérité",icon:"flame",min:2,c:"var(--c-av)",desc:"De Chill jusqu'à +18."},
  {id:"nhie",cat:"all",name:"Je n'ai jamais",icon:"wine",min:3,c:"var(--c-nhie)",desc:"Les aveux, de Soft à +18."},
  {id:"wyr",cat:"all",name:"Tu préfères",icon:"split",min:3,c:"var(--c-wyr)",desc:"Choisis ton camp. La minorité perd."},
