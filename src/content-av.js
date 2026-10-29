@@ -1807,8 +1807,8 @@ Va dans la pièce d'à côté avec {opp} pendant 1 minute. Faites ce que vous vo
 Va dans la salle de bain avec {opp} pendant 2 minutes. Ce qui s'y passe reste dans la salle de bain.
 Enferme-toi 3 minutes dans une pièce avec la personne de ton choix. Vous revenez avec un vêtement en moins chacun.
 Glissez-vous sous une couverture, {opp} et toi, pendant 1 minute. Le groupe se retourne.
-Montre à une personne de ton choix une photo de toi rangée dans ton dossier « My Eyes Only » sur Snapchat, ou prends 3 gages.
-Ouvre ton album de photos masquées et montre à {opp} une photo de toi, ou prends 3 gages.
+Montre à une personne de ton choix une photo de ton dossier « My Eyes Only » sur Snapchat, ou prends 3 gages.
+Ouvre ton album de photos masquées et montre à {opp} la photo de ton choix, ou prends 3 gages.
 Montre à {opp} la dernière photo coquine de toi que tu as envoyée, ou prends 3 gages.
 Montre à {opp} le dernier selfie que tu n'as envoyé qu'à une seule personne.
 Lis à voix haute le dernier message coquin que tu as reçu, sans dire de qui il vient, ou prends 3 gages.
