@@ -24,14 +24,45 @@ const store = {
 const plural = (n, w) => `${n} ${w}${Math.abs(n) > 1 ? "s" : ""}`;
 const ptsTxt = v => `${v > 0 ? "+" : ""}${plural(v, "pt")}`;
 
-/* Paquet mémorisé sur le téléphone : une carte ne revient qu'une fois tout le paquet passé, même d'une partie à l'autre */
-function pdeck(key, arr) {
+/* Paquets mémorisés sur l'appareil : une carte ne revient qu'une fois toutes les autres du paquet tirées,
+   même d'une partie à l'autre et après fermeture de l'appli. Chaque carte est repérée par une empreinte
+   de son texte, donc l'ajout de nouvelles cartes ne remet pas l'historique à zéro. Des paquets qui se
+   recoupent partagent le même historique (thèmes du Quiz, niveaux des Mimes, gages épicés et +18). */
+const cardKey = c => typeof c === "string" ? c : Array.isArray(c) ? c.join("|") : c.q && c.cat ? c.q : JSON.stringify(c);
+function cardId(c) {
+  const s = cardKey(c);
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < s.length; i++) { const ch = s.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+const seenMem = {};
+function pdeck(key, arr, legacy = key) {
+  const ids = arr.map(cardId);
   return {
     draw() {
-      let st = store.get("deck:" + key, null);
-      if (!st || st.n !== arr.length || !Array.isArray(st.left) || !st.left.length) st = { n: arr.length, left: shuffle(arr.map((_, i) => i)) };
-      const i = st.left.pop();
-      store.set("deck:" + key, st);
+      const k = "seen:" + key;
+      let seen = seenMem[k] || store.get(k, null);
+      if (!Array.isArray(seen)) seen = [];
+      /* Reprise de l'ancien format, qui gardait les numéros des cartes restantes */
+      const old = store.get("deck:" + legacy, null);
+      if (old) {
+        try { localStorage.removeItem("cajoue:deck:" + legacy); } catch (e) {}
+        if (Array.isArray(old.left) && old.n <= arr.length) { const left = new Set(old.left); for (let i = 0; i < old.n; i++) if (!left.has(i)) seen.push(ids[i]); }
+      }
+      const done = new Set(seen);
+      let free = ids.flatMap((id, i) => done.has(id) ? [] : [i]);
+      if (!free.length) {
+        /* Tout le paquet est passé : il recommence, sans redonner tout de suite la dernière carte */
+        const mine = new Set(ids), last = seen[seen.length - 1];
+        seen = seen.filter(id => !mine.has(id));
+        free = ids.flatMap((id, i) => id === last && arr.length > 1 ? [] : [i]);
+      }
+      const i = free[Math.floor(Math.random() * free.length)];
+      seen.push(ids[i]);
+      seenMem[k] = seen;
+      store.set(k, seen);
       return arr[i];
     }
   };
@@ -290,7 +321,7 @@ function confirmSheet(o) { sheet = { type: "confirm", ...o }; draw(); }
 /* Gages : deux propositions tirées au sort, plus le choix du groupe */
 /* spicy : false, "hot" (gage épicé) ou "x18" (gage épicé ou réservé aux adultes) */
 function gageOpts(spicy) {
-  const n = pdeck("gages", GAGES), a = spicy === "x18" ? pdeck("gages-x18", GAGES_X18).draw() : spicy ? pdeck("gages-hot", GAGES_HOT).draw() : n.draw();
+  const n = pdeck("gages", GAGES), a = spicy === "x18" ? pdeck("gages-hot", GAGES_X18, "gages-x18").draw() : spicy ? pdeck("gages-hot", GAGES_HOT).draw() : n.draw();
   let b = n.draw(); if (b === a) b = n.draw();
   return [a, b];
 }
@@ -1426,7 +1457,7 @@ const A = {
     if (players.length < g.min) { tab = "players"; go(root); toast(`${g.name} se joue à ${g.min} minimum`); return; }
     if (id === "mime" || id === "taboo") { G = { kind: id, nTeams: 2, dur: 60, round: 1, diff: store.get("mimeDiff", "easy") }; makeTeams(); return go(teamSetup); }
     if (id === "av") { G = { kind: "av", order: shuffle(players), i: 0, level: store.get("avlvl", "fun"), decks: {} }; if (G.level === "x18" && !adultOk) G.level = "hot"; return go(avTurn); }
-    if (id === "tvm") { G = { kind: "tvm", order: shuffle(players), i: 0, scores: Object.fromEntries(players.map(p => [p, 0])), step: "prep", theme: pick(TVM_THEMES), sel: [] }; return go(tvm); }
+    if (id === "tvm") { G = { kind: "tvm", order: shuffle(players), i: 0, scores: Object.fromEntries(players.map(p => [p, 0])), step: "prep", td: pdeck("tvm", TVM_THEMES), sel: [] }; G.theme = G.td.draw(); return go(tvm); }
     if (id === "uc") { const n = players.length; G = { kind: "uc", nU: n >= 13 ? 3 : n >= 7 ? 2 : 1, nW: n >= 11 ? 2 : n >= 5 ? 1 : 0, ucScores: {} }; return go(ucSetup); }
     if (id === "tu") { G = { kind: "tu", nTeams: 2, dur: 45, nWords: 40, round: 0 }; makeTeams(); return go(teamSetup); }
     if (id === "quiz") { G = { kind: "quiz", nTeams: 2, nQ: 10, round: 1, qtheme: store.get("quizTheme", "all") }; makeTeams(); return go(teamSetup); }
@@ -1451,7 +1482,7 @@ const A = {
   reTeams() { makeTeams(); draw(); },
   dur(n) { G.dur = +n; draw(); },
   diff(k) { G.diff = k; store.set("mimeDiff", k); draw(); },
-  teamsGo() { if (G.kind === "tu") return A.tuGo(); if (G.kind === "quiz") return A.quizGo(); if (G.kind === "num") return A.numGo(); G.cur = 0; G.round = 1; G.deck = G.kind === "mime" ? pdeck("mime-" + G.diff, MIME_SETS[G.diff]) : pdeck("taboo", TABOO); go(turnIntro); },
+  teamsGo() { if (G.kind === "tu") return A.tuGo(); if (G.kind === "quiz") return A.quizGo(); if (G.kind === "num") return A.numGo(); G.cur = 0; G.round = 1; G.deck = G.kind === "mime" ? pdeck("mime", MIME_SETS[G.diff], "mime-" + G.diff) : pdeck("taboo", TABOO); go(turnIntro); },
   turnStart() { G.log = []; G.card = G.deck.draw(); go(turnPlay); runTimer(G.dur, A.turnStop); },
   mark(v) { G.log.push({ c: G.card, v: +v }); G.card = G.deck.draw(); beep(+v === 1 ? 880 : +v === -1 ? 220 : 440, .08); draw(); },
   turnStop() { stopTimer(); if (G.card) { G.log.push({ c: G.card, v: 0, last: true }); G.card = null; } go(turnEnd); },
@@ -1487,7 +1518,7 @@ const A = {
   },
   avSkip() { G.i++; draw(); },
   /* 2 vérités 1 mensonge */
-  tvmTheme() { let t; do { t = pick(TVM_THEMES); } while (t === G.theme); G.theme = t; draw(); },
+  tvmTheme() { G.theme = G.td.draw(); draw(); },
   tvmReady() { G.step = "talk"; go(tvm); },
   tvmDebate() { runTimer(60, draw); draw(); },
   tvmVote() { stopTimer(); G.step = "vote"; G.sel = []; go(tvm); },
@@ -1495,7 +1526,7 @@ const A = {
   tvmValidate() {
     const p = tvmCur();
     if (G.sel.length) G.sel.forEach(n => { G.scores[n]++; addPts(n, 1); }); else { G.scores[p] += 2; addPts(p, 2); }
-    G.i++; G.step = "prep"; G.theme = pick(TVM_THEMES); go(tvm);
+    G.i++; G.step = "prep"; G.theme = G.td.draw(); go(tvm);
   },
   /* undercover */
   ucU(d) { const v = G.nU + +d; if (v >= 0 && v + G.nW <= maxImp() && v + G.nW >= 1) G.nU = v; draw(); },
@@ -1603,7 +1634,7 @@ Object.assign(A, {
   quizTheme(t) { G.qtheme = t; store.set("quizTheme", t); draw(); },
   quizGo() {
     const all = G.qtheme === "all" || !QUIZ_THEMES.includes(G.qtheme);
-    Object.assign(G, { cur: 0, asked: 0, total: G.nQ * G.teams.length, qd: all ? pdeck("quiz", QUIZ) : pdeck("quiz-" + G.qtheme, QUIZ.filter(q => q.cat === G.qtheme)) });
+    Object.assign(G, { cur: 0, asked: 0, total: G.nQ * G.teams.length, qd: all ? pdeck("quiz", QUIZ) : pdeck("quiz", QUIZ.filter(q => q.cat === G.qtheme), "quiz-" + G.qtheme) });
     quizDrawQ(); go(quizQ);
   },
   quizAns(i) {
@@ -1727,7 +1758,7 @@ function dicoNewWord() { G.word = G.d.draw(); G.step = "word"; }
 function cpDraw() {
   const k = G.kind, src = { know: KNOW, future: FUTURE, who2: WHO2[G.level], dare2: DARE2[G.level], talk: TALK[G.level], wave: WYR[G.level] }[k];
   const key = k + (["who2", "dare2", "talk", "wave"].includes(k) ? "-" + G.level : "");
-  G.decks[key] = G.decks[key] || pdeck("cp-" + key, src);
+  G.decks[key] = G.decks[key] || (k === "wave" ? pdeck("wyr-" + G.level, src, "cp-" + key) : pdeck("cp-" + key, src));
   G.card = G.decks[key].draw();
   const p = G.couple[G.i % 2];
   if (k === "know" || k === "dare2") G.text = fill(G.card, { cur: p, p1: p, p2: cpOther(p) });

@@ -1795,6 +1795,136 @@ Laisse {opp} t'attraper par le col et te rapprocher de son visage.
 Mets ta main dans le dos de {opp}, sous son haut, jusqu'à ce qu'{elle|il:opp} boive une gorgée.
 Fais un bisou à {opp} là où {elle|il:opp} a un grain de beauté, s'il est au-dessus de la ceinture.
 Embrasse {opp} dans le cou pendant 5 secondes, puis {elle|il:opp} te rend la pareille.
+Twerke {assise|assis} sur les genoux de {opp} pendant 15 secondes.
+Twerke devant {opp}, ses mains posées sur tes hanches, pendant 15 secondes.
+Twerke à quatre pattes sur le canapé pendant 10 secondes, face à {opp}.
+Embrasse {opp} langoureusement pendant 15 secondes, avec la langue, ou prends 3 gages.
+Embrasse {opp} sans t'arrêter pendant 30 secondes, le groupe compte à voix haute.
+Glisse ta main dans {le soutien-gorge|le caleçon:opp} de {opp} pendant 5 secondes, ou prends 3 gages.
+Glisse ta main dans le pantalon de {opp}, par-dessus ses sous-vêtements, pendant 10 secondes.
+Laisse {opp} glisser sa main dans ton pantalon pendant 10 secondes, ou prends 3 gages.
+Va dans la pièce d'à côté avec {opp} pendant 1 minute. Faites ce que vous voulez, personne ne pose de questions.
+Va dans la salle de bain avec {opp} pendant 2 minutes. Ce qui s'y passe reste dans la salle de bain.
+Enferme-toi 3 minutes dans une pièce avec la personne de ton choix. Vous revenez avec un vêtement en moins chacun.
+Glissez-vous sous une couverture, {opp} et toi, pendant 1 minute. Le groupe se retourne.
+Montre à une personne de ton choix une photo de toi rangée dans ton dossier « My Eyes Only » sur Snapchat, ou prends 3 gages.
+Ouvre ton album de photos masquées et montre à {opp} une photo de toi, ou prends 3 gages.
+Montre à {opp} la dernière photo coquine de toi que tu as envoyée, ou prends 3 gages.
+Montre à {opp} le dernier selfie que tu n'as envoyé qu'à une seule personne.
+Lis à voix haute le dernier message coquin que tu as reçu, sans dire de qui il vient, ou prends 3 gages.
+Ouvre ta navigation privée et montre à {opp} le dernier onglet ouvert, ou prends 3 gages.
+Envoie à {opp} un vocal coquin de 10 secondes, qu'{elle|il:opp} écoute à voix haute devant tout le monde.
+Mets une claque sur la fesse gauche de {opp}.
+Mets une fessée à {opp}. Le groupe choisit la force : douce, moyenne ou bien sentie.
+Laisse {opp} te mettre une fessée, aussi forte qu'{elle|il:opp} le veut.
+Mets-toi à quatre pattes et laisse {opp} te donner deux fessées.
+Laisse {opp} te donner trois fessées : une sur chaque fesse et la dernière où {elle|il:opp} veut.
+Choisis une personne du groupe : elle te met une fessée devant tout le monde.
+{Retire ton soutien-gorge sans enlever ton haut, puis fais-le tourner au-dessus de ta tête|Retire ton haut et fais-le tourner au-dessus de ta tête comme un chippendale}.
+Enlève {ta culotte|ton caleçon} dans la pièce d'à côté et glisse-{la|le} dans la poche de {opp}.
+Joue la suite de la partie sans {ton soutien-gorge|ton caleçon}, enlevé discrètement dans la pièce d'à côté.
+Retire un sous-vêtement à {opp} sans lui enlever ses vêtements. Tu as 1 minute.
+Dégrafe {le soutien-gorge|la ceinture:opp} de {opp} d'une seule main. Tu as 10 secondes.
+Déshabille {opp} jusqu'aux sous-vêtements, ou prends 3 gages.
+Laisse {opp} te déshabiller jusqu'aux sous-vêtements, ou prends 3 gages.
+Enlève le haut de {opp} avec les dents, ou prends 3 gages.
+Ouvre la braguette de {opp} avec les dents, ou prends 3 gages.
+Tu as 30 secondes pour enlever un maximum de vêtements à {opp}.
+{opp} a 30 secondes pour t'enlever un maximum de vêtements.
+Ferme les yeux pendant que {opp} t'enlève un vêtement de son choix, sous-vêtements compris.
+Enlève ton pantalon et assieds-toi sur les genoux de {opp} jusqu'à ton prochain tour.
+Enlève ton pantalon et garde-le enlevé jusqu'à ton prochain tour, ou prends 3 gages.
+Retire ton pantalon en dansant, les yeux dans les yeux avec {opp}.
+Fais un strip-tease jusqu'aux sous-vêtements devant {opp}, {assise|assis:opp} sur une chaise.
+Relève ton haut devant {opp} pendant 3 secondes{, soutien-gorge compris si tu oses|}.
+Baisse ton pantalon et montre tes fesses au groupe pendant 3 secondes.
+Fais un câlin à {opp}, tous les deux en sous-vêtements, pendant 10 secondes, ou prends 3 gages.
+Fais un slow avec {opp} en sous-vêtements, ou prends 3 gages.
+Joue trois manches de pierre, feuille, ciseaux contre {opp} : à chaque manche, le perdant enlève un vêtement.
+Joue à pierre, feuille, ciseaux contre {opp} : le perdant embrasse le gagnant où celui-ci le veut.
+Touche {la poitrine|le torse:opp} de {opp} pendant 10 secondes, par-dessus le vêtement.
+Laisse {opp} te toucher {la poitrine|le torse} pendant 10 secondes.
+Embrasse {la poitrine|le torse:opp} de {opp}, sous son haut, pendant 5 secondes, ou prends 3 gages.
+Mordille le téton de {opp} par-dessus son haut.
+Pose ta main sur l'entrejambe de {opp}, par-dessus le pantalon, pendant 5 secondes, ou prends 3 gages.
+Laisse {opp} poser sa main sur ton entrejambe, par-dessus le pantalon, pendant 5 secondes.
+Passe ta main entre les cuisses de {opp}, par-dessus le vêtement, pendant 5 secondes.
+Empoigne les fesses de {opp} pendant 10 secondes.
+Laisse {opp} t'empoigner les fesses pendant 10 secondes.
+Pose tes deux mains sur les fesses de {opp} et garde-les jusqu'à ce qu'{elle|il:opp} dise stop.
+Caresse les fesses de {opp} sous son pantalon pendant 5 secondes, ou prends 3 gages.
+Embrasse {opp} en lui caressant les fesses.
+Glisse ta main sous le haut de {opp} et caresse son ventre pendant 10 secondes.
+Mets la main de {opp} sur ta poitrine et laisse-la 10 secondes.
+Prends la main de {opp} et pose-la où tu veux, sans limite, pendant 5 secondes.
+Prends la main de {opp} et fais-la glisser lentement de ton cou jusqu'à ta ceinture.
+Pendant 1 minute, {opp} peut te toucher où {elle|il:opp} veut, par-dessus les vêtements.
+Pendant 1 minute, tu peux toucher {opp} où tu veux, par-dessus les vêtements.
+Garde ta main dans la poche avant du pantalon de {opp} pendant 1 minute.
+Mets ta main dans la poche arrière de {opp} et laisse-la jusqu'à ton prochain tour.
+Lèche le cou de {opp}, de l'épaule jusqu'à l'oreille.
+Lèche le nombril de {opp}.
+Lèche la lèvre inférieure de {opp}.
+Passe ta langue sur les lèvres de {opp}, sans l'embrasser.
+Suce le doigt de {opp} en {la|le:opp} regardant dans les yeux.
+Laisse {opp} te sucer le doigt pendant 5 secondes.
+Étale un peu de chocolat sur le ventre de {opp} et lèche-le.
+Lèche une goutte de chantilly posée sur le ventre de {opp}, juste au-dessus de la ceinture.
+Bois un shot posé dans le creux des reins de {opp}, sans les mains.
+Fais une tequila version body shot : sel sur le cou de {opp}, un shot, puis le citron dans sa bouche.
+Partage une gorgée de ta boisson avec {opp} en l'embrassant.
+Mets un glaçon dans ta bouche et fais-le glisser le long de la colonne de {opp}, sous son haut.
+Laisse {opp} glisser un glaçon dans ton pantalon.
+Cache un bonbon sur toi : {opp} a 20 secondes pour le trouver avec la bouche.
+Cache un glaçon sur toi : {opp} a 20 secondes pour le trouver avec les mains.
+Mordille la fesse de {opp} par-dessus son pantalon.
+Fais un bisou sur les fesses de {opp}, pantalon baissé, ou prends 3 gages.
+Fais un suçon à {opp} à l'intérieur de la cuisse.
+Laisse {opp} te faire un suçon où {elle|il:opp} veut, sans limite.
+Mords doucement {opp} là où tu veux.
+Laisse {opp} te mordre là où {elle|il:opp} veut.
+Embrasse {opp} où tu veux, même en dessous de la ceinture, par-dessus le vêtement.
+Ferme les yeux et laisse {opp} t'embrasser où {elle|il:opp} veut, sans limite de ceinture, pendant 10 secondes.
+Embrasse {opp} à l'endroit que le groupe choisit, même en dessous de la ceinture, par-dessus le vêtement.
+Fais un bisou à {opp} sur chaque partie du corps que le groupe cite, pendant 20 secondes.
+Embrasse {opp} en descendant du cou jusqu'au nombril, son haut relevé.
+Allonge {opp} sur le canapé et embrasse son ventre en descendant jusqu'à la ceinture.
+Fais un bisou dans le bas du dos de {opp}, juste au-dessus des fesses, son haut relevé.
+Enlève ton haut et laisse {opp} t'embrasser le torse pendant 10 secondes.
+Relève ton haut et laisse {opp} dessiner un cœur au rouge à lèvres sur ton ventre.
+Embrasse {opp} en {la|le:opp} plaquant doucement contre un mur, pendant 10 secondes.
+Embrasse {opp} en lui tenant les poignets au-dessus de la tête, contre le mur.
+Assieds {opp} sur la table, place-toi entre ses jambes et embrasse-{la|le:opp} pendant 10 secondes.
+Fais asseoir {opp} sur tes genoux, face à toi, et embrassez-vous jusqu'à ce que le groupe dise stop.
+Embrasse {opp}, {allongée|allongé} sur {elle|lui:opp}, pendant 15 secondes.
+Laisse {opp} s'allonger sur toi et t'embrasser pendant 15 secondes.
+Embrasse {opp} pendant qu'{elle|il:opp} garde un glaçon dans la bouche.
+Embrasse {opp} le plus longtemps possible. Une personne de ton choix vous chronomètre.
+Murmure à {opp} le mot le plus cru que tu connais, puis embrasse-{la|le:opp}.
+Dis à voix haute trois choses que tu aimerais faire à {opp} au lit.
+Fais gémir {opp} en moins de 30 secondes, sans enlever aucun vêtement.
+Gémis le prénom de {opp} de la façon la plus crédible possible.
+Assieds-toi sur les genoux de {opp} et ondule du bassin pendant 20 secondes.
+Frotte-toi contre {opp} comme en boîte de nuit, sur la chanson choisie par le groupe.
+Danse {collée serrée|collé serré} avec {opp}, tes mains sur ses fesses, pendant toute une chanson.
+Fais une lap dance à {opp} en terminant {assise|assis} à califourchon sur {elle|lui:opp}.
+Mime la levrette avec {opp}, habillés, pendant 10 secondes.
+Mime un 69 avec {opp}, habillés, pendant 5 secondes, ou prends 3 gages.
+Mets-toi en missionnaire avec {opp}, habillés, et ne bougez plus pendant 15 secondes.
+Simule avec {opp} un réveil coquin du dimanche matin sous une couverture, pendant 20 secondes.
+Fais allonger {opp} sur le ventre, assieds-toi sur ses fesses et masse-lui le dos sous son haut pendant 30 secondes.
+Masse les fesses de {opp} pendant 20 secondes.
+Masse l'intérieur des cuisses de {opp} pendant 20 secondes.
+Laisse {opp} te masser l'intérieur des cuisses pendant 20 secondes.
+Bande les yeux de {opp} et embrasse-{la|le:opp} à trois endroits de ton choix.
+Les yeux bandés, laisse {opp} te toucher à trois endroits. Devine avec quoi : ses lèvres, sa langue ou ses doigts.
+Attache les poignets de {opp} avec une écharpe et embrasse-{la|le:opp} comme tu veux pendant 20 secondes.
+Laisse {opp} t'attacher les mains dans le dos jusqu'à ton prochain tour.
+Fais un bisou sur la bouche à chaque personne du groupe qui l'accepte, ou prends 3 gages.
+Fais un baiser à trois avec {opp} et une troisième personne de ton choix.
+Choisis deux personnes : elles s'embrassent langoureusement pendant 10 secondes, ou prennent chacune 2 gages.
+Choisis deux personnes qui passent 2 minutes ensemble dans la pièce d'à côté.
+Le groupe choisit une partie de ton corps : {opp} doit l'embrasser.
 `)
  }
 };

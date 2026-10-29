@@ -15,7 +15,7 @@ L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPho
 | Quiz | dès 2 | Questions à 4 choix, chaque équipe à son tour. On joue sur un thème ou sur tous. | 2 250 questions en 8 thèmes, au moins 250 par thème |
 | Ordre de grandeur | dès 2 | Chaque équipe estime un chiffre en secret : une date, une hauteur, un nombre. La plus proche marque. | 275 questions |
 | **Tous ensemble** | | | |
-| Action ou Vérité | dès 2 | Quatre niveaux : Chill, Fun, Épicé (séduction, sans sexe), +18 (sexualité). | 2 179 cartes, au moins 250 vérités et 250 actions par niveau |
+| Action ou Vérité | dès 2 | Quatre niveaux : Chill, Fun, Épicé (séduction, sans sexe), +18 (sexualité). | 2 309 cartes, au moins 250 vérités et 250 actions par niveau, dont 397 actions +18 |
 | Je n'ai jamais | dès 3 | Quatre niveaux : Soft, Fun, Épicé (séduction, sans sexe), +18 (sexualité). 1 point par aveu. | 1 016 cartes, au moins 250 par niveau |
 | Tu préfères | dès 3 | Trois niveaux. Chacun vote A ou B, la majorité gagne, la minorité prend un gage. | 791 dilemmes, au moins 250 par niveau |
 | La Bombe | dès 3 | Répondre au thème et passer le téléphone avant l'explosion. | 289 thèmes |
@@ -44,7 +44,7 @@ L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPho
 - **Classement de la soirée** : les points de tous les jeux s'additionnent.
 - **Gages au choix** : deux gages tirés au sort, plus « Le groupe choisit le gage ». Proposés quand un joueur refuse une carte, rate un défi, perd un duel, perd à La Bombe ou se retrouve dans la minorité de Tu préfères. 258 gages et 262 gages épicés. Au niveau +18, le gage épicé peut aussi être un gage réservé aux adultes.
 - **Suivi des gages** : chaque gage est noté comme fait ou refusé. Un gage refusé coûte 2 points. Le classement affiche les gages de chacun et désigne la personne qui en a fait le plus et celle qui en a refusé le plus.
-- **Pas de répétition** : une carte ne revient qu'une fois tout le paquet passé, même d'une soirée à l'autre.
+- **Pas de répétition** : sur un même appareil, une carte, un mot ou une question ne revient qu'une fois tous les autres passés, même d'une soirée à l'autre et après fermeture de l'appli. Les cartes déjà vues restent mémorisées quand de nouvelles cartes arrivent, et les paquets qui se recoupent partagent leur historique : thèmes du Quiz, niveaux des Mimes, Tu préfères et Même longueur d'onde.
 - **Jeux en couple** : on choisit les deux personnes du couple dans la liste des joueurs, l'appli s'en souvient. Les cartes s'accordent au sexe de chacun, que le couple soit mixte ou non.
 - **Niveau +18** protégé par une confirmation, dans Action ou Vérité, Je n'ai jamais, Tu préfères, Le plus susceptible de, Qui de nous deux, Défis à deux et Même longueur d'onde.
 - **Chrono** avec bips des 5 dernières secondes, vibration à la fin et bouton d'arrêt.
