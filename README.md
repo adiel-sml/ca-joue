@@ -1,6 +1,6 @@
 # Ça Joue
 
-Douze jeux de soirée sur un seul téléphone qu'on se passe. Gratuit, sans compte, sans publicité, utilisable hors ligne.
+Vingt-trois jeux de soirée sur un seul téléphone qu'on se passe, dont six jeux pour les couples. Gratuit, sans compte, sans publicité, utilisable hors ligne.
 
 L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPhone, iPad, Android) comme une appli classique : plein écran, icône, fonctionnement sans réseau. Sur tablette, la mise en page s'élargit et l'appli fonctionne en portrait comme en paysage.
 
@@ -13,6 +13,7 @@ L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPho
 | Mot interdit | dès 2 | Faire deviner un mot sans dire les 4 mots interdits. | 274 cartes |
 | Time's Up | dès 4 | Trois manches avec les mêmes mots : décrire, un seul mot, mimer. | 335 mots |
 | Quiz | dès 2 | Questions à 4 choix, chaque équipe à son tour. | 301 questions |
+| Ordre de grandeur | dès 2 | Chaque équipe estime un chiffre en secret : une date, une hauteur, un nombre. La plus proche marque. | 275 questions |
 | **Tous ensemble** | | | |
 | Action ou Vérité | dès 2 | Quatre niveaux : Chill, Fun, Épicé (séduction, sans sexe), +18 (sexualité). | 2 179 cartes, au moins 250 vérités et 250 actions par niveau |
 | Je n'ai jamais | dès 3 | Quatre niveaux : Soft, Fun, Épicé (séduction, sans sexe), +18 (sexualité). 1 point par aveu. | 1 016 cartes, au moins 250 par niveau |
@@ -20,9 +21,20 @@ L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPho
 | La Bombe | dès 3 | Répondre au thème et passer le téléphone avant l'explosion. | 289 thèmes |
 | 2 vérités, 1 mensonge | dès 2 | Trouver l'anecdote inventée. | 283 thèmes d'inspiration |
 | Jeu mystère | dès 2 | Qui pourrait, Je n'ai jamais, défis, duels, patate chaude, devinettes, règles. | 269 cartes |
+| Le plus susceptible de | dès 3 | Chacun vote en secret, ou à main levée, pour la personne qui colle le mieux à la carte. Trois niveaux : Soft, Épicé, +18. | 790 cartes, au moins 250 par niveau |
+| Le faux dictionnaire | dès 3 | Un vrai mot rare. Chacun invente une fausse définition, puis tout le monde cherche la vraie. | 317 mots |
+| Mot pour mot | dès 2 | Un mot lié au précédent avant la fin du chrono. Qui sèche ou répète a perdu. | 298 mots de départ |
 | **Rôles secrets** | | | |
 | Undercover | dès 3 | Démasquer l'intrus. Rôles spéciaux au choix : Boss, Fantôme, Amoureux, Vengeur, Bouclier, Clown. | 293 paires de mots |
 | Loup-garou | dès 5 | L'appli fait le meneur, avec une voix qui annonce la nuit, les morts, le débat et le vote. Voyante, Sorcière, Chasseur, Cupidon. | |
+| Le lieu secret | dès 3 | Tout le monde connaît le lieu, sauf l'espion. On se pose des questions pour le démasquer, l'espion essaie de deviner le lieu. Un ou deux espions. | 285 lieux |
+| **En couple** | | | |
+| Tu me connais ? | à deux | L'un répond à une question sur l'autre, qui confirme. Score de complicité à la fin. | 289 questions |
+| Notre futur | à deux | Chacun écrit sa réponse en secret sur votre avenir, puis on compare. | 264 questions |
+| Qui de nous deux | à deux | À trois, chacun pointe la bonne personne. Trois niveaux : Tendre, Épicé, +18. | 802 cartes, au moins 250 par niveau |
+| Même longueur d'onde | à deux | Un dilemme de Tu préfères, deux choix secrets. Êtes-vous d'accord ? | 791 dilemmes |
+| Défis à deux | à deux | Des défis chacun son tour. Trois niveaux : Tendre, Épicé, +18. | 792 défis, au moins 250 par niveau |
+| Cœur à cœur | à deux | Des questions pour parler vraiment. Trois niveaux : Légères, Souvenirs, Profondes. | 789 questions, au moins 250 par niveau |
 
 ## Fonctionnalités
 
@@ -31,7 +43,8 @@ L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPho
 - **Gages au choix** : deux gages tirés au sort, plus « Le groupe choisit le gage ». Proposés quand un joueur refuse une carte, rate un défi, perd un duel, perd à La Bombe ou se retrouve dans la minorité de Tu préfères. 258 gages et 262 gages épicés. Au niveau +18, le gage épicé peut aussi être un gage réservé aux adultes.
 - **Suivi des gages** : chaque gage est noté comme fait ou refusé. Un gage refusé coûte 2 points. Le classement affiche les gages de chacun et désigne la personne qui en a fait le plus et celle qui en a refusé le plus.
 - **Pas de répétition** : une carte ne revient qu'une fois tout le paquet passé, même d'une soirée à l'autre.
-- **Niveau +18** protégé par une confirmation, dans Action ou Vérité, Je n'ai jamais et Tu préfères.
+- **Jeux en couple** : on choisit les deux personnes du couple dans la liste des joueurs, l'appli s'en souvient. Les cartes s'accordent au sexe de chacun, que le couple soit mixte ou non.
+- **Niveau +18** protégé par une confirmation, dans Action ou Vérité, Je n'ai jamais, Tu préfères, Le plus susceptible de, Qui de nous deux, Défis à deux et Même longueur d'onde.
 - **Chrono** avec bips des 5 dernières secondes, vibration à la fin et bouton d'arrêt.
 - **Écran toujours allumé** pendant la partie, quand le téléphone le permet.
 
@@ -68,6 +81,8 @@ npm run preview    # teste la version de production (installation et hors ligne 
 | `src/content-games.js` | Time's Up, La Bombe, Tu préfères, Quiz, rôles du Loup-garou. |
 | `src/content-nhie.js` | Je n'ai jamais, quatre niveaux. |
 | `src/content-av.js` | Action ou Vérité, cartes supplémentaires des quatre niveaux. |
+| `src/content-party.js` | Le lieu secret, Le plus susceptible de, Ordre de grandeur, Le faux dictionnaire, Mot pour mot. |
+| `src/content-couple.js` | Les jeux en couple. |
 | `src/content-extra.js` | Cartes supplémentaires de Tu préfères, Quiz, La Bombe, Mot interdit, Mimes, Jeu mystère, 2 vérités 1 mensonge et des gages. |
 | `src/styles.css` | Le design. |
 | `src/avatars.js` | Les personnages des joueurs. |
@@ -78,8 +93,8 @@ npm run preview    # teste la version de production (installation et hors ligne 
 
 - `{joueur}` : un autre joueur au hasard ;
 - `{opp}` : un joueur du sexe opposé, sinon un autre joueur ;
-- `{p1}`, `{p2}` : les joueurs tirés pour une carte mystère ;
-- `{forme féminine|forme masculine}` : accord selon le joueur concerné, par exemple `{la reine|le roi}`. Pour un autre joueur : `{elle|il:opp}`.
+- `{p1}`, `{p2}` : les joueurs tirés pour une carte mystère, ou, dans les jeux en couple, la personne dont c'est le tour et l'autre ;
+- `{forme féminine|forme masculine}` : accord selon le joueur concerné, par exemple `{la reine|le roi}`. Pour un autre joueur : `{elle|il:opp}` ou `{elle|il:p2}`.
 
 Les doublons sont écartés automatiquement à la fusion des listes.
 

@@ -6,6 +6,8 @@ import "./styles.css";
 import { registerSW } from "virtual:pwa-register";
 import { MIME_EASY, MIME_HARD, TABOO, AV, GAGES, GAGES_HOT, GAGES_X18, AV_LEVELS, AV_PTS, AV_BONUS, TVM_THEMES, UC_PAIRS, UC_SPECIALS, UC_PTS, MYS_TYPES, MYS, TEAM_NAMES, TEAM_COLORS, GAMES, GAME_CATS } from "./content.js";
 import { TU_WORDS, BOMB_THEMES, WYR, NHIE, QUIZ, LG_ROLES, LG_SPECIALS } from "./content-games.js";
+import { SPY_PLACES, MOST, NUM_Q, DICO, CHAIN_WORDS } from "./content-party.js";
+import { KNOW, FUTURE, WHO2, DARE2, TALK } from "./content-couple.js";
 import { ic } from "./icons.js";
 import { AVATARS, avatarSvg } from "./avatars.js";
 
@@ -115,7 +117,7 @@ function runTimer(sec, onEnd) {
     const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
     timer.left = left;
     const n = document.getElementById("tnum"), b = document.getElementById("tbar");
-    if (n) { n.textContent = left; n.classList.toggle("urgent", left <= 10); }
+    if (n) { n.textContent = fmtT(left, sec); n.classList.toggle("urgent", left <= 10); }
     if (b) b.style.transform = `scaleX(${Math.max(0, (end - Date.now()) / (sec * 1000))})`;
     if (left <= 5 && left > 0 && left !== timer.last) { timer.last = left; beep(660, .08); }
     if (left === 0) { stopTimer(); beep(330, .6); vib(); onEnd && onEnd(); }
@@ -123,7 +125,9 @@ function runTimer(sec, onEnd) {
   timer.id = setInterval(tick, 200);
   tick();
 }
-const timerHTML = s => `<div class="timer"><div class="tbar"><i id="tbar" style="transform:scaleX(${timer ? timer.left / timer.sec : 1})"></i></div><div class="tnum" id="tnum">${s}</div></div>`;
+/* Au-delà de 99 secondes, le chrono s'affiche en minutes : 6:00 */
+const fmtT = (left, total) => total >= 100 ? `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}` : String(left);
+const timerHTML = s => `<div class="timer"><div class="tbar"><i id="tbar" style="transform:scaleX(${timer ? timer.left / timer.sec : 1})"></i></div><div class="tnum" id="tnum">${fmtT(s, timer ? timer.sec : s)}</div></div>`;
 
 let wake = null;
 async function keepAwake() { try { if (!wake && navigator.wakeLock) { wake = await navigator.wakeLock.request("screen"); wake.addEventListener("release", () => wake = null); } } catch (e) {} }
@@ -197,7 +201,7 @@ function root() {
       <span class="tile-ic">${ic(g.icon, 28)}</span>
       <span class="tile-name">${esc(g.name)}</span>
       <span class="tile-desc">${esc(g.desc)}</span>
-      <span class="tile-meta">${ic("users", 14)} Dès ${g.min} joueurs</span>
+      <span class="tile-meta">${ic(g.cat === "couple" ? "heart" : "users", 14)} ${g.cat === "couple" ? "À deux" : `Dès ${g.min} joueurs`}</span>
     </button>`).join("")}</div>`).join("")}`
   });
 }
@@ -224,7 +228,7 @@ function boardBody() {
   ${s.length > 3 ? scoreList(s.slice(3), false, 3) : ""}
   ${gagesBlock()}
   <details class="howto"><summary>${ic("info", 18)} Comment on gagne des points</summary>
-  <p>Mimes et Mot interdit : chaque membre de l'équipe gagne les points du tour, et 3 points de plus pour l'équipe gagnante. Action ou Vérité : 1 point par vérité, 2 par action, bonus en Épicé et en +18. Undercover : 2 points par civil gagnant, 5 par Undercover, 6 pour Mr White. 2 vérités 1 mensonge et Jeu mystère : les points de chaque manche. Gages : chaque gage fait ou refusé est noté, et un gage refusé coûte 2 points.</p></details>
+  <p>Mimes et Mot interdit : chaque membre de l'équipe gagne les points du tour, et 3 points de plus pour l'équipe gagnante. Action ou Vérité : 1 point par vérité, 2 par action, bonus en Épicé et en +18. Undercover : 2 points par civil gagnant, 5 par Undercover, 6 pour Mr White. Le lieu secret : 2 points par habitant gagnant, 4 pour l'espion. Ordre de grandeur : 1 point pour l'équipe la plus proche, 2 si elle tombe pile. Le faux dictionnaire : 2 points pour la vraie définition trouvée, 1 par voix sur ta fausse définition. Le plus susceptible de : 1 point si tu votes comme la majorité. Mot pour mot : 1 point pour chaque survivant de la manche. Jeux en couple : 1 point par bonne réponse, accord ou défi relevé. 2 vérités 1 mensonge et Jeu mystère : les points de chaque manche. Gages : chaque gage fait ou refusé est noté, et un gage refusé coûte 2 points.</p></details>
   <button class="textbtn danger" data-act="askReset">Remettre le classement à zéro</button>`;
 }
 
@@ -292,12 +296,13 @@ function makeTeams() {
   G.teams = Array.from({ length: G.nTeams }, (_, i) => ({ name: TEAM_NAMES[i], c: TEAM_COLORS[i], members: [], score: 0, k: 0 }));
   sh.forEach((p, i) => G.teams[i % G.nTeams].members.push(p));
 }
-const teamName = () => ({ mime: "Mimes", taboo: "Mot interdit", tu: "Time's Up", quiz: "Quiz" })[G.kind];
+const teamName = () => ({ mime: "Mimes", taboo: "Mot interdit", tu: "Time's Up", quiz: "Quiz", num: "Ordre de grandeur" })[G.kind];
 const TEAM_LEADS = {
   mime: "Une personne mime, son équipe devine. Interdit de parler, de faire des bruits ou de montrer un objet.",
   taboo: "Une personne fait deviner le mot avec des phrases, sans dire le mot ni les mots en rouge. L'équipe adverse surveille.",
   tu: "Les mêmes mots reviennent pendant trois manches : on les décrit, puis on les fait deviner avec un seul mot, puis on les mime.",
-  quiz: "Chaque équipe répond à son tour. Une bonne réponse rapporte un point."
+  quiz: "Chaque équipe répond à son tour. Une bonne réponse rapporte un point.",
+  num: "Chaque équipe donne son estimation en secret. L'équipe la plus proche de la bonne réponse marque un point, deux si elle tombe pile."
 };
 const gameColor = id => GAMES.find(g => g.id === id).c;
 function teamSetup() {
@@ -308,14 +313,14 @@ function teamSetup() {
     <div class="panel"><div class="panel-head"><span class="label">Équipes</span><button class="pill ghost" data-act="reTeams">${ic("shuffle", 16)} Mélanger</button></div>
       <div class="seg">${[2, 3, 4].map(n => `<button class="${G.nTeams === n ? "on" : ""}" data-act="nTeams" data-arg="${n}" ${n > max ? "disabled" : ""}>${n} équipes</button>`).join("")}</div>
       <div class="teams">${G.teams.map(t => `<div class="team" style="--tc:${t.c}"><b>${esc(t.name)}</b><div class="team-members">${t.members.map(m => `<span class="mini">${av(m, "xs")}${esc(m)}</span>`).join("")}</div></div>`).join("")}</div>
-      ${solo && G.kind !== "quiz" ? `<p class="hint">Dans une équipe d'une personne, ce sont les autres qui devinent. Les points vont à celle ou celui qui fait deviner.</p>` : ""}
+      ${solo && G.kind !== "quiz" && G.kind !== "num" ? `<p class="hint">Dans une équipe d'une personne, ce sont les autres qui devinent. Les points vont à celle ou celui qui fait deviner.</p>` : ""}
     </div>
     ${G.kind === "mime" ? `<div class="panel"><span class="label">Mots</span>
       <div class="seg">${[["easy", "Faciles"], ["hard", "Difficiles"], ["mix", "Mélange"]].map(([k, l]) => `<button class="${G.diff === k ? "on" : ""}" data-act="diff" data-arg="${k}">${l}</button>`).join("")}</div>
       <p class="hint">${G.diff === "easy" ? "Animaux, objets, métiers, sports : des mots simples à mimer." : G.diff === "hard" ? "Films, personnages et actions détaillées : pour les pros du mime." : "Un peu de tout."}</p></div>` : ""}
     ${G.kind === "tu" ? `<div class="panel"><span class="label">Nombre de mots</span>
       <div class="seg">${[30, 40, 50].map(n => `<button class="${G.nWords === n ? "on" : ""}" data-act="tuWords" data-arg="${n}">${n} mots</button>`).join("")}</div></div>` : ""}
-    ${G.kind === "quiz" ? `<div class="panel"><span class="label">Questions par équipe</span>
+    ${G.kind === "quiz" || G.kind === "num" ? `<div class="panel"><span class="label">${G.kind === "num" ? "Questions" : "Questions par équipe"}</span>
       <div class="seg">${[5, 10, 15].map(n => `<button class="${G.nQ === n ? "on" : ""}" data-act="quizN" data-arg="${n}">${n}</button>`).join("")}</div></div>` : `<div class="panel"><span class="label">Durée d'un tour</span>
       <div class="seg">${(G.kind === "tu" ? [30, 45, 60] : [45, 60, 90]).map(n => `<button class="${G.dur === n ? "on" : ""}" data-act="dur" data-arg="${n}">${n} s</button>`).join("")}</div>
     </div>`}`,
@@ -975,6 +980,390 @@ function lgFinish(w) {
   say({ village: "Le village a gagné.", wolves: "Les loups-garous ont gagné.", lovers: "Les amoureux ont gagné.", nobody: "Personne n'a survécu." }[w]);
 }
 
+/* ---------- Le lieu secret ---------- */
+const SPYC = "var(--c-spy)";
+const spyMax = () => players.length >= 7 ? 2 : 1;
+function spySetup() {
+  return screen({
+    title: "Le lieu secret", color: SPYC, body: `
+    <p class="lead">Tout le monde connaît le lieu, sauf l'espion. Posez-vous des questions pour le démasquer. L'espion, lui, essaie de deviner le lieu sans se faire repérer.</p>
+    <div class="panel"><span class="label">Espions</span>
+      <div class="seg">${[1, 2].map(n => `<button class="${G.nS === n ? "on" : ""}" data-act="spyN" data-arg="${n}" ${n > spyMax() ? "disabled" : ""}>${plural(n, "espion")}</button>`).join("")}</div>
+      ${spyMax() < 2 ? `<p class="hint">Deux espions possibles à partir de 7 joueurs.</p>` : ""}</div>
+    <div class="panel"><span class="label">Durée de l'enquête</span>
+      <div class="seg">${[4, 6, 8].map(n => `<button class="${G.mins === n ? "on" : ""}" data-act="spyMins" data-arg="${n}">${n} min</button>`).join("")}</div></div>
+    <details class="howto"><summary>${ic("info", 18)} Comment on joue</summary>
+      <p>Chacun découvre en secret le lieu, ou son rôle d'espion. La personne désignée pose une question sur le lieu à quelqu'un de son choix, sans jamais le nommer. Celle qui répond pose la question suivante. Trop vague, on vous soupçonne. Trop précis, l'espion devine. Le groupe peut passer au vote à tout moment, et l'espion peut se dévoiler pour tenter de deviner le lieu. Les habitants gagnent 2 points, l'espion 4.</p></details>`,
+    foot: btn("Distribuer les rôles", "spyGo", { icon: "play" })
+  });
+}
+const spyCard = p => p.spy
+  ? `<div class="card"><span class="card-label">${esc(p.name)}, tu es</span><span class="role-big">${ic("eyeOff", 40)}</span><div class="word">L'espion</div><p class="card-foot">Tu ne connais pas le lieu. Écoute les questions, bluffe et essaie de le deviner.${G.nS > 1 ? " Il y a deux espions, vous ne vous connaissez pas." : ""}</p></div>`
+  : `<div class="card"><span class="card-label">Le lieu, ${esc(p.name)}</span><div class="word">${esc(G.place)}</div><p class="card-foot">Tu n'es pas l'espion. Ne prononce jamais le nom du lieu.</p></div>`;
+function spyDeal() {
+  const p = G.ps[G.i], t = `Distribution ${G.i + 1} sur ${G.ps.length}`;
+  if (!G.show) return screen({
+    title: t, color: SPYC, body: `<div class="hero">${av(p.name, "xl")}<span class="kicker">Passe le téléphone à</span><h2 class="big">${esc(p.name)}</h2><p class="lead">Les autres ne regardent pas l'écran.</p></div>`,
+    foot: btn(`Je suis ${esc(p.name)}, voir le lieu`, "spyShow", { icon: "eye" })
+  });
+  return screen({ title: t, color: SPYC, body: spyCard(p), foot: btn("J'ai retenu, je cache", "spyHide", { icon: "eyeOff" }) });
+}
+function spyPlay() {
+  if (typeof G.peek === "number") return screen({ title: "Revoir le lieu", color: SPYC, body: spyCard(G.ps[G.peek]), foot: btn("Cacher", "spyPeekDone", { icon: "eyeOff" }) });
+  if (G.peek === "list") return screen({
+    title: "Revoir le lieu", color: SPYC, body: `<h2 class="h2">Qui a oublié ?</h2><p class="hint">Seule cette personne regarde l'écran.</p>
+    <div class="pickgrid">${G.ps.map((p, i) => `<button class="pickav" data-act="spyPeek" data-arg="${i}">${av(p.name, "m")}<span>${esc(p.name)}</span></button>`).join("")}</div>`,
+    foot: btn("Retour", "spyPeekDone", { kind: "ghost", icon: "back" })
+  });
+  return screen({
+    title: "Le lieu secret", color: SPYC, body: `
+    <div class="who">${av(G.first, "m")}<div><span class="kicker">Première question</span><b>${esc(G.first)}</b></div></div>
+    <p class="hint">Pose une question sur le lieu à la personne de ton choix. Celle qui répond pose la suivante. Interdit de reposer la question à la personne qui vient de t'interroger.</p>
+    ${timerHTML(timer ? timer.left : G.mins * 60)}
+    ${timer ? btn("Arrêter le chrono", "stopClock", { kind: "ghost", icon: "stop" }) : btn(`Lancer ${G.mins} minutes d'enquête`, "spyClock", { kind: "ghost", icon: "timer" })}
+    <button class="textbtn" data-act="spyPeekList">Quelqu'un a oublié le lieu ?</button>`,
+    foot: btn("Passer au vote", "spyVote", { icon: "vote" }) + `<button class="textbtn" data-act="spyUnmask">${ic("eyeOff", 18)} L'espion se dévoile</button>`
+  });
+}
+function spyVoteScreen() {
+  const solo = G.step === "unmask";
+  return screen({
+    title: solo ? "L'espion se dévoile" : "Le vote", color: SPYC, body: solo
+      ? `<h2 class="h2">Qui se dévoile ?</h2><p class="hint">L'espion se désigne, puis tente de deviner le lieu. S'il trouve, il gagne.</p>
+      <div class="pickgrid">${G.ps.map((p, i) => `<button class="pickav" data-act="spySelf" data-arg="${i}">${av(p.name, "m")}<span>${esc(p.name)}</span></button>`).join("")}</div>`
+      : `<h2 class="h2">Qui est l'espion ?</h2><p class="hint">À trois, tout le monde pointe un suspect. Touche la personne la plus désignée.</p>
+      <div class="pickgrid">${G.ps.map((p, i) => `<button class="pickav${G.pick === i ? " on" : ""}" data-act="spyPick" data-arg="${i}">${av(p.name, "m")}<span>${esc(p.name)}</span></button>`).join("")}</div>`,
+    foot: (solo ? "" : btn(G.pick != null ? `Accuser ${esc(G.ps[G.pick].name)}` : "Choisis un suspect", "spyAccuse", { kind: "danger", icon: "crosshair", dis: G.pick == null }))
+      + `<button class="textbtn" data-act="spyBack">Retour à l'enquête</button>`
+  });
+}
+function spyGuess() {
+  const p = G.ps[G.caught];
+  return screen({
+    title: "Dernière chance", color: SPYC, body: `
+    <div class="hero">${av(p.name, "l")}<span class="kicker">${G.self ? "Se dévoile" : "Démasqué"}</span><h2 class="big">${esc(p.name)} est ${fe(p.name, "une espionne", "un espion")}</h2>
+    <p class="lead">${G.self ? "S'il trouve le lieu, l'espion gagne. Sinon, les habitants gagnent." : "Dernière chance : s'il trouve le lieu, l'espion gagne quand même."}</p></div>
+    <span class="label">Quel est le lieu ?</span>
+    <div class="pick places">${G.opts.map((o, i) => `<button data-act="spyTry" data-arg="${i}">${esc(o)}</button>`).join("")}</div>`
+  });
+}
+function spyEnd() {
+  const spies = G.ps.filter(p => p.spy);
+  return screen({
+    title: "Fin de la partie", color: SPYC, left: null, body: `
+    <div class="hero">${ic(G.win === "spies" ? "eyeOff" : "mapPin", 48)}<h2 class="big">${G.win === "spies" ? (spies.length > 1 ? "Les espions gagnent" : "L'espion gagne") : "Les habitants gagnent"}</h2><p class="lead">${G.why}</p></div>
+    <div class="card"><span class="card-label">Le lieu</span><div class="word">${esc(G.place)}</div></div>
+    <ul class="list">${G.ps.map(p => `<li class="row-item">${av(p.name, "s")}<span class="grow"><b>${esc(p.name)}</b><small>${p.spy ? fe(p.name, "Espionne", "Espion") : "Habitant"}</small></span><b class="badge ${G.pts[p.name] ? "b-good" : ""}">${G.pts[p.name] ? "+" + G.pts[p.name] : "0"}</b></li>`).join("")}</ul>`,
+    foot: btn("Nouveau lieu", "spyGo", { icon: "undo" }) + `<div class="row2 links"><button class="textbtn" data-act="spySettings">Réglages</button><button class="textbtn" data-act="home">Retour aux jeux</button></div>`
+  });
+}
+
+/* ---------- Le plus susceptible de ---------- */
+const MOSTC = "var(--c-most)";
+const MOST_LEVELS = [["soft", "Soft"], ["hot", "Épicé"], ["x18", "+18"]];
+const segOf = (levels, cur, act) => `<div class="seg">${levels.map(([k, l]) => `<button class="${cur === k ? "on" : ""}" data-act="${act}" data-arg="${k}">${l}</button>`).join("")}</div>`;
+const mostCard = () => `<div class="card"><span class="card-label">${ic("pointer", 16)} Le plus susceptible de…</span><div class="txt">…${esc(G.card)} ?</div></div>`;
+function most() {
+  if (G.gate) return gateScreen("Le plus susceptible de", MOSTC, "mostAdult", "mostGateNo");
+  if (G.step === "vote") {
+    const v = players[G.vi];
+    return screen({
+      title: `Vote ${G.vi + 1} sur ${players.length}`, color: MOSTC, body: `
+      <div class="who">${av(v, "m")}<div><span class="kicker">Vote secret de</span><b>${esc(v)}</b></div></div>
+      ${mostCard()}
+      <p class="hint">Les autres ne regardent pas. Touche la personne de ton choix, le téléphone passe ensuite au suivant.</p>
+      <div class="pickgrid">${others(v).map(n => `<button class="pickav" data-act="mostCast" data-arg="${esc(n)}">${av(n, "m")}<span>${esc(n)}</span></button>`).join("")}</div>`,
+      foot: G.vi > 0 ? btn("Corriger le vote précédent", "mostUncast", { kind: "ghost", icon: "undo" }) : ""
+    });
+  }
+  if (G.step === "result") {
+    const tops = G.tops, one = tops.length === 1;
+    return screen({
+      title: "Le plus susceptible de", color: MOSTC, body: `
+      <div class="hero">${one ? av(tops[0], "xl") : `<div class="pair-av">${tops.slice(0, 3).map(n => av(n, "l")).join("")}</div>`}
+      <span class="kicker">${one ? fe(tops[0], "Élue par le groupe", "Élu par le groupe") : "Égalité"}</span><h2 class="big">${tops.map(esc).join(" et ")}</h2></div>
+      ${mostCard()}
+      ${G.tally.length ? `<ul class="list">${G.tally.map(([n, v]) => `<li class="row-item${tops.includes(n) ? " lead" : ""}">${av(n, "s")}<span class="grow">${esc(n)}</span><b class="num">${v} voix</b></li>`).join("")}</ul>
+      <p class="hint">${G.winners.length ? `1 point pour ${G.winners.map(esc).join(", ")}, qui ont voté comme la majorité.` : "Personne n'a voté comme la majorité."}</p>` : ""}`,
+      foot: `<div class="row2">${btn("Le gage", "mostGage", { kind: "ghost", icon: "flame" })}${btn("Carte suivante", "mostNext", { icon: "play" })}</div>`
+    });
+  }
+  return screen({
+    title: "Le plus susceptible de", color: MOSTC, body: `
+    ${segOf(MOST_LEVELS, G.level, "mostLevel")}
+    ${mostCard()}
+    ${segOf([["secret", "Vote secret"], ["hand", "À main levée"]], G.mode, "mostMode")}
+    ${G.mode === "hand" ? `<span class="label">À trois, tout le monde pointe quelqu'un. Qui a le plus de voix ?</span>
+    <div class="pickgrid">${players.map(n => `<button class="pickav${G.sel.includes(n) ? " on" : ""}" data-act="mostSel" data-arg="${esc(n)}" aria-pressed="${G.sel.includes(n)}">${av(n, "m")}<span>${esc(n)}</span></button>`).join("")}</div>`
+    : `<p class="hint">Chacun vote en secret en se passant le téléphone. Celles et ceux qui votent comme la majorité gagnent 1 point.</p>`}`,
+    foot: `<div class="row2">${btn("Passer", "mostNext", { kind: "ghost", icon: "skip" })}${G.mode === "hand" ? btn("Valider", "mostHand", { icon: "check", dis: !G.sel.length }) : btn("Voter en secret", "mostVoteStart", { icon: "vote" })}</div>`
+  });
+}
+
+/* ---------- Ordre de grandeur ---------- */
+const fmtNum = (v, year) => year ? String(v) : v.toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+const numUnit = q => q.u && q.u !== "année" ? " " + q.u : "";
+function numQ() {
+  const q = G.q;
+  if (G.ti < G.teams.length) {
+    const t = G.teams[G.ti];
+    return screen({
+      title: `Question ${G.asked + 1} sur ${G.total}`, color: t.c, body: `
+      <div class="who"><i class="dot" style="--tc:${t.c};width:16px;height:16px"></i><div><span class="kicker">Estimation de</span><b>${esc(t.name)}</b></div></div>
+      <div class="card"><span class="card-label">${ic("ruler", 16)} Ordre de grandeur</span><div class="txt">${esc(q.q)}</div>${q.u && q.u !== "année" ? `<p class="card-foot">Réponse en ${esc(q.u)}</p>` : ""}</div>
+      <label class="field"><span>Votre estimation</span><input id="numIn" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" value="${esc(G.input)}" placeholder="Un nombre"></label>
+      <p class="hint">Les autres équipes ne regardent pas l'écran.</p>`,
+      foot: btn(G.ti + 1 < G.teams.length ? "Valider et cacher" : "Valider et révéler", "numSet", { icon: "check" })
+    });
+  }
+  const year = q.u === "année";
+  return screen({
+    title: `Question ${G.asked + 1} sur ${G.total}`, color: "var(--c-num)", body: `
+    <div class="card"><span class="card-label">${esc(q.q)}</span><div class="word">${fmtNum(q.a, year)}${esc(numUnit(q))}</div></div>
+    <ul class="list">${G.rank.map(r => { const t = G.teams[r.i]; return `<li class="row-item${r.win ? " lead" : ""}" style="--tc:${t.c}"><i class="dot"></i><span class="grow"><b>${esc(t.name)}</b><small>${fmtNum(r.v, year)}${esc(numUnit(q))}</small></span>${r.win ? `<b class="badge b-good">+${G.gain}</b>` : `<b class="badge">0</b>`}</li>`; }).join("")}</ul>
+    <p class="hint center">${G.gain === 2 ? "Pile la bonne réponse : 2 points." : "L'équipe la plus proche marque 1 point. Pile la bonne réponse en rapporte 2."}</p>`,
+    foot: btn(G.asked + 1 >= G.total ? "Voir les résultats" : "Question suivante", "numNext", { icon: "play" })
+  });
+}
+
+/* ---------- Le faux dictionnaire ---------- */
+const DICOC = "var(--c-dico)";
+const dicoScores = () => `<span class="label">Scores de la partie</span>${scoreList(Object.entries(G.scores).sort((a, b) => b[1] - a[1]))}`;
+function dico() {
+  const w = G.word.w;
+  if (G.step === "word") return screen({
+    title: "Le faux dictionnaire", color: DICOC, body: `
+    <div class="card"><span class="card-label">${ic("book", 16)} Le mot</span><div class="word">${esc(w)}</div></div>
+    <p class="lead">Chacun invente une fausse définition crédible, en secret. On mélange avec la vraie, puis tout le monde vote. Trouver la vraie rapporte 2 points, chaque voix sur ta fausse définition 1 point.</p>
+    <p class="hint">Si quelqu'un connaît déjà ce mot, changez-en.</p>
+    ${dicoScores()}`,
+    foot: btn("Écrire les définitions", "dicoWrite", { icon: "pencil" }) + `<button class="textbtn" data-act="dicoOther">${ic("shuffle", 18)} Autre mot</button>`
+  });
+  if (G.step === "write") {
+    const p = players[G.wi], t = `Définition ${G.wi + 1} sur ${players.length}`;
+    if (!G.show) return screen({
+      title: t, color: DICOC, body: `<div class="hero">${av(p, "xl")}<span class="kicker">Passe le téléphone à</span><h2 class="big">${esc(p)}</h2><p class="lead">Les autres ne regardent pas l'écran.</p></div>`,
+      foot: btn(`Je suis ${esc(p)}, écrire`, "dicoShow", { icon: "pencil" })
+    });
+    return screen({
+      title: t, color: DICOC, body: `
+      <div class="card"><span class="card-label">Ta fausse définition de</span><div class="word">${esc(w)}</div></div>
+      <label class="field"><span>${esc(p)}, invente une définition</span><textarea id="txtIn" rows="3" maxlength="160" placeholder="Une définition qui sonne vrai">${esc(G.input)}</textarea></label>
+      <p class="hint">Imite le style d'un dictionnaire : court, sérieux, crédible.</p>`,
+      foot: btn("Valider et cacher", "dicoSave", { icon: "check" }) + `<button class="textbtn" data-act="dicoSkip">Passer mon tour</button>`
+    });
+  }
+  if (G.step === "read") return screen({
+    title: "Lecture", color: DICOC, body: `
+    <div class="card"><span class="card-label">Les définitions de</span><div class="word">${esc(w)}</div></div>
+    <p class="hint">Une personne lit toutes les définitions à voix haute, sans rire et sans hésiter.</p>
+    <ol class="list">${G.defs.map((d, i) => `<li class="row-item def"><span class="opt">${i + 1}</span><span class="grow">${esc(d.d)}</span></li>`).join("")}</ol>`,
+    foot: btn("Passer au vote", "dicoVote", { icon: "vote" })
+  });
+  if (G.step === "vote") {
+    const v = players[G.vi];
+    return screen({
+      title: `Vote ${G.vi + 1} sur ${players.length}`, color: DICOC, body: `
+      <div class="who">${av(v, "m")}<div><span class="kicker">Vote de</span><b>${esc(v)}</b></div></div>
+      <p class="hint">Quelle est la vraie définition de <b>${esc(w)}</b> ? Ta propre définition n'apparaît pas.</p>
+      <ul class="list">${G.defs.map((d, i) => d.who === v ? "" : `<li><button class="row-item def" data-act="dicoCast" data-arg="${i}"><span class="opt">${i + 1}</span><span class="grow">${esc(d.d)}</span></button></li>`).join("")}</ul>`,
+      foot: G.vi > 0 ? btn("Corriger le vote précédent", "dicoUncast", { kind: "ghost", icon: "undo" }) : ""
+    });
+  }
+  return screen({
+    title: "Résultat", color: DICOC, body: `
+    <div class="card"><span class="card-label">La vraie définition de ${esc(w)}</span><div class="txt">${esc(G.word.d)}</div></div>
+    <ul class="list">${G.defs.map((d, i) => { const vs = players.filter(n => G.votes[n] === i); return `<li class="row-item def${d.who ? "" : " lead"}"><span class="opt">${i + 1}</span><span class="grow"><b>${d.who ? `Inventée par ${esc(d.who)}` : "La vraie"}</b><small>${esc(d.d)}</small><small>${vs.length ? `Votes : ${vs.map(esc).join(", ")}` : "Aucun vote"}</small></span></li>`; }).join("")}</ul>
+    ${dicoScores()}`,
+    foot: btn("Mot suivant", "dicoNext", { icon: "play" })
+  });
+}
+
+/* ---------- Mot pour mot ---------- */
+const CHAINC = "var(--c-chain)";
+const chainCur = () => G.order[G.cur % G.order.length];
+function chain() {
+  if (G.step === "play") {
+    const p = chainCur();
+    return screen({
+      title: "Mot pour mot", color: CHAINC, left: null, right: `<button class="iconbtn" data-act="chainPause" aria-label="Pause">${ic("stop")}</button>`, body: `
+      ${timerHTML(timer ? timer.left : G.sec)}
+      <div class="meta-row"><span class="kicker">Mot de départ : ${esc(G.word)}</span><span class="kicker">${plural(G.n, "mot")}</span></div>
+      <div class="hero">${av(p, "xl")}<span class="kicker">À toi</span><h2 class="big">${esc(p)}</h2><p class="lead">Dis un mot lié au précédent, puis touche le bouton.</p></div>
+      <button class="textbtn danger" data-act="chainLose">${ic("ban", 18)} Contesté : mot répété ou sans lien</button>`,
+      foot: `<button class="btn chain-go" data-act="chainNext">${ic("check", 24)}<span>Mot dit, au suivant</span></button>`
+    });
+  }
+  if (G.step === "lost") return screen({
+    title: "Mot pour mot", color: CHAINC, body: `
+    <div class="hero">${av(G.loser, "xl")}<span class="kicker">${G.n ? `Après ${plural(G.n, "mot")}` : "Dès le premier mot"}</span><h2 class="big">${esc(G.loser)} a perdu</h2><p class="lead">Les autres gagnent 1 point.</p></div>`,
+    foot: `<div class="row2">${btn("Le gage", "chainGage", { kind: "ghost", icon: "flame" })}${btn("Nouvelle manche", "chainNew", { icon: "undo" })}</div>`
+  });
+  return screen({
+    title: "Mot pour mot", color: CHAINC, body: `
+    <div class="card"><span class="card-label">${ic("link", 16)} Mot de départ</span><div class="word">${esc(G.word)}</div></div>
+    <p class="lead">Posez le téléphone au milieu. Chacun son tour, dis un mot lié au précédent avant la fin du chrono : « plage », « sable », « château »… Pas de répétition. Si le groupe conteste, tu as perdu.</p>
+    <div class="panel"><span class="label">Temps par mot</span>${segOf([["3", "3 s"], ["5", "5 s"], ["8", "8 s"]], String(G.sec), "chainSec")}</div>
+    <div class="who">${av(chainCur(), "m")}<div><span class="kicker">Commence</span><b>${esc(chainCur())}</b></div></div>`,
+    foot: btn("C'est parti", "chainStart", { icon: "play" }) + `<button class="textbtn" data-act="chainWord">${ic("shuffle", 18)} Autre mot de départ</button>`
+  });
+}
+
+/* ---------- Jeux en couple ---------- */
+const coupleOk = c => Array.isArray(c) && c.length === 2 && c[0] !== c[1] && c.every(n => players.includes(n));
+const cpOther = n => G.couple[0] === n ? G.couple[1] : G.couple[0];
+const cpColor = () => gameColor(G.kind);
+const cpTitle = () => GAMES.find(g => g.id === G.kind).name;
+const WHO2_LEVELS = [["tendre", "Tendre"], ["hot", "Épicé"], ["x18", "+18"]];
+const DARE2_LEVELS = WHO2_LEVELS;
+const TALK_LEVELS = [["light", "Légères"], ["memories", "Souvenirs"], ["deep", "Profondes"]];
+const CP_LEADS = {
+  know: "Chacun son tour, l'un répond à une question sur l'autre. L'autre confirme si c'est juste. À la fin, votre score de complicité.",
+  future: "Une question sur votre avenir. Chacun écrit sa réponse en secret, puis on compare. Même vision ou sujet à discuter ?",
+  who2: "« Qui de nous deux… » : à trois, chacun pointe la personne qui correspond. D'accord ou pas ?",
+  wave: "Un dilemme, deux choix secrets. Êtes-vous sur la même longueur d'onde ?",
+  dare2: "Des défis à faire à deux, chacun son tour. Du tendre au +18.",
+  talk: "Des questions pour parler vraiment, sans points ni gagnant. Chacun répond à son tour."
+};
+const cpCount = { know: [10, 20, 30], future: [5, 10, 15], wave: [10, 20, 30] };
+function coupleSetup() {
+  const ok = coupleOk(G.couple);
+  return screen({
+    title: cpTitle(), color: cpColor(), body: `
+    <p class="lead">${CP_LEADS[G.kind]}</p>
+    <div class="panel"><span class="label">Le couple</span>
+      <div class="pickgrid">${players.map(n => `<button class="pickav${G.couple.includes(n) ? " on" : ""}" data-act="cpPick" data-arg="${esc(n)}" aria-pressed="${G.couple.includes(n)}">${av(n, "m")}<span>${esc(n)}</span></button>`).join("")}</div>
+      <p class="hint">${ok ? `${esc(G.couple[0])} et ${esc(G.couple[1])}` : "Touche les deux personnes du couple."}</p></div>
+    ${cpCount[G.kind] ? `<div class="panel"><span class="label">${G.kind === "wave" ? "Dilemmes" : "Questions"}</span>${segOf(cpCount[G.kind].map(n => [String(n), String(n)]), String(G.n), "cpN")}</div>` : ""}`,
+    foot: btn("Commencer", "cpGo", { icon: "play", dis: !ok })
+  });
+}
+const cpHead = (n, k) => `<div class="who">${av(n, "m")}<div><span class="kicker">${k}</span><b>${esc(n)}</b></div></div>`;
+const cpProgress = () => `<span class="kicker">${G.i + 1} sur ${G.n}</span>`;
+const pct = (a, b) => b ? Math.round(a * 100 / b) : 0;
+function cpVerdict(p) {
+  return p >= 80 ? ["Âmes sœurs", "Vous vous connaissez par cœur."] : p >= 60 ? ["Très complices", "Quelques surprises, mais l'essentiel est là."]
+    : p >= 40 ? ["En pleine découverte", "Il vous reste de jolies choses à apprendre l'un sur l'autre."] : ["Tout à découvrir", "Parfait pour une longue discussion ce soir."];
+}
+function cpResult(title, p, rows) {
+  const [v, d] = cpVerdict(p);
+  return screen({
+    title: cpTitle(), color: cpColor(), left: null, body: `
+    <div class="hero"><div class="pair-av">${av(G.couple[0], "l")}${ic("heart", 28)}${av(G.couple[1], "l")}</div>
+    <span class="kicker">${title}</span><h2 class="big">${p} %</h2><p class="lead"><b>${v}.</b> ${d}</p></div>
+    ${rows}`,
+    foot: btn("Rejouer", "cpGo", { icon: "undo" }) + `<div class="row2 links"><button class="textbtn" data-act="cpSettings">Réglages</button><button class="textbtn" data-act="home">Retour aux jeux</button></div>`
+  });
+}
+function know() {
+  if (G.i >= G.n) {
+    const [a, b] = G.couple, tot = G.ok[a] + G.ok[b];
+    return cpResult("Score de complicité", pct(tot, G.n), `<ul class="list">${G.couple.map(n => `<li class="row-item">${av(n, "s")}<span class="grow"><b>${esc(n)}</b><small>Connaît ${esc(cpOther(n))}</small></span><b class="num">${G.ok[n]} sur ${G.asked[n]}</b></li>`).join("")}</ul>`);
+  }
+  const p = G.couple[G.i % 2];
+  return screen({
+    title: cpTitle(), color: cpColor(), body: `
+    <div class="meta-row">${cpProgress()}<span class="kicker">${G.ok[G.couple[0]] + G.ok[G.couple[1]]} bonnes réponses</span></div>
+    ${cpHead(p, "Répond")}
+    <div class="card"><span class="card-label">${ic("target", 16)} Question sur ${esc(cpOther(p))}</span><div class="txt">${G.text}</div></div>
+    <p class="hint center">${esc(cpOther(p))} dit si c'est juste.</p>`,
+    foot: `<div class="row2">${btn("Raté", "knowAns", { arg: "0", kind: "ghost", icon: "x" })}${btn("Bonne réponse", "knowAns", { arg: "1", icon: "check" })}</div><button class="textbtn" data-act="knowSkip">${ic("skip", 18)} Autre question</button>`
+  });
+}
+function future() {
+  const [a, b] = G.couple, q = `<div class="card"><span class="card-label">${ic("telescope", 16)} Notre futur</span><div class="txt">${esc(G.card)}</div></div>`;
+  if (G.i >= G.n) return cpResult("Vision commune", pct(G.agree, G.n), "");
+  if (G.step === "a" || G.step === "b") {
+    const p = G.step === "a" ? a : b;
+    return screen({
+      title: cpTitle(), color: cpColor(), body: `
+      <div class="meta-row">${cpProgress()}</div>
+      ${cpHead(p, "Écrit en secret")}${q}
+      <label class="field"><span>Ta réponse, ${esc(p)}</span><textarea id="txtIn" rows="3" maxlength="200" placeholder="Écris ce que tu imagines">${esc(G.input)}</textarea></label>
+      <p class="hint">${esc(cpOther(p))} ne regarde pas l'écran.</p>`,
+      foot: btn(G.step === "a" ? `Valider et passer à ${esc(b)}` : "Valider et révéler", "futureSave", { icon: "check" }) + (G.step === "a" ? `<button class="textbtn" data-act="futureOral">Répondre à voix haute</button>` : "")
+    });
+  }
+  return screen({
+    title: cpTitle(), color: cpColor(), body: `
+    <div class="meta-row">${cpProgress()}</div>${q}
+    ${G.step === "oral" ? `<p class="lead center">À trois, répondez en même temps.</p>` : `<div class="answers">${G.couple.map(n => `<div class="answer-b">${cpHead(n, "Sa réponse")}<p>${esc(G.ans[n]) || "<small>Pas de réponse</small>"}</p></div>`).join("")}</div>`}`,
+    foot: `<div class="row2">${btn("À discuter", "futureJudge", { arg: "0", kind: "ghost", icon: "quote" })}${btn("Même vision", "futureJudge", { arg: "1", icon: "heart" })}</div>`
+  });
+}
+const waveChoices = (act) => {
+  const [x, y] = G.card;
+  return `<div class="wyr"><button class="wyr-choice a" data-act="${act}" data-arg="A"><span class="wyr-tag">A</span><p>${esc(x)}</p></button><span class="wyr-or">ou</span><button class="wyr-choice b" data-act="${act}" data-arg="B"><span class="wyr-tag">B</span><p>${esc(y)}</p></button></div>`;
+};
+function wave() {
+  if (G.gate) return gateScreen(cpTitle(), cpColor(), "cpAdult", "cpGateNo");
+  const [a, b] = G.couple;
+  if (G.i >= G.n) return cpResult("Même longueur d'onde", pct(G.agree, G.n), "");
+  if (G.step === "a" || G.step === "b") {
+    const p = G.step === "a" ? a : b;
+    return screen({
+      title: cpTitle(), color: cpColor(), body: `
+      ${G.step === "a" ? segOf(WYR_LEVELS, G.level, "cpLevel") : ""}
+      <div class="meta-row">${cpProgress()}<span class="kicker">${G.agree} accord${G.agree > 1 ? "s" : ""}</span></div>
+      ${cpHead(p, "Choisit en secret")}
+      ${waveChoices("wavePick")}
+      <p class="hint center">${esc(cpOther(p))} ne regarde pas l'écran.</p>`,
+      foot: G.step === "a" ? `<button class="textbtn" data-act="waveSkip">${ic("skip", 18)} Autre dilemme</button>` : ""
+    });
+  }
+  const same = G.picks[a] === G.picks[b];
+  return screen({
+    title: cpTitle(), color: cpColor(), body: `
+    <div class="meta-row">${cpProgress()}</div>
+    <div class="hero">${ic(same ? "heart" : "split", 44)}<h2 class="big">${same ? "Même choix" : "Choix différents"}</h2></div>
+    <div class="wyr-result">${["A", "B"].map((k, i) => `<div class="wyr-side ${k.toLowerCase()}"><span class="wyr-tag">${k}</span><p>${esc(G.card[i])}</p><div class="team-members">${G.couple.filter(n => G.picks[n] === k).map(n => `<span class="mini">${av(n, "xs")}${esc(n)}</span>`).join("") || "<small>Personne</small>"}</div></div>`).join("")}</div>`,
+    foot: btn(G.i + 1 >= G.n ? "Voir le résultat" : "Dilemme suivant", "waveNext", { icon: "play" })
+  });
+}
+function who2() {
+  if (G.gate) return gateScreen(cpTitle(), cpColor(), "cpAdult", "cpGateNo");
+  if (G.done) {
+    const [a, b] = G.couple;
+    return cpResult("Réponses communes", pct(G.agree, G.total), `<ul class="list">${G.couple.map(n => `<li class="row-item">${av(n, "s")}<span class="grow"><b>${esc(n)}</b><small>Désigné${fe(n, "e", "")} d'un commun accord</small></span><b class="num">${G.tally[n]} fois</b></li>`).join("")}</ul>
+    <p class="hint center">${G.total} cartes jouées, ${G.total - G.agree} désaccord${G.total - G.agree > 1 ? "s" : ""}.</p>`);
+  }
+  return screen({
+    title: cpTitle(), color: cpColor(), body: `
+    ${segOf(WHO2_LEVELS, G.level, "cpLevel")}
+    <div class="card"><span class="card-label">${ic("heartHands", 16)} Qui de nous deux…</span><div class="txt">…${esc(G.card)} ?</div></div>
+    <span class="label">À trois, chacun pointe la bonne personne. Résultat ?</span>
+    <div class="pickgrid two">${G.couple.map(n => `<button class="pickav" data-act="who2Ans" data-arg="${esc(n)}">${av(n, "m")}<span>Tous les deux : ${esc(n)}</span></button>`).join("")}</div>`,
+    foot: btn("Pas d'accord", "who2Ans", { arg: "", kind: "ghost", icon: "split" }) + `<button class="textbtn" data-act="cpEnd">Terminer et voir le bilan</button>`
+  });
+}
+function dare2() {
+  if (G.gate) return gateScreen(cpTitle(), cpColor(), "cpAdult", "cpGateNo");
+  if (G.done) return screen({
+    title: cpTitle(), color: cpColor(), left: null, body: `
+    <div class="hero"><div class="pair-av">${av(G.couple[0], "l")}${ic("heart", 28)}${av(G.couple[1], "l")}</div><span class="kicker">Bilan</span><h2 class="big">${plural(G.ok[G.couple[0]] + G.ok[G.couple[1]], "défi")} relevé${G.ok[G.couple[0]] + G.ok[G.couple[1]] > 1 ? "s" : ""}</h2></div>
+    <ul class="list">${G.couple.map(n => `<li class="row-item">${av(n, "s")}<span class="grow">${esc(n)}</span><b class="num">${G.ok[n]}</b></li>`).join("")}</ul>`,
+    foot: btn("Continuer les défis", "cpResume", { icon: "play" }) + `<button class="textbtn" data-act="home">Retour aux jeux</button>`
+  });
+  const p = G.couple[G.i % 2];
+  return screen({
+    title: cpTitle(), color: cpColor(), body: `
+    ${segOf(DARE2_LEVELS, G.level, "cpLevel")}
+    ${cpHead(p, "Défi pour")}
+    <div class="card"><span class="card-label">${ic("gift", 16)} Défi, niveau ${DARE2_LEVELS.find(l => l[0] === G.level)[1]}</span><div class="txt">${G.text}</div></div>`,
+    foot: `<div class="row2">${btn("Passer", "dareNext", { arg: "0", kind: "ghost", icon: "skip" })}${btn("Défi relevé", "dareNext", { arg: "1", icon: "check" })}</div><button class="textbtn" data-act="cpEnd">Terminer et voir le bilan</button>`
+  });
+}
+function talk() {
+  const p = G.couple[G.i % 2];
+  return screen({
+    title: cpTitle(), color: cpColor(), body: `
+    ${segOf(TALK_LEVELS, G.level, "cpLevel")}
+    <div class="card"><span class="card-label">${ic("chatHeart", 16)} ${TALK_LEVELS.find(l => l[0] === G.level)[1]}</span><div class="txt">${esc(G.card)}</div></div>
+    <p class="hint center">${esc(p)} répond en premier, puis ${esc(cpOther(p))}. Prenez votre temps.</p>`,
+    foot: btn("Question suivante", "talkNext", { icon: "play" }) + `<button class="textbtn" data-act="home">Terminer</button>`
+  });
+}
+
 /* ---------- Classement (écran ouvert depuis un jeu) ---------- */
 function boardScreen() { return screen({ title: "Classement", left: "back", right: null, body: boardBody() }); }
 
@@ -1029,13 +1418,23 @@ const A = {
     if (id === "nhie") { let l = store.get("nhielvl", "fun"); if (l === "x18" && !adultOk) l = "hot"; G = { kind: "nhie", level: l, decks: {} }; nhieDraw(); return go(nhie); }
     if (id === "lg") { const n = players.length; G = { kind: "lg", nW: n >= 16 ? 4 : n >= 12 ? 3 : n >= 7 ? 2 : 1 }; return go(lgSetup); }
     if (id === "mys") { G = { kind: "mys", d: pdeck("mys", MYS), card: null, rule: null }; return go(mys); }
+    if (id === "spy") { G = { kind: "spy", nS: 1, mins: 6 }; return go(spySetup); }
+    if (id === "most") { let l = store.get("mostlvl", "soft"); if (l === "x18" && !adultOk) l = "hot"; G = { kind: "most", level: l, mode: store.get("mostmode", "secret"), decks: {} }; mostDraw(); return go(most); }
+    if (id === "num") { G = { kind: "num", nTeams: 2, nQ: 10, round: 1 }; makeTeams(); return go(teamSetup); }
+    if (id === "dico") { G = { kind: "dico", d: pdeck("dico", DICO), scores: Object.fromEntries(players.map(p => [p, 0])) }; dicoNewWord(); return go(dico); }
+    if (id === "chain") { G = { kind: "chain", d: pdeck("chain", CHAIN_WORDS), sec: store.get("chainsec", 5), order: shuffle(players), cur: 0, step: "start" }; G.word = G.d.draw(); return go(chain); }
+    if (g.cat === "couple") {
+      let c = store.get("couple", null); if (!coupleOk(c)) c = players.length === 2 ? [...players] : [];
+      let l = store.get("cplvl-" + id, id === "talk" ? "light" : id === "wave" ? "normal" : "tendre"); if (l === "x18" && !adultOk) l = "hot";
+      G = { kind: id, couple: c, n: cpCount[id] ? cpCount[id][1] : 0, level: l, decks: {} }; return go(coupleSetup);
+    }
   },
   /* équipes */
   nTeams(n) { G.nTeams = +n; makeTeams(); draw(); },
   reTeams() { makeTeams(); draw(); },
   dur(n) { G.dur = +n; draw(); },
   diff(k) { G.diff = k; store.set("mimeDiff", k); draw(); },
-  teamsGo() { if (G.kind === "tu") return A.tuGo(); if (G.kind === "quiz") return A.quizGo(); G.cur = 0; G.round = 1; G.deck = G.kind === "mime" ? pdeck("mime-" + G.diff, MIME_SETS[G.diff]) : pdeck("taboo", TABOO); go(turnIntro); },
+  teamsGo() { if (G.kind === "tu") return A.tuGo(); if (G.kind === "quiz") return A.quizGo(); if (G.kind === "num") return A.numGo(); G.cur = 0; G.round = 1; G.deck = G.kind === "mime" ? pdeck("mime-" + G.diff, MIME_SETS[G.diff]) : pdeck("taboo", TABOO); go(turnIntro); },
   turnStart() { G.log = []; G.card = G.deck.draw(); go(turnPlay); runTimer(G.dur, A.turnStop); },
   mark(v) { G.log.push({ c: G.card, v: +v }); G.card = G.deck.draw(); beep(+v === 1 ? 880 : +v === -1 ? 220 : 440, .08); draw(); },
   turnStop() { stopTimer(); if (G.card) { G.log.push({ c: G.card, v: 0, last: true }); G.card = null; } go(turnEnd); },
@@ -1294,6 +1693,218 @@ Object.assign(A, {
   lgNoElim() { G.night++; lgStartNight(); }
 });
 
+/* ---------- Actions des jeux ajoutés : lieu secret, vote, estimations, dictionnaire, chaîne de mots, couple ---------- */
+function mostDraw() { const k = G.level; G.decks[k] = G.decks[k] || pdeck("most-" + k, MOST[k]); G.card = G.decks[k].draw(); G.sel = []; G.votes = {}; G.step = "ask"; }
+function mostResult(tally) {
+  const best = tally.length ? tally[0][1] : 0;
+  G.tally = tally; G.tops = tally.filter(t => t[1] === best).map(t => t[0]);
+  G.winners = Object.keys(G.votes).filter(v => G.tops.includes(G.votes[v]));
+  G.winners.forEach(n => addPts(n, 1));
+  G.step = "result"; go(most);
+}
+function numDraw() { G.q = G.qd.draw(); G.est = {}; G.ti = 0; G.input = ""; }
+const parseNum = s => { const v = parseFloat(String(s).replace(/[\s  ]/g, "").replace(",", ".")); return isFinite(v) ? v : null; };
+function dicoNewWord() { G.word = G.d.draw(); G.step = "word"; }
+function cpDraw() {
+  const k = G.kind, src = { know: KNOW, future: FUTURE, who2: WHO2[G.level], dare2: DARE2[G.level], talk: TALK[G.level], wave: WYR[G.level] }[k];
+  const key = k + (["who2", "dare2", "talk", "wave"].includes(k) ? "-" + G.level : "");
+  G.decks[key] = G.decks[key] || pdeck("cp-" + key, src);
+  G.card = G.decks[key].draw();
+  const p = G.couple[G.i % 2];
+  if (k === "know" || k === "dare2") G.text = fill(G.card, { cur: p, p1: p, p2: cpOther(p) });
+  G.step = "a"; G.input = ""; G.ans = {}; G.picks = {};
+}
+const cpView = () => ({ know, future, who2, wave, dare2, talk })[G.kind];
+
+Object.assign(A, {
+  /* Le lieu secret */
+  spyN(n) { G.nS = Math.min(+n, spyMax()); draw(); },
+  spyMins(n) { G.mins = +n; draw(); },
+  spySettings() { stopTimer(); go(spySetup); },
+  spyGo() {
+    stopTimer();
+    G.deck = G.deck || pdeck("spy", SPY_PLACES);
+    G.place = G.deck.draw();
+    const sh = shuffle(players), spies = new Set(sh.slice(0, Math.min(G.nS, spyMax())));
+    G.ps = shuffle(players).map(name => ({ name, spy: spies.has(name) }));
+    G.first = pick(players);
+    Object.assign(G, { i: 0, show: false, peek: null, pick: null, step: "play", caught: null, self: false, win: null, pts: {} });
+    go(spyDeal);
+  },
+  spyShow() { G.show = true; draw(); },
+  spyHide() { G.show = false; G.i++; if (G.i >= G.ps.length) go(spyPlay); else go(spyDeal); },
+  spyClock() { runTimer(G.mins * 60, () => { draw(); toast("Temps écoulé : passez au vote"); }); draw(); },
+  spyPeekList() { G.peek = "list"; draw(); },
+  spyPeek(i) { G.peek = +i; draw(); },
+  spyPeekDone() { G.peek = null; draw(); },
+  spyVote() { G.step = "vote"; G.pick = null; go(spyVoteScreen); },
+  spyUnmask() { if (G.nS === 1) return A.spySelf(G.ps.findIndex(p => p.spy)); G.step = "unmask"; go(spyVoteScreen); },
+  spyBack() { G.step = "play"; go(spyPlay); },
+  spyPick(i) { G.pick = G.pick === +i ? null : +i; draw(); },
+  spyOpts() { G.opts = shuffle([G.place, ...shuffle(SPY_PLACES.filter(x => x !== G.place)).slice(0, 11)]); },
+  spySelf(i) {
+    if (!G.ps[+i].spy) return toast("Seul l'espion peut se dévoiler");
+    stopTimer(); G.caught = +i; G.self = true; A.spyOpts(); go(spyGuess);
+  },
+  spyAccuse() {
+    if (G.pick == null) return;
+    stopTimer();
+    const p = G.ps[G.pick];
+    if (!p.spy) return A.spyFinish("spies", `${p.name} n'était pas ${fe(p.name, "l'espionne", "l'espion")}. Le groupe s'est trompé de cible.`);
+    G.caught = G.pick; G.self = false; A.spyOpts(); go(spyGuess);
+  },
+  spyTry(i) {
+    const p = G.ps[G.caught], ok = G.opts[+i] === G.place;
+    A.spyFinish(ok ? "spies" : "locals", ok ? `${p.name} a deviné le lieu.` : `${p.name} a répondu « ${G.opts[+i]} ». Raté.`);
+  },
+  spyFinish(w, why) {
+    G.win = w; G.why = why; G.pts = {};
+    G.ps.forEach(p => { const v = w === "spies" ? (p.spy ? 4 : 0) : (p.spy ? 0 : 2); if (v) { G.pts[p.name] = v; addPts(p.name, v); } });
+    go(spyEnd);
+  },
+  /* Le plus susceptible de */
+  mostLevel(k) { if (k === "x18" && !adultOk) { G.gate = true; return draw(); } G.level = k; store.set("mostlvl", k); mostDraw(); draw(); },
+  mostAdult() { adultOk = true; G.gate = false; G.level = "x18"; store.set("mostlvl", "x18"); mostDraw(); draw(); },
+  mostGateNo() { G.gate = false; draw(); },
+  mostMode(m) { G.mode = m; store.set("mostmode", m); draw(); },
+  mostSel(n) { G.sel = toggleIn(G.sel, n); draw(); },
+  mostHand() { if (!G.sel.length) return; G.votes = {}; G.tally = []; G.tops = G.sel; G.winners = []; G.step = "result"; go(most); },
+  mostVoteStart() { G.vi = 0; G.votes = {}; G.step = "vote"; go(most); },
+  mostCast(n) {
+    G.votes[players[G.vi]] = n; G.vi++;
+    if (G.vi < players.length) return go(most);
+    const c = {}; Object.values(G.votes).forEach(v => { c[v] = (c[v] || 0) + 1; });
+    mostResult(Object.entries(c).sort((a, b) => b[1] - a[1]));
+  },
+  mostUncast() { G.vi--; delete G.votes[players[G.vi]]; draw(); },
+  mostGage() { openGage(G.tops, G.level !== "soft" && G.level); },
+  mostNext() { mostDraw(); go(most); },
+  /* Ordre de grandeur */
+  numGo() { Object.assign(G, { cur: 0, asked: 0, total: G.nQ, qd: pdeck("num", NUM_Q) }); numDraw(); go(numQ); },
+  numSet() {
+    const v = parseNum(G.input);
+    if (v == null) { toast("Écris un nombre"); return; }
+    G.est[G.ti] = v; G.ti++; G.input = "";
+    if (G.ti >= G.teams.length) {
+      const d = G.teams.map((t, i) => ({ i, v: G.est[i], d: Math.abs(G.est[i] - G.q.a) })).sort((x, y) => x.d - y.d);
+      const best = d[0].d; G.gain = best === 0 ? 2 : 1;
+      d.forEach(r => { r.win = r.d === best; if (r.win) { const t = G.teams[r.i]; t.score += G.gain; t.members.forEach(m => addPts(m, G.gain)); } });
+      G.rank = d; beep(880, .12);
+    }
+    go(numQ);
+  },
+  numNext() { G.asked++; if (G.asked >= G.total) return A.teamEnd(); numDraw(); go(numQ); },
+  /* Le faux dictionnaire */
+  dicoOther() { dicoNewWord(); draw(); },
+  dicoWrite() { Object.assign(G, { step: "write", wi: 0, show: false, input: "", fakes: {} }); go(dico); },
+  dicoShow() { G.show = true; G.input = ""; draw(); },
+  dicoSave() {
+    const t = G.input.trim();
+    if (t.length < 3) { toast("Écris une définition"); return; }
+    G.fakes[players[G.wi]] = t.charAt(0).toUpperCase() + t.slice(1);
+    A.dicoAdvance();
+  },
+  dicoSkip() { A.dicoAdvance(); },
+  dicoAdvance() {
+    G.wi++; G.show = false; G.input = "";
+    if (G.wi < players.length) return go(dico);
+    G.defs = shuffle([{ who: null, d: G.word.d }, ...Object.entries(G.fakes).map(([who, d]) => ({ who, d }))]);
+    G.step = "read"; go(dico);
+  },
+  dicoVote() { G.step = "vote"; G.vi = 0; G.votes = {}; go(dico); },
+  dicoCast(i) {
+    G.votes[players[G.vi]] = +i; G.vi++;
+    if (G.vi < players.length) return go(dico);
+    players.forEach(v => {
+      const d = G.defs[G.votes[v]];
+      if (!d) return;
+      if (!d.who) { G.scores[v] = (G.scores[v] || 0) + 2; addPts(v, 2); }
+      else if (d.who !== v) { G.scores[d.who] = (G.scores[d.who] || 0) + 1; addPts(d.who, 1); }
+    });
+    G.step = "result"; go(dico);
+  },
+  dicoUncast() { G.vi--; delete G.votes[players[G.vi]]; draw(); },
+  dicoNext() { dicoNewWord(); go(dico); },
+  /* Mot pour mot */
+  chainSec(s) { G.sec = +s; store.set("chainsec", G.sec); draw(); },
+  chainWord() { G.word = G.d.draw(); draw(); },
+  chainStart() { G.step = "play"; G.n = 0; go(chain); runTimer(G.sec, A.chainLose); },
+  chainNext() { G.n++; G.cur++; beep(660, .05); go(chain); runTimer(G.sec, A.chainLose); },
+  chainPause() { stopTimer(); G.step = "start"; go(chain); },
+  chainLose() {
+    stopTimer(); G.loser = chainCur(); G.step = "lost";
+    others(G.loser).forEach(o => addPts(o, 1));
+    explosion(); vib(); go(chain);
+  },
+  chainGage() { openGage(G.loser); },
+  chainNew() { G.word = G.d.draw(); G.order = shuffle(players); G.cur = 0; G.step = "start"; go(chain); },
+  /* Couple : réglages communs */
+  cpPick(n) {
+    if (G.couple.includes(n)) G.couple = G.couple.filter(x => x !== n);
+    else G.couple = G.couple.length < 2 ? [...G.couple, n] : [G.couple[0], n];
+    draw();
+  },
+  cpN(n) { G.n = +n; draw(); },
+  cpSettings() { go(coupleSetup); },
+  cpGo() {
+    if (!coupleOk(G.couple)) return;
+    store.set("couple", G.couple);
+    const [a, b] = G.couple;
+    Object.assign(G, { i: 0, agree: 0, total: 0, done: false, gate: false, decks: G.decks || {}, ok: { [a]: 0, [b]: 0 }, asked: { [a]: 0, [b]: 0 }, tally: { [a]: 0, [b]: 0 } });
+    cpDraw(); go(cpView());
+  },
+  cpLevel(k) {
+    if (k === "x18" && !adultOk) { G.gate = true; G.pend = k; return draw(); }
+    G.level = k; store.set("cplvl-" + G.kind, k); cpDraw(); draw();
+  },
+  cpAdult() { adultOk = true; G.gate = false; G.level = "x18"; store.set("cplvl-" + G.kind, "x18"); cpDraw(); draw(); },
+  cpGateNo() { G.gate = false; draw(); },
+  cpEnd() { G.done = true; draw(); },
+  cpResume() { G.done = false; cpDraw(); draw(); },
+  /* Tu me connais ? */
+  knowAns(v) {
+    const p = G.couple[G.i % 2];
+    G.asked[p]++; if (+v) { G.ok[p]++; addPts(p, 1); beep(880, .1); }
+    G.i++; if (G.i < G.n) cpDraw(); go(know);
+  },
+  knowSkip() { cpDraw(); draw(); },
+  /* Notre futur */
+  futureSave() {
+    const [a, b] = G.couple;
+    G.ans[G.step === "a" ? a : b] = G.input.trim(); G.input = "";
+    G.step = G.step === "a" ? "b" : "reveal"; go(future);
+  },
+  futureOral() { G.step = "oral"; go(future); },
+  futureJudge(v) {
+    if (+v) { G.agree++; G.couple.forEach(n => addPts(n, 1)); }
+    G.i++; if (G.i < G.n) cpDraw(); go(future);
+  },
+  /* Même longueur d'onde */
+  wavePick(k) {
+    const [a, b] = G.couple;
+    if (G.step === "a") { G.picks[a] = k; G.step = "b"; return go(wave); }
+    G.picks[b] = k; G.step = "reveal";
+    if (G.picks[a] === G.picks[b]) { G.agree++; G.couple.forEach(n => addPts(n, 1)); beep(880, .12); }
+    go(wave);
+  },
+  waveSkip() { cpDraw(); draw(); },
+  waveNext() { G.i++; if (G.i < G.n) cpDraw(); go(wave); },
+  /* Qui de nous deux */
+  who2Ans(n) {
+    G.total++;
+    if (n) { G.agree++; G.tally[n]++; toast(`D'accord : ${n}`); } else toast("Pas d'accord");
+    cpDraw(); draw();
+  },
+  /* Défis à deux */
+  dareNext(v) {
+    const p = G.couple[G.i % 2];
+    if (+v) { G.ok[p]++; addPts(p, 1); }
+    G.i++; cpDraw(); go(dare2);
+  },
+  /* Cœur à cœur */
+  talkNext() { G.i++; cpDraw(); go(talk); }
+});
+
 document.addEventListener("click", e => {
   keepAwake();
   const t = e.target.closest("[data-act]");
@@ -1303,7 +1914,10 @@ document.addEventListener("click", e => {
   e.preventDefault();
   fn(t.dataset.arg);
 });
-document.addEventListener("input", e => { if (e.target.id === "pname" && sheet && sheet.draft) sheet.draft.name = e.target.value; });
+document.addEventListener("input", e => {
+  if (e.target.id === "pname" && sheet && sheet.draft) sheet.draft.name = e.target.value;
+  if ((e.target.id === "numIn" || e.target.id === "txtIn") && G) G.input = e.target.value;
+});
 document.addEventListener("submit", e => {
   if (e.target.id !== "pform") return;
   e.preventDefault();
@@ -1319,7 +1933,10 @@ document.addEventListener("submit", e => {
   } else roster.push({ id: uid(), name, g: d.g, av: d.av });
   saveRoster(); syncNames(); sheet = null; draw();
 });
-document.addEventListener("keydown", e => { if (e.key === "Escape" && sheet) { sheet = null; draw(); } });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && sheet) { sheet = null; draw(); }
+  if (e.key === "Enter" && e.target.id === "numIn") { e.preventDefault(); A.numSet(); }
+});
 
 try { registerSW({ immediate: true }); } catch (e) {}
 go(root);

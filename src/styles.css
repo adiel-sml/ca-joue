@@ -22,6 +22,17 @@
   --c-wyr: #43aa8b;
   --c-bomb: #e76f51;
   --c-lg: #a3b18a;
+  --c-num: #06d6a0;
+  --c-most: #ffd166;
+  --c-dico: #c9a0a8;
+  --c-chain: #90be6d;
+  --c-spy: #7aa5d8;
+  --c-know: #ef476f;
+  --c-future: #f8961e;
+  --c-who2: #ff9b85;
+  --c-wave: #4fb3a9;
+  --c-dare2: #e63946;
+  --c-talk: #f7a8b8;
   --good: #3ddc97;
   --bad: #ff4d6d;
   --accent: #ffbe0b;
@@ -331,6 +342,23 @@ button.row-item:active { background: var(--surface-2); }
 .pair-av { display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--c-av); }
 .bomb-live > .ic { color: var(--c-bomb); }
 .boom { color: var(--c-bomb); }
+/* Jeux ajoutés : lieu secret, dictionnaire, chaîne de mots, couple */
+.field textarea { width: 100%; min-height: 96px; border-radius: 14px; border: 2px solid var(--line); background: var(--bg); color: var(--text); font: inherit; font-size: 18px; line-height: 1.35; padding: 12px 14px; resize: vertical; }
+.field textarea:focus { border-color: var(--gc); outline: none; }
+.field input#numIn { font-family: var(--f-display); font-size: 28px; text-align: center; }
+.places button { font-size: 15px; }
+.places button:active { background: var(--gc); color: var(--ink); }
+.def .opt { width: 30px; height: 30px; border-radius: 9px; background: var(--surface-2); display: grid; place-items: center; font-weight: 800; flex: none; align-self: flex-start; }
+.def .grow { gap: 4px; }
+.def.lead .opt { background: var(--good); color: var(--ink); }
+.chain-go { min-height: 96px; font-size: 21px; }
+button.wyr-choice { width: 100%; text-align: left; }
+button.wyr-choice:active { transform: scale(.99); }
+.answers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.answer-b { background: var(--surface); border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.answer-b .who b { font-size: 17px; }
+.answer-b p { font-size: 18px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+@media (max-width: 420px) { .answers { grid-template-columns: 1fr; } }
 
 @keyframes up { from { transform: translateY(24px); opacity: 0; } }
 @keyframes fade { from { opacity: 0; } }

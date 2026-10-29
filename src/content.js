@@ -141,9 +141,20 @@ export const GAMES = [
  {id:"tvm",cat:"all",name:"2 vérités, 1 mensonge",icon:"scanSearch",min:2,c:"var(--c-tvm)",desc:"Trouve l'anecdote inventée."},
  {id:"mys",cat:"all",name:"Jeu mystère",icon:"dices",min:2,c:"var(--c-mys)",desc:"Défis, duels et règles absurdes."},
  {id:"uc",cat:"secret",name:"Undercover",icon:"mask",min:3,c:"var(--c-uc)",desc:"Démasque l'intrus parmi vous."},
- {id:"lg",cat:"secret",name:"Loup-garou",icon:"moon",min:5,c:"var(--c-lg)",desc:"L'appli fait le meneur de jeu."}
+ {id:"lg",cat:"secret",name:"Loup-garou",icon:"moon",min:5,c:"var(--c-lg)",desc:"L'appli fait le meneur de jeu."},
+ {id:"num",cat:"team",name:"Ordre de grandeur",icon:"ruler",min:2,c:"var(--c-num)",desc:"Le chiffre le plus proche gagne."},
+ {id:"most",cat:"all",name:"Le plus susceptible de",icon:"pointer",min:3,c:"var(--c-most)",desc:"Votez pour la personne qui colle le mieux."},
+ {id:"dico",cat:"all",name:"Le faux dictionnaire",icon:"book",min:3,c:"var(--c-dico)",desc:"Invente une définition et piège les autres."},
+ {id:"chain",cat:"all",name:"Mot pour mot",icon:"link",min:2,c:"var(--c-chain)",desc:"Un mot lié au précédent, en 5 secondes."},
+ {id:"spy",cat:"secret",name:"Le lieu secret",icon:"mapPin",min:3,c:"var(--c-spy)",desc:"Tous connaissent le lieu, sauf l'espion."},
+ {id:"know",cat:"couple",name:"Tu me connais ?",icon:"target",min:2,c:"var(--c-know)",desc:"Le test de complicité du couple."},
+ {id:"future",cat:"couple",name:"Notre futur",icon:"telescope",min:2,c:"var(--c-future)",desc:"Vos projets, écrits en secret puis comparés."},
+ {id:"who2",cat:"couple",name:"Qui de nous deux",icon:"heartHands",min:2,c:"var(--c-who2)",desc:"Pointez la bonne personne en même temps."},
+ {id:"wave",cat:"couple",name:"Même longueur d'onde",icon:"wave",min:2,c:"var(--c-wave)",desc:"Les mêmes choix sans vous concerter ?"},
+ {id:"dare2",cat:"couple",name:"Défis à deux",icon:"gift",min:2,c:"var(--c-dare2)",desc:"Des défis de tendres à +18."},
+ {id:"talk",cat:"couple",name:"Cœur à cœur",icon:"chatHeart",min:2,c:"var(--c-talk)",desc:"Des questions pour mieux se connaître."}
 ];
-export const GAME_CATS = [["team", "En équipes"], ["all", "Tous ensemble"], ["secret", "Rôles secrets"]];
+export const GAME_CATS = [["team", "En équipes"], ["all", "Tous ensemble"], ["secret", "Rôles secrets"], ["couple", "En couple"]];
 
 /* Fusion des listes, en écartant les doublons (même mot, sans tenir compte des majuscules) */
 const uniqBy = (list, key) => { const seen = new Set(); return list.filter(x => { const k = key(x).toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }); };
