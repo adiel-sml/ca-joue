@@ -7,7 +7,8 @@ export default defineConfig({
   build: { outDir: "dist", target: "es2019" },
   plugins: [
     VitePWA({
-      registerType: "autoUpdate",
+      // La nouvelle version se télécharge en arrière-plan et l'accueil propose de l'installer : jamais de rechargement en pleine partie.
+      registerType: "prompt",
       injectRegister: false,
       includeAssets: ["icon.svg", "apple-touch-icon.png"],
       manifest: {
