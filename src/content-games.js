@@ -1,6 +1,7 @@
 /* Contenu des jeux Time's Up, La Bombe, Tu préfères, Je n'ai jamais, Quiz et Loup-garou */
 import { TU_MORE, BOMB_MORE, WYR_MORE, QUIZ_MORE } from "./content-more.js";
 import { NHIE_SOFT, NHIE_FUN, NHIE_HOT, NHIE_X18 } from "./content-nhie.js";
+import { WYR_EXTRA, BOMB_EXTRA, QUIZ_EXTRA } from "./content-extra.js";
 const uniq = l => { const s = new Set(); return l.filter(x => { const k = (typeof x === "string" ? x : x.q || x.join("|")).toLowerCase(); if (s.has(k)) return false; s.add(k); return true; }); };
 
 /* ---------- Time's Up : personnalités, personnages et objets connus ---------- */
@@ -274,11 +275,11 @@ const QUIZ_BASE = [
 ];
 
 export const TU_WORDS = uniq([...TU_BASE, ...TU_MORE]);
-export const BOMB_THEMES = uniq([...BOMB_BASE, ...BOMB_MORE]);
-export const WYR = Object.fromEntries(Object.keys(WYR_BASE).map(k => [k, uniq([...WYR_BASE[k], ...WYR_MORE[k]])]));
+export const BOMB_THEMES = uniq([...BOMB_BASE, ...BOMB_MORE, ...BOMB_EXTRA]);
+export const WYR = Object.fromEntries(Object.keys(WYR_BASE).map(k => [k, uniq([...WYR_BASE[k], ...WYR_MORE[k], ...WYR_EXTRA[k]])]));
 /* Je n'ai jamais : listes réécrites dans content-nhie.js (au moins 250 cartes par niveau) */
 export const NHIE = { soft: uniq(NHIE_SOFT), fun: uniq(NHIE_FUN), hot: uniq(NHIE_HOT), x18: uniq(NHIE_X18) };
-export const QUIZ = uniq([...QUIZ_BASE, ...QUIZ_MORE]);
+export const QUIZ = uniq([...QUIZ_BASE, ...QUIZ_MORE, ...QUIZ_EXTRA]);
 
 /* ---------- Loup-garou ---------- */
 export const LG_ROLES = {

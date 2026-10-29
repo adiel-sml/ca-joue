@@ -1,5 +1,7 @@
 import { MIMES_EASY, TABOO_PLUS, UC_PLUS, AV_PLUS, GAGES_PLUS, TVM_PLUS, MYS_PLUS } from "./content-plus.js";
-import { MIMES_EASY_MORE, MIMES_HARD_MORE, TABOO_MORE, UC_MORE, AV_MORE, GAGES_MORE, GAGES_HOT, MYS_MORE, TVM_MORE } from "./content-more.js";
+import { MIMES_EASY_MORE, MIMES_HARD_MORE, TABOO_MORE, UC_MORE, AV_MORE, GAGES_MORE, GAGES_HOT as GAGES_HOT_MORE, MYS_MORE, TVM_MORE } from "./content-more.js";
+import { AV_EXTRA } from "./content-av.js";
+import { MIMES_HARD_EXTRA, TABOO_EXTRA, GAGES_EXTRA, GAGES_HOT_EXTRA, GAGES_X18_EXTRA, TVM_EXTRA, MYS_EXTRA } from "./content-extra.js";
 
 /* ---------- Contenu ----------
    Gabarits : {joueur} = autre joueur au hasard, {opp} = joueur du sexe opposé (sinon un autre),
@@ -13,7 +15,7 @@ export const MIMES = {
   "Objet":["Parapluie","Aspirateur","Trottinette","Machine à laver","Sèche-cheveux","Montgolfière","Grille-pain","Tondeuse","Photomaton","Ascenseur","Balançoire","Brosse à dents électrique","Trampoline","Tire-bouchon"]
 };
 const toCards = o => Object.entries(o).flatMap(([cat,ws])=>ws.map(w=>({w,cat})));
-export const MIME_HARD = [...toCards(MIMES), ...toCards(MIMES_HARD_MORE)];
+export const MIME_HARD = [...toCards(MIMES), ...toCards(MIMES_HARD_MORE), ...toCards(MIMES_HARD_EXTRA)];
 export const MIME_EASY = [...toCards(MIMES_EASY), ...toCards(MIMES_EASY_MORE)];
 
 const TABOO_BASE = [
@@ -43,7 +45,7 @@ const AV_BASE = {
   a:["Envoie « Tu me manques » à la 5e personne de tes contacts.","Laisse {joueur} écrire ta prochaine story.","Appelle quelqu'un en visio et chante-lui joyeux anniversaire.","Fais un défilé de mode avec 3 accessoires trouvés dans la pièce.","Laisse {joueur} faire défiler ta galerie photo pendant 15 secondes.","Fais une danse langoureuse avec une chaise.","Parle uniquement en chantant jusqu'à ton prochain tour.","Laisse {joueur} te maquiller les yeux fermés.","Fais un tutoriel make-up imaginaire de 30 secondes.","Imite la personne à ta gauche en train de draguer.","Appelle quelqu'un et annonce-lui une fausse nouvelle choquante pendant 30 secondes.","Fais ton meilleur twerk pendant 15 secondes.","Laisse le groupe choisir ta photo de profil WhatsApp pour 24 h.","Fais une déclaration dramatique à {opp}, à genoux.","Raconte ton dernier rêve en le mimant.","Écris un poème de 4 vers sur {joueur} et lis-le.","Garde une cuillère dans la bouche jusqu'à ton prochain tour.","Like 3 vieilles photos du compte de ton crush.","Imite le prof qui t'a le plus marqué{e|}.","Fais le tour de la table en faisant un compliment ridicule à chacun."]
  },
  hot:{
-  v:["Qui ici embrasserais-tu si tu devais choisir ?","Quelle est la chose la plus osée que tu aies faite ?","Quel est ton fantasme le plus avouable ?","Qu'est-ce qui t'excite le plus chez quelqu'un ?","Raconte ton meilleur bisou, avec les détails.","Quel est l'endroit le plus insolite où tu as embrassé quelqu'un ?","As-tu déjà écrit à ton ex à 3 h du matin pour qu'il ou elle vienne ?","As-tu déjà craqué pour l'ex d'un ami ou d'une amie ?","Combien de personnes as-tu embrassées en une seule soirée, au maximum ?","Quel est le message le plus coquin que tu aies envoyé ?","Es-tu attiré{e|} par quelqu'un ici ? Qui ?","Quelle partie du corps de {opp} préfères-tu ?","Tu dors en pyjama, en sous-vêtements ou nu{e|} ?","As-tu déjà eu un coup d'un soir ? Raconte.","Quel est ton type physique, exactement ?","As-tu déjà envoyé une photo osée ? À qui (sans nom) ?","Note sur 10 ton attirance pour {opp}.","Quel vêtement te rend le plus sexy, selon toi ?","Quel est le pire endroit où tu as eu envie de quelqu'un ?","As-tu déjà fantasmé sur quelqu'un de ce groupe ?"],
+  v:["Qui ici embrasserais-tu si tu devais choisir ?","Quelle est la chose la plus osée que tu aies faite ?","Quel est ton fantasme le plus avouable ?","Quel trait de caractère te séduit le plus chez quelqu'un ?","Raconte ton meilleur bisou, avec les détails.","Quel est l'endroit le plus insolite où tu as embrassé quelqu'un ?","As-tu déjà écrit à ton ex à 3 h du matin pour qu'il ou elle vienne ?","As-tu déjà craqué pour l'ex d'un ami ou d'une amie ?","Combien de personnes as-tu embrassées en une seule soirée, au maximum ?","Quel est le message le plus coquin que tu aies envoyé ?","Es-tu attiré{e|} par quelqu'un ici ? Qui ?","Quelle partie du corps de {opp} préfères-tu ?","Tu dors en pyjama, en sous-vêtements ou nu{e|} ?","As-tu déjà eu un coup d'un soir ? Raconte.","Quel est ton type physique, exactement ?","As-tu déjà envoyé une photo osée ? À qui (sans nom) ?","Note sur 10 ton attirance pour {opp}.","Quel vêtement te rend le plus sexy, selon toi ?","Quel est le pire endroit où tu as eu envie de quelqu'un ?","As-tu déjà fantasmé sur quelqu'un de ce groupe ?"],
   a:["Fais un bisou dans le cou de {opp}.","Envoie « Je pensais à toi… » à ton crush ou ton ex.","Fais un massage des épaules de 30 secondes à {opp}.","Assieds-toi sur les genoux de {opp} jusqu'à ton prochain tour.","Murmure quelque chose de coquin à l'oreille de {opp}.","Fais une danse lascive de 20 secondes devant {opp}.","Drague {opp} avec ta meilleure phrase d'accroche, les yeux dans les yeux.","Fais un slow collé-serré de 30 secondes avec {opp}.","Mange une banane de la façon la plus sexy possible.","Laisse {opp} te faire un bisou où {elle|il:opp} veut sur le visage.","Lis la composition d'un shampoing avec ta voix la plus sexy.","Fais passer un glaçon de ta bouche à ta main, puis au cou de {opp}.","Fais un compliment osé à {opp}.","Montre ta dernière conversation avec ton crush.","Enlève une chaussette avec les dents.","Tiens la main de {opp} jusqu'à ton prochain tour.","Rejoue ton dernier date avec {opp} comme partenaire.","Fais un bisou sur la joue de chaque personne présente.","Fais un bisou soufflé à {opp} chaque fois que tu bois, jusqu'à ton prochain tour.","Mords doucement l'épaule de {opp}."]
  },
  x18:{
@@ -146,10 +148,15 @@ export const GAME_CATS = [["team", "En équipes"], ["all", "Tous ensemble"], ["s
 /* Fusion des listes, en écartant les doublons (même mot, sans tenir compte des majuscules) */
 const uniqBy = (list, key) => { const seen = new Set(); return list.filter(x => { const k = key(x).toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }); };
 function uniqPairs(list) { const seen = new Set(); return list.filter(p => { const k = p.map(x => x.toLowerCase()); if (k.some(x => seen.has(x))) return false; k.forEach(x => seen.add(x)); return true; }); }
-export const TABOO = uniqBy([...TABOO_BASE, ...TABOO_PLUS, ...TABOO_MORE], x => x.w);
-export const AV = Object.fromEntries(Object.entries(AV_BASE).map(([k, l]) => [k, { v: [...l.v, ...AV_PLUS[k].v, ...AV_MORE[k].v], a: [...l.a, ...AV_PLUS[k].a, ...AV_MORE[k].a] }]));
-export const GAGES = uniqBy([...GAGES_BASE, ...GAGES_PLUS, ...GAGES_MORE], x => x);
-export { GAGES_HOT };
-export const TVM_THEMES = uniqBy([...TVM_BASE, ...TVM_PLUS, ...TVM_MORE], x => x);
+export const TABOO = uniqBy([...TABOO_BASE, ...TABOO_PLUS, ...TABOO_MORE, ...TABOO_EXTRA], x => x.w);
+export const AV = Object.fromEntries(Object.entries(AV_BASE).map(([k, l]) => [k, {
+  v: uniqBy([...l.v, ...AV_PLUS[k].v, ...AV_MORE[k].v, ...AV_EXTRA[k].v], x => x),
+  a: uniqBy([...l.a, ...AV_PLUS[k].a, ...AV_MORE[k].a, ...AV_EXTRA[k].a], x => x)
+}]));
+export const GAGES = uniqBy([...GAGES_BASE, ...GAGES_PLUS, ...GAGES_MORE, ...GAGES_EXTRA], x => x);
+export const GAGES_HOT = uniqBy([...GAGES_HOT_MORE, ...GAGES_HOT_EXTRA], x => x);
+/* Au niveau +18, le gage épicé est tiré parmi les gages épicés et des gages réservés aux adultes */
+export const GAGES_X18 = uniqBy([...GAGES_HOT, ...GAGES_X18_EXTRA], x => x);
+export const TVM_THEMES = uniqBy([...TVM_BASE, ...TVM_PLUS, ...TVM_MORE, ...TVM_EXTRA], x => x);
 export const UC_PAIRS = uniqPairs([...UC_BASE, ...UC_PLUS, ...UC_MORE]);
-export const MYS = [...MYS_BASE, ...MYS_PLUS, ...MYS_MORE];
+export const MYS = uniqBy([...MYS_BASE, ...MYS_PLUS, ...MYS_MORE, ...MYS_EXTRA], x => x.x);

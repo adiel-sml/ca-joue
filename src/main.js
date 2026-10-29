@@ -4,7 +4,7 @@ import "@fontsource/figtree/latin-600.css";
 import "@fontsource/figtree/latin-800.css";
 import "./styles.css";
 import { registerSW } from "virtual:pwa-register";
-import { MIME_EASY, MIME_HARD, TABOO, AV, GAGES, GAGES_HOT, AV_LEVELS, AV_PTS, AV_BONUS, TVM_THEMES, UC_PAIRS, UC_SPECIALS, UC_PTS, MYS_TYPES, MYS, TEAM_NAMES, TEAM_COLORS, GAMES, GAME_CATS } from "./content.js";
+import { MIME_EASY, MIME_HARD, TABOO, AV, GAGES, GAGES_HOT, GAGES_X18, AV_LEVELS, AV_PTS, AV_BONUS, TVM_THEMES, UC_PAIRS, UC_SPECIALS, UC_PTS, MYS_TYPES, MYS, TEAM_NAMES, TEAM_COLORS, GAMES, GAME_CATS } from "./content.js";
 import { TU_WORDS, BOMB_THEMES, WYR, NHIE, QUIZ, LG_ROLES, LG_SPECIALS } from "./content-games.js";
 import { ic } from "./icons.js";
 import { AVATARS, avatarSvg } from "./avatars.js";
@@ -275,8 +275,9 @@ function sheetHTML() {
 }
 function confirmSheet(o) { sheet = { type: "confirm", ...o }; draw(); }
 /* Gages : deux propositions tirées au sort, plus le choix du groupe */
+/* spicy : false, "hot" (gage épicé) ou "x18" (gage épicé ou réservé aux adultes) */
 function gageOpts(spicy) {
-  const n = pdeck("gages", GAGES), a = spicy ? pdeck("gages-hot", GAGES_HOT).draw() : n.draw();
+  const n = pdeck("gages", GAGES), a = spicy === "x18" ? pdeck("gages-x18", GAGES_X18).draw() : spicy ? pdeck("gages-hot", GAGES_HOT).draw() : n.draw();
   let b = n.draw(); if (b === a) b = n.draw();
   return [a, b];
 }
@@ -1062,7 +1063,7 @@ const A = {
     G.type = t; G.text = fill(G.decks[key].draw(), { cur, joueur: pick(o.length ? o : players), opp: oppOf(cur) });
     go(avCard);
   },
-  avJoker() { openGage(avCur(), G.level === "hot" || G.level === "x18", "avAfterGage"); },
+  avJoker() { openGage(avCur(), (G.level === "hot" || G.level === "x18") && G.level, "avAfterGage"); },
   avAfterGage() { G.i++; go(avTurn); },
   avNext() {
     const p = avCur(), pts = G.type === "g" ? 0 : AV_PTS[G.type] + AV_BONUS[G.level];
@@ -1234,7 +1235,7 @@ Object.assign(A, {
   },
 
   wyrNext() { wyrDraw(); go(wyr); },
-  wyrGage() { const a = players.filter(n => G.votes[n] === "A"), b = players.filter(n => G.votes[n] === "B"); openGage(a.length < b.length ? a : b, G.level !== "normal"); },
+  wyrGage() { const a = players.filter(n => G.votes[n] === "A"), b = players.filter(n => G.votes[n] === "B"); openGage(a.length < b.length ? a : b, G.level !== "normal" && G.level); },
   /* Je n'ai jamais */
   nhieLevel(k) { if (k === "x18" && !adultOk) { G.gate = true; return draw(); } G.level = k; store.set("nhielvl", k); nhieDraw(); draw(); },
   nhieAdult() { adultOk = true; G.gate = false; G.level = "x18"; store.set("nhielvl", "x18"); nhieDraw(); draw(); },

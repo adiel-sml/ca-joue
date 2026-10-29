@@ -9,17 +9,17 @@ L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPho
 | Jeu | Joueurs | Principe | Contenu |
 |---|---|---|---|
 | **En équipes** | | | |
-| Mimes | dès 2 | Faire deviner sans parler, au chrono. Mots faciles, difficiles ou mélangés. | 410 mots faciles, 215 difficiles |
-| Mot interdit | dès 2 | Faire deviner un mot sans dire les 4 mots interdits. | 249 cartes |
+| Mimes | dès 2 | Faire deviner sans parler, au chrono. Mots faciles, difficiles ou mélangés. | 410 mots faciles, 280 difficiles |
+| Mot interdit | dès 2 | Faire deviner un mot sans dire les 4 mots interdits. | 274 cartes |
 | Time's Up | dès 4 | Trois manches avec les mêmes mots : décrire, un seul mot, mimer. | 335 mots |
-| Quiz | dès 2 | Questions à 4 choix, chaque équipe à son tour. | 165 questions |
+| Quiz | dès 2 | Questions à 4 choix, chaque équipe à son tour. | 301 questions |
 | **Tous ensemble** | | | |
-| Action ou Vérité | dès 2 | Quatre niveaux : Chill, Fun, Épicé, +18. | 409 cartes |
+| Action ou Vérité | dès 2 | Quatre niveaux : Chill, Fun, Épicé (séduction, sans sexe), +18 (sexualité). | 2 179 cartes, au moins 250 vérités et 250 actions par niveau |
 | Je n'ai jamais | dès 3 | Quatre niveaux : Soft, Fun, Épicé (séduction, sans sexe), +18 (sexualité). 1 point par aveu. | 1 016 cartes, au moins 250 par niveau |
-| Tu préfères | dès 3 | Trois niveaux. Chacun vote A ou B, la majorité gagne, la minorité prend un gage. | 170 dilemmes |
-| La Bombe | dès 3 | Répondre au thème et passer le téléphone avant l'explosion. | 243 thèmes |
-| 2 vérités, 1 mensonge | dès 2 | Trouver l'anecdote inventée. | 40 thèmes d'inspiration |
-| Jeu mystère | dès 2 | Qui pourrait, Je n'ai jamais, défis, duels, patate chaude, devinettes, règles. | 211 cartes |
+| Tu préfères | dès 3 | Trois niveaux. Chacun vote A ou B, la majorité gagne, la minorité prend un gage. | 791 dilemmes, au moins 250 par niveau |
+| La Bombe | dès 3 | Répondre au thème et passer le téléphone avant l'explosion. | 289 thèmes |
+| 2 vérités, 1 mensonge | dès 2 | Trouver l'anecdote inventée. | 283 thèmes d'inspiration |
+| Jeu mystère | dès 2 | Qui pourrait, Je n'ai jamais, défis, duels, patate chaude, devinettes, règles. | 269 cartes |
 | **Rôles secrets** | | | |
 | Undercover | dès 3 | Démasquer l'intrus. Rôles spéciaux au choix : Boss, Fantôme, Amoureux, Vengeur, Bouclier, Clown. | 293 paires de mots |
 | Loup-garou | dès 5 | L'appli fait le meneur, avec une voix qui annonce la nuit, les morts, le débat et le vote. Voyante, Sorcière, Chasseur, Cupidon. | |
@@ -28,7 +28,7 @@ L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPho
 
 - **Joueurs** avec prénom, sexe et personnage illustré. Le sexe sert à adapter les cartes : bisous entre fille et garçon, accords « la reine » ou « le roi ».
 - **Classement de la soirée** : les points de tous les jeux s'additionnent.
-- **Gages au choix** : deux gages tirés au sort, plus « Le groupe choisit le gage ». Proposés quand un joueur refuse une carte, rate un défi, perd un duel, perd à La Bombe ou se retrouve dans la minorité de Tu préfères. 100 gages et 25 gages épicés.
+- **Gages au choix** : deux gages tirés au sort, plus « Le groupe choisit le gage ». Proposés quand un joueur refuse une carte, rate un défi, perd un duel, perd à La Bombe ou se retrouve dans la minorité de Tu préfères. 258 gages et 262 gages épicés. Au niveau +18, le gage épicé peut aussi être un gage réservé aux adultes.
 - **Suivi des gages** : chaque gage est noté comme fait ou refusé. Un gage refusé coûte 2 points. Le classement affiche les gages de chacun et désigne la personne qui en a fait le plus et celle qui en a refusé le plus.
 - **Pas de répétition** : une carte ne revient qu'une fois tout le paquet passé, même d'une soirée à l'autre.
 - **Niveau +18** protégé par une confirmation, dans Action ou Vérité, Je n'ai jamais et Tu préfères.
@@ -67,6 +67,8 @@ npm run preview    # teste la version de production (installation et hors ligne 
 | `src/content-plus.js`, `src/content-more.js` | Cartes supplémentaires, fusionnées avec les listes de base sans doublons. |
 | `src/content-games.js` | Time's Up, La Bombe, Tu préfères, Quiz, rôles du Loup-garou. |
 | `src/content-nhie.js` | Je n'ai jamais, quatre niveaux. |
+| `src/content-av.js` | Action ou Vérité, cartes supplémentaires des quatre niveaux. |
+| `src/content-extra.js` | Cartes supplémentaires de Tu préfères, Quiz, La Bombe, Mot interdit, Mimes, Jeu mystère, 2 vérités 1 mensonge et des gages. |
 | `src/styles.css` | Le design. |
 | `src/avatars.js` | Les personnages des joueurs. |
 | `src/icons.js` | Les icônes utilisées. |
