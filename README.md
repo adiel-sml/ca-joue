@@ -12,7 +12,7 @@ L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPho
 | Mimes | dès 2 | Faire deviner sans parler, au chrono. Mots faciles, difficiles ou mélangés. | 410 mots faciles, 280 difficiles |
 | Mot interdit | dès 2 | Faire deviner un mot sans dire les 4 mots interdits. | 274 cartes |
 | Time's Up | dès 4 | Trois manches avec les mêmes mots : décrire, un seul mot, mimer. | 335 mots |
-| Quiz | dès 2 | Questions à 4 choix, chaque équipe à son tour. | 301 questions |
+| Quiz | dès 2 | Questions à 4 choix, chaque équipe à son tour. On joue sur un thème ou sur tous. | 2 250 questions en 8 thèmes, au moins 250 par thème |
 | Ordre de grandeur | dès 2 | Chaque équipe estime un chiffre en secret : une date, une hauteur, un nombre. La plus proche marque. | 275 questions |
 | **Tous ensemble** | | | |
 | Action ou Vérité | dès 2 | Quatre niveaux : Chill, Fun, Épicé (séduction, sans sexe), +18 (sexualité). | 2 179 cartes, au moins 250 vérités et 250 actions par niveau |
@@ -38,6 +38,8 @@ L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPho
 
 ## Fonctionnalités
 
+- **Règles de chaque jeu** : le but, le déroulement étape par étape et les points. Elles s'affichent la première fois qu'on ouvre un jeu, puis à tout moment avec le bouton d'information en haut de l'écran.
+- **Quiz par thèmes** : Culture générale (283 questions), Géographie (294), Histoire (275), Sciences et nature (286), Cinéma et séries (280), Musique (268), Sport (284) et Pop culture (280). L'appli retient le dernier thème choisi.
 - **Joueurs** avec prénom, sexe et personnage illustré. Le sexe sert à adapter les cartes : bisous entre fille et garçon, accords « la reine » ou « le roi ».
 - **Classement de la soirée** : les points de tous les jeux s'additionnent.
 - **Gages au choix** : deux gages tirés au sort, plus « Le groupe choisit le gage ». Proposés quand un joueur refuse une carte, rate un défi, perd un duel, perd à La Bombe ou se retrouve dans la minorité de Tu préfères. 258 gages et 262 gages épicés. Au niveau +18, le gage épicé peut aussi être un gage réservé aux adultes.
@@ -83,6 +85,8 @@ npm run preview    # teste la version de production (installation et hors ligne 
 | `src/content-av.js` | Action ou Vérité, cartes supplémentaires des quatre niveaux. |
 | `src/content-party.js` | Le lieu secret, Le plus susceptible de, Ordre de grandeur, Le faux dictionnaire, Mot pour mot. |
 | `src/content-couple.js` | Les jeux en couple. |
+| `src/content-rules.js` | Règles de chaque jeu, affichées à la première ouverture et avec le bouton d'information. |
+| `src/content-quiz.js` | Questions du Quiz classées par thème. |
 | `src/content-extra.js` | Cartes supplémentaires de Tu préfères, Quiz, La Bombe, Mot interdit, Mimes, Jeu mystère, 2 vérités 1 mensonge et des gages. |
 | `src/styles.css` | Le design. |
 | `src/avatars.js` | Les personnages des joueurs. |

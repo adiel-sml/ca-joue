@@ -2,6 +2,7 @@
 import { TU_MORE, BOMB_MORE, WYR_MORE, QUIZ_MORE } from "./content-more.js";
 import { NHIE_SOFT, NHIE_FUN, NHIE_HOT, NHIE_X18 } from "./content-nhie.js";
 import { WYR_EXTRA, BOMB_EXTRA, QUIZ_EXTRA } from "./content-extra.js";
+import { QUIZ_THEMED, QUIZ_RECAT } from "./content-quiz.js";
 const uniq = l => { const s = new Set(); return l.filter(x => { const k = (typeof x === "string" ? x : x.q || x.join("|")).toLowerCase(); if (s.has(k)) return false; s.add(k); return true; }); };
 
 /* ---------- Time's Up : personnalités, personnages et objets connus ---------- */
@@ -279,7 +280,9 @@ export const BOMB_THEMES = uniq([...BOMB_BASE, ...BOMB_MORE, ...BOMB_EXTRA]);
 export const WYR = Object.fromEntries(Object.keys(WYR_BASE).map(k => [k, uniq([...WYR_BASE[k], ...WYR_MORE[k], ...WYR_EXTRA[k]])]));
 /* Je n'ai jamais : listes réécrites dans content-nhie.js (au moins 250 cartes par niveau) */
 export const NHIE = { soft: uniq(NHIE_SOFT), fun: uniq(NHIE_FUN), hot: uniq(NHIE_HOT), x18: uniq(NHIE_X18) };
-export const QUIZ = uniq([...QUIZ_BASE, ...QUIZ_MORE, ...QUIZ_EXTRA]);
+export const QUIZ = uniq([...QUIZ_BASE, ...QUIZ_MORE, ...QUIZ_EXTRA, ...QUIZ_THEMED]).map(q => QUIZ_RECAT[q.q] ? { ...q, cat: QUIZ_RECAT[q.q] } : q);
+/* Thèmes du Quiz, dans l'ordre d'affichage */
+export const QUIZ_THEMES = ["Culture générale", "Géographie", "Histoire", "Sciences et nature", "Cinéma et séries", "Musique", "Sport", "Pop culture"];
 
 /* ---------- Loup-garou ---------- */
 export const LG_ROLES = {
