@@ -176,6 +176,8 @@ const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.
 /* ---------- État de l'interface ---------- */
 let G = null;          // partie en cours
 let tab = "games";     // onglet de l'accueil
+let applyUpdate = null;  // installe la nouvelle version quand elle est prête
+let updating = false;
 let homeCat = store.get("homeCat", "*");   // catégorie de jeux affichée à l'accueil
 let view = root;       // écran affiché
 let prevView = null;   // écran à rouvrir après le classement
@@ -225,6 +227,7 @@ function root() {
   return screen({
     left: null, right: null, tabs: true, body: `
     <div class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-name">Ça Joue</span></div>
+    ${applyUpdate ? `<div class="install update"><span class="install-ic">${ic("refresh", 22)}</span><span class="grow"><b>Nouvelle version disponible</b><small>Nouveaux contenus et corrections. Joueurs et classement sont conservés.</small></span><button class="pill" data-act="update" ${updating ? "disabled" : ""}>${updating ? "Un instant" : "Mettre à jour"}</button></div>` : ""}
     <button class="crew" data-act="tab" data-arg="players">
       <span class="stack-av">${players.slice(0, 6).map(n => av(n, "s")).join("")}</span>
       <span class="grow"><b>${plural(players.length, "joueur")}</b><small>${isSample ? "Exemples à remplacer" : "Modifier la liste"}</small></span>
@@ -1474,6 +1477,7 @@ const A = {
     if (G && G.kind === id && RULES[id] && !seen.includes(id)) { store.set("rulesSeen", [...seen, id]); sheet = { type: "rules", id }; draw(); }
   },
   rules() { if (G && RULES[G.kind]) { sheet = { type: "rules", id: G.kind }; draw(); } },
+  update() { if (!applyUpdate || updating) return; updating = true; draw(); applyUpdate(); },
   homeCat(k) {
     const top = $app.querySelector(".cats-top"), y = top ? top.getBoundingClientRect().top + window.scrollY : 0, stuck = top && window.scrollY > y;
     homeCat = k; store.set("homeCat", k); draw();
@@ -2016,5 +2020,22 @@ document.addEventListener("keydown", e => {
   if (e.key === "Enter" && e.target.id === "numIn") { e.preventDefault(); A.numSet(); }
 });
 
-try { registerSW({ immediate: true }); } catch (e) {}
+/* Mises à jour : la nouvelle version se télécharge en arrière-plan, puis l'accueil propose de l'installer.
+   Jamais de rechargement en pleine partie. On vérifie au lancement, au retour dans l'appli et toutes les 30 minutes. */
+try {
+  const updateSW = registerSW({
+    immediate: true,
+    onNeedRefresh() {
+      applyUpdate = () => { store.set("justUpdated", true); updateSW(true); setTimeout(() => location.reload(), 4000); };
+      if (view === root && !sheet) draw();
+    },
+    onRegisteredSW(url, reg) {
+      if (!reg) return;
+      const check = () => { if (navigator.onLine !== false && !reg.installing) reg.update().catch(() => {}); };
+      setInterval(check, 30 * 60 * 1000);
+      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") check(); });
+    }
+  });
+} catch (e) {}
 go(root);
+if (store.get("justUpdated", false)) { store.set("justUpdated", false); toast("Ça Joue est à jour."); }

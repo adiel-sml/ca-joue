@@ -147,6 +147,7 @@ small { font-size: 13px; color: var(--muted); }
 .install .grow { flex: 1 1 140px; }
 .install [data-act=hideInstall] { position: absolute; top: 6px; right: 6px; }
 @media (max-width: 380px) { .stack-av .av:nth-child(n+5) { display: none; } .install-ic { display: none; } }
+.install.update { padding-right: 14px; box-shadow: inset 0 0 0 2px var(--accent); }
 .install-ic { width: 40px; height: 40px; border-radius: 12px; background: var(--bg); display: grid; place-items: center; color: var(--accent); flex: none; }
 /* Barre des catégories de l'accueil : elle défile à l'horizontale et reste collée en haut */
 .cats {

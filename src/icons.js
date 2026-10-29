@@ -5,7 +5,7 @@ import {
   Crown, Ghost, Heart, Swords, Shield, Laugh, Hourglass, Lightbulb, Shuffle, Info, Hand, Zap, Gavel,
   MessageSquareQuote, Square, Minus, UserPlus, Vote, Medal, Smartphone, Skull, HeartCrack, SkipForward,
   Bomb, Brain, Wine, Split, Moon, Sun, PawPrint, FlaskConical, Crosshair, House, Volume2, VolumeX,
-  MapPin, Pointer, Ruler, BookOpen, Link, Target, Telescope, HeartHandshake, AudioWaveform, Gift, MessageCircleHeart
+  MapPin, Pointer, Ruler, BookOpen, Link, Target, Telescope, HeartHandshake, AudioWaveform, Gift, MessageCircleHeart, RefreshCw
 } from "lucide";
 
 const I = {
@@ -17,7 +17,7 @@ const I = {
   hand: Hand, zap: Zap, gavel: Gavel, quote: MessageSquareQuote, stop: Square, minus: Minus,
   userPlus: UserPlus, vote: Vote, medal: Medal, phone: Smartphone, skull: Skull, heartCrack: HeartCrack,
   skip: SkipForward, bomb: Bomb, brain: Brain, wine: Wine, split: Split, moon: Moon, sun: Sun, paw: PawPrint,
-  flask: FlaskConical, crosshair: Crosshair, house: House, volume: Volume2, volumeOff: VolumeX,
+  refresh: RefreshCw, flask: FlaskConical, crosshair: Crosshair, house: House, volume: Volume2, volumeOff: VolumeX,
   mapPin: MapPin, pointer: Pointer, ruler: Ruler, book: BookOpen, link: Link, target: Target, telescope: Telescope,
   heartHands: HeartHandshake, wave: AudioWaveform, gift: Gift, chatHeart: MessageCircleHeart
 };

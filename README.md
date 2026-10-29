@@ -72,7 +72,7 @@ npm run preview    # teste la version de production (installation et hors ligne 
 
 1. Sur [vercel.com](https://vercel.com), **Add New**, puis **Project**, et importer le dépôt `ca-joue`.
 2. Garder le preset **Vite** : commande `npm run build`, dossier `dist`. Cliquer sur **Deploy**.
-3. Chaque push sur `main` met le site à jour. L'appli installée se met à jour à la prochaine ouverture.
+3. Chaque push sur `main` met le site à jour. L'appli vérifie les mises à jour au lancement, à chaque retour dans l'appli et toutes les 30 minutes. La nouvelle version se télécharge en arrière-plan, puis un bandeau « Nouvelle version disponible » apparaît sur l'accueil : un toucher sur « Mettre à jour » l'installe en une seconde, joueurs et classement conservés. L'appli ne se recharge jamais en pleine partie.
 
 ## Structure
 
