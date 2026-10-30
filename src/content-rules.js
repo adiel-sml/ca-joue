@@ -4,24 +4,24 @@ export const RULES = {
   mime: {
     but: "Faire deviner un mot à son équipe en le mimant, sans dire un seul mot.",
     steps: [
-      "Formez les équipes, choisissez des mots faciles, difficiles ou mélangés, et la durée d'un tour.",
+      "Formez les équipes, choisissez des mots faciles, difficiles ou mélangés, la durée d'un tour et l'objectif : 15, 30 ou 40 points, ou sans limite.",
       "La personne désignée prend le téléphone et lance le chrono. Un mot s'affiche, elle seule le voit.",
       "Elle le mime : interdit de parler, de faire des bruits ou de montrer un objet. Son équipe propose des réponses.",
       "« Trouvé » quand l'équipe a deviné, « Passer » pour changer de mot. On enchaîne jusqu'à la fin du chrono.",
       "À la fin du tour, on corrige si besoin, puis le téléphone passe à l'équipe suivante."
     ],
-    pts: "1 point par mot trouvé, pour chaque membre de l'équipe. L'équipe gagnante reçoit 3 points de plus. À deux, chacun fait deviner à l'autre."
+    pts: "1 point par mot trouvé, pour chaque membre de l'équipe. La première équipe à atteindre l'objectif gagne et reçoit 3 points de plus. À deux, chacun fait deviner à l'autre."
   },
   taboo: {
     but: "Faire deviner un mot avec des phrases, sans prononcer les mots interdits.",
     steps: [
-      "Formez les équipes et choisissez la durée d'un tour.",
+      "Formez les équipes, choisissez la durée d'un tour et l'objectif : 15, 30 ou 40 points, ou sans limite.",
       "La personne désignée lance le chrono. Un mot s'affiche avec quatre mots interdits en rouge.",
       "Elle décrit le mot sans le dire, sans mot de la même famille et sans les mots interdits.",
       "Une personne de l'équipe adverse surveille l'écran et touche « Mot interdit prononcé » à la moindre faute.",
       "À la fin du tour, le récapitulatif rappelle les mots interdits de chaque carte pour vérifier."
     ],
-    pts: "1 point par mot trouvé, 1 point en moins par mot interdit prononcé. L'équipe gagnante reçoit 3 points de plus."
+    pts: "1 point par mot trouvé, 1 point en moins par mot interdit prononcé. La première équipe à atteindre l'objectif gagne et reçoit 3 points de plus."
   },
   tu: {
     but: "Faire deviner les mêmes mots pendant trois manches, de plus en plus difficiles.",
@@ -37,7 +37,7 @@ export const RULES = {
   quiz: {
     but: "Répondre juste à des questions de culture, en équipes.",
     steps: [
-      "Formez les équipes, choisissez un thème ou tous les thèmes, et le nombre de questions par équipe.",
+      "Formez les équipes, choisissez un thème ou tous les thèmes, puis un objectif de points ou un nombre de questions par équipe.",
       "Chaque équipe reçoit une question à son tour, avec quatre réponses possibles.",
       "L'équipe se met d'accord, puis touche sa réponse. La bonne réponse s'affiche aussitôt.",
       "Quand toutes les questions sont posées, l'appli annonce l'équipe gagnante."
@@ -47,7 +47,7 @@ export const RULES = {
   num: {
     but: "Donner l'estimation la plus proche d'un chiffre : une date, une hauteur, une distance, un nombre.",
     steps: [
-      "Formez les équipes et choisissez le nombre de questions.",
+      "Formez les équipes, puis choisissez un objectif de points ou un nombre de questions.",
       "Une question chiffrée s'affiche. Chaque équipe tape son estimation en secret, pendant que les autres ne regardent pas.",
       "Quand toutes les équipes ont répondu, l'appli révèle la bonne réponse et classe les estimations.",
       "On passe à la question suivante."
