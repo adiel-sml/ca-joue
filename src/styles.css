@@ -327,6 +327,11 @@ button.row-item:active { background: var(--surface-2); }
 .wyr-or { align-self: center; margin: -12px 0; z-index: 1; background: var(--bg); color: var(--text); border-radius: 999px; padding: 6px 16px; font-family: var(--f-display); font-size: 18px; box-shadow: 0 0 0 4px var(--bg); }
 .wyr-vote { min-height: 60px; }
 .ab { display: flex; gap: 8px; flex: none; }
+/* Gages : un gage chacun */
+.gage-each .row-item { flex-wrap: wrap; }
+.gage-each .grow small { color: var(--text); font-size: 15px; line-height: 1.35; }
+.gage-ab { display: flex; gap: 6px; margin-left: auto; }
+.gage-ab .pill { padding: 8px 12px; }
 .ab button { width: 52px; height: 44px; border-radius: 12px; background: var(--surface-2); font-family: var(--f-display); font-size: 18px; color: var(--muted); }
 .ab button.on.a { background: var(--c-tvm); color: var(--ink); }
 .ab button.on.b { background: var(--c-tu); color: var(--ink); }

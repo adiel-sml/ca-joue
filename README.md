@@ -9,7 +9,7 @@ L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPho
 | Jeu | Joueurs | Principe | Contenu |
 |---|---|---|---|
 | **En équipes** | | | |
-| Mimes | dès 2 | Faire deviner sans parler, au chrono. Mots faciles, difficiles ou mélangés. | 410 mots faciles, 280 difficiles |
+| Mimes | dès 2 | Faire deviner sans parler, au chrono. Mots faciles, difficiles ou mélangés. | 322 mots faciles, 344 difficiles, un seul mot français par carte |
 | Mot interdit | dès 2 | Faire deviner un mot sans dire les 4 mots interdits. | 274 cartes |
 | Time's Up | dès 4 | Trois manches avec les mêmes mots : décrire, un seul mot, mimer. | 335 mots |
 | Quiz | dès 2 | Questions à 4 choix, chaque équipe à son tour. On joue sur un thème ou sur tous. | 2 250 questions en 8 thèmes, au moins 250 par thème |
@@ -43,12 +43,12 @@ L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPho
 - **Quiz par thèmes** : Culture générale (283 questions), Géographie (294), Histoire (275), Sciences et nature (286), Cinéma et séries (280), Musique (268), Sport (284) et Pop culture (280). L'appli retient le dernier thème choisi.
 - **Joueurs** avec prénom, sexe et personnage illustré. Le sexe sert à adapter les cartes : bisous entre fille et garçon, accords « la reine » ou « le roi ».
 - **Classement de la soirée** : les points de tous les jeux s'additionnent.
-- **Gages au choix** : deux gages tirés au sort au niveau de la partie, plus « Le groupe choisit le gage ». Proposés quand un joueur refuse une carte, rate un défi, perd un duel, perd à La Bombe ou se retrouve dans la minorité de Tu préfères. Trois niveaux : 258 gages normaux (défis, téléphone, aveux), 274 gages épicés (séduction) et 270 gages +18. Revoir le gage d'un tour réaffiche les mêmes propositions, ou le gage déjà choisi.
+- **Gages au choix** : deux gages tirés au sort au niveau de la partie, plus « Le groupe choisit le gage ». Proposés quand un joueur refuse une carte, rate un défi, perd un duel, perd à La Bombe ou se retrouve dans la minorité de Tu préfères. Trois niveaux : 258 gages normaux (défis, téléphone, aveux), 274 gages épicés (séduction) et 270 gages +18. Revoir le gage d'un tour réaffiche les mêmes propositions, ou le gage déjà choisi. Quand deux personnes ou plus ont un gage, l'appli propose des gages de groupe à faire ensemble (264 normaux, 261 épicés, 257 +18) ou « Un gage chacun », noté séparément pour chaque personne.
 - **Suivi des gages** : chaque gage est noté comme fait ou refusé. Un gage refusé coûte 2 points. Le classement affiche les gages de chacun et désigne la personne qui en a fait le plus et celle qui en a refusé le plus.
 - **Pas de répétition** : sur un même appareil, une carte, un mot ou une question ne revient qu'une fois tous les autres passés, même d'une soirée à l'autre et après fermeture de l'appli. Les cartes déjà vues restent mémorisées quand de nouvelles cartes arrivent, et les paquets qui se recoupent partagent leur historique : thèmes du Quiz, niveaux des Mimes, Tu préfères et Même longueur d'onde.
 - **Jeux en couple** : on choisit les deux personnes du couple dans la liste des joueurs, l'appli s'en souvient. Les cartes s'accordent au sexe de chacun, que le couple soit mixte ou non.
 - **Niveau +18** protégé par une confirmation, dans Action ou Vérité, Je n'ai jamais, Tu préfères, Le plus susceptible de, Qui de nous deux, Défis à deux et Même longueur d'onde.
-- **Chrono** avec bips des 5 dernières secondes, vibration à la fin et bouton d'arrêt.
+- **Chrono** avec bips des 5 dernières secondes, sonnerie et vibration à la fin, et bouton d'arrêt. Le son est activé dès le premier toucher, y compris sur iPhone.
 - **Écran toujours allumé** pendant la partie, quand le téléphone le permet.
 
 ## Installer sur le téléphone
@@ -88,7 +88,8 @@ npm run preview    # teste la version de production (installation et hors ligne 
 | `src/content-couple.js` | Les jeux en couple. |
 | `src/content-rules.js` | Règles de chaque jeu, affichées à la première ouverture et avec le bouton d'information. |
 | `src/content-quiz.js` | Questions du Quiz classées par thème. |
-| `src/content-gages.js` | Gages des trois niveaux : normal, épicé et +18. |
+| `src/content-gages.js` | Gages des trois niveaux, individuels et de groupe. |
+| `src/content-mimes.js` | Mots des Mimes, faciles et difficiles. |
 | `src/content-extra.js` | Cartes supplémentaires de Tu préfères, Quiz, La Bombe, Mot interdit, Mimes, Jeu mystère, 2 vérités 1 mensonge. |
 | `src/styles.css` | Le design. |
 | `src/avatars.js` | Les personnages des joueurs. |

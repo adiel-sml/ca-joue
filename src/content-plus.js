@@ -1,17 +1,5 @@
 /* Cartes supplémentaires, ajoutées aux listes de content.js */
 
-/* Mimes faciles : des mots simples et concrets, faciles à mimer */
-export const MIMES_EASY = {
-  "Animal": ["Chat", "Chien", "Lapin", "Serpent", "Singe", "Éléphant", "Girafe", "Pingouin", "Kangourou", "Poule", "Vache", "Cochon", "Cheval", "Lion", "Crocodile", "Grenouille", "Poisson", "Oiseau", "Canard", "Papillon", "Abeille", "Araignée", "Escargot", "Tortue", "Ours", "Gorille", "Dauphin", "Requin", "Crabe", "Hibou", "Souris", "Mouton", "Chameau", "Moustique", "Flamant rose"],
-  "Sport": ["Football", "Tennis", "Basket", "Natation", "Boxe", "Ski", "Golf", "Vélo", "Surf", "Judo", "Course à pied", "Ping-pong", "Bowling", "Escalade", "Patinage", "Yoga", "Musculation", "Volley", "Rugby", "Équitation", "Tir à l'arc", "Saut à la corde"],
-  "Métier": ["Pompier", "Policier", "Docteur", "Dentiste", "Coiffeur", "Cuisinier", "Serveur", "Professeur", "Pilote", "Chauffeur de bus", "Facteur", "Photographe", "Peintre", "Plombier", "Jardinier", "Boulanger", "Magicien", "Chanteur", "DJ", "Danseuse", "Astronaute", "Clown", "Infirmière", "Caissière", "Mécanicien", "Agriculteur", "Arbitre"],
-  "Objet": ["Téléphone", "Parapluie", "Brosse à dents", "Guitare", "Piano", "Ordinateur", "Appareil photo", "Ciseaux", "Marteau", "Lunettes", "Montre", "Clé", "Ballon", "Livre", "Aspirateur", "Sèche-cheveux", "Miroir", "Valise", "Bougie", "Échelle", "Balai", "Fourchette", "Casserole", "Réveil", "Télécommande", "Trompette", "Batterie", "Micro", "Casque", "Sac à main", "Cadeau", "Ventilateur", "Lampe de poche", "Rouge à lèvres", "Peigne", "Cerf-volant", "Trottinette", "Skateboard", "Poussette"],
-  "Action": ["Dormir", "Manger", "Boire", "Nager", "Courir", "Danser", "Chanter", "Pleurer", "Rire", "Éternuer", "Bâiller", "Applaudir", "Cuisiner", "Conduire", "Lire", "Écrire", "Se maquiller", "Se raser", "Se doucher", "Téléphoner", "Faire la vaisselle", "Repasser", "Siffler", "Tricoter", "Ronfler", "Sauter", "Grimper", "Peindre", "Saluer", "Chuchoter"],
-  "Nourriture": ["Spaghetti", "Glace", "Banane", "Pizza", "Popcorn", "Hamburger", "Citron", "Soupe", "Pastèque", "Sucette", "Chewing-gum", "Crêpe", "Hot-dog", "Barbe à papa", "Pomme", "Gâteau d'anniversaire", "Frites", "Chips", "Café"],
-  "Transport et lieu": ["Avion", "Bateau", "Train", "Moto", "Hélicoptère", "Fusée", "Voiture", "Ascenseur", "Plage", "Piscine", "Cinéma", "Toboggan", "Manège", "Tente"],
-  "Personnage": ["Père Noël", "Sorcière", "Vampire", "Fantôme", "Robot", "Zombie", "Superman", "Princesse", "Roi", "Sirène", "Momie", "Cowboy", "Ninja", "Chevalier", "Pinocchio", "Bébé", "Mamie"]
-};
-
 export const TABOO_PLUS = `Banane:fruit,jaune,singe,éplucher
 Piscine:nager,eau,plonger,maillot
 Guitare:instrument,cordes,musique,jouer

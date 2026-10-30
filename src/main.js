@@ -9,6 +9,7 @@ import { TU_WORDS, BOMB_THEMES, WYR, NHIE, QUIZ, QUIZ_THEMES, LG_ROLES, LG_SPECI
 import { SPY_PLACES, MOST, NUM_Q, DICO, CHAIN_WORDS } from "./content-party.js";
 import { KNOW, FUTURE, WHO2, DARE2, TALK } from "./content-couple.js";
 import { RULES } from "./content-rules.js";
+import { GROUPE_N, GROUPE_E, GROUPE_A } from "./content-gages.js";
 import { ic } from "./icons.js";
 import { AVATARS, avatarSvg } from "./avatars.js";
 
@@ -120,11 +121,30 @@ function gageResolve(ok) {
 
 /* ---------- Son, chrono, écran allumé ---------- */
 let actx;
-function beep(f, d) { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.type = "triangle"; o.frequency.value = f; g.gain.setValueAtTime(.22, actx.currentTime); g.gain.exponentialRampToValueAtTime(.001, actx.currentTime + d); o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime + d); } catch (e) {} }
+/* Son : sur iPhone, l'audio n'est autorisé qu'après un toucher. On le prépare dès le premier toucher,
+   et on demande à jouer même si le téléphone est en mode silencieux (Safari 16.4 et plus). */
+function audio() {
+  try {
+    if (navigator.audioSession && navigator.audioSession.type !== "playback") navigator.audioSession.type = "playback";
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+  } catch (e) {}
+  return actx;
+}
+function unlockAudio() {
+  const c = audio(); if (!c || unlockAudio.done) return;
+  try { const b = c.createBuffer(1, 1, 22050), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); unlockAudio.done = true; } catch (e) {}
+}
+function tone(f, d, at = 0, type = "triangle", vol = .22) {
+  try { const c = audio(), t = c.currentTime + at, o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.value = f; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + d); o.connect(g).connect(c.destination); o.start(t); o.stop(t + d); } catch (e) {}
+}
+function beep(f, d) { tone(f, d); }
+/* Fin du chrono : trois bips puis une longue sonnerie, bien audibles */
+function endSound() { [0, .22, .44].forEach(at => tone(880, .16, at, "square", .25)); tone(440, .9, .7, "square", .3); }
 /* Explosion : souffle de bruit filtré qui s'éteint, plus un grondement grave */
 function explosion() {
   try {
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    audio();
     const t0 = actx.currentTime, len = 2.2, sr = actx.sampleRate;
     const buf = actx.createBuffer(1, Math.floor(sr * len), sr), d = buf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 1.5);
@@ -153,7 +173,7 @@ function runTimer(sec, onEnd) {
     if (n) { n.textContent = fmtT(left, sec); n.classList.toggle("urgent", left <= 10); }
     if (b) b.style.transform = `scaleX(${Math.max(0, (end - Date.now()) / (sec * 1000))})`;
     if (left <= 5 && left > 0 && left !== timer.last) { timer.last = left; beep(660, .08); }
-    if (left === 0) { stopTimer(); beep(330, .6); vib(); onEnd && onEnd(); }
+    if (left === 0) { stopTimer(); endSound(); vib(); onEnd && onEnd(); }
   };
   timer.id = setInterval(tick, 200);
   tick();
@@ -330,22 +350,27 @@ function sheetHTML() {
     inner = `<h2 class="sheet-title">${sheet.title}</h2><p class="sheet-text">${sheet.text}</p>
     <div class="stack">${btn(sheet.ok, sheet.act, { kind: sheet.danger ? "danger" : "", arg: sheet.arg ?? "" })}<button class="btn ghost" data-act="closeSheet">Annuler</button></div>`;
   } else if (sheet.type === "gage") {
-    const who = sheet.who.map(esc).join(", ");
-    inner = sheet.done
-      ? `<h2 class="sheet-title">${who ? `Gage de ${who}` : "Le gage"}</h2>
-        <div class="card"><span class="card-label">Gage</span><div class="txt">${sheet.chosen === "group" ? "Le groupe invente le gage." : esc(sheet.chosen)}</div></div>
-        <p class="lead center">${sheet.done === "done" ? "Gage fait, c'est noté au classement." : `Gage refusé : −${GAGE_PENALTY} pts, c'est noté au classement.`}</p>
-        <button class="btn ghost" data-act="closeSheet">Fermer</button>`
-      : sheet.chosen == null
-      ? `<h2 class="sheet-title">${who ? `Gage pour ${who}` : "Choisis un gage"}</h2><p class="sheet-text">Choisis parmi ces trois propositions.</p>
-        <ul class="list">${sheet.opts.map((o, i) => `<li><button class="row-item gage-opt" data-act="gagePick" data-arg="${i}"><span class="opt">${i + 1}</span><span class="grow">${esc(o)}</span></button></li>`).join("")}
-        <li><button class="row-item gage-opt" data-act="gagePick" data-arg="2"><span class="opt">${ic("users", 16)}</span><span class="grow"><b>Le groupe choisit le gage</b><small>Si aucune proposition ne convient</small></span></button></li></ul>
-`
-      : `<h2 class="sheet-title">${who ? `Gage de ${who}` : "Le gage"}</h2>
-        <div class="card"><span class="card-label">Gage</span><div class="txt">${sheet.chosen === "group" ? "Le groupe invente le gage. À vous de jouer !" : esc(sheet.chosen)}</div></div>
+    const who = esc(andList(sheet.who)), pen = `−${GAGE_PENALTY} pts`;
+    const card = t => `<div class="card"><span class="card-label">${sheet.multi && t !== "group" ? "Gage à faire ensemble" : "Gage"}</span><div class="txt">${t === "group" ? "Le groupe invente le gage." : esc(t)}</div></div>`;
+    const status = d => d === "done" ? `<b class="badge b-good">Fait</b>` : `<b class="badge b-bad">Refusé ${pen}</b>`;
+    if (sheet.each) {
+      /* Un gage chacun : chaque personne a le sien, noté séparément */
+      const all = sheet.each.every(e => e.done);
+      inner = `<h2 class="sheet-title">Un gage chacun</h2><p class="sheet-text">Chacun fait son gage. Refuser coûte ${GAGE_PENALTY} points à la personne qui refuse.</p>
+        <ul class="list gage-each">${sheet.each.map((e, i) => `<li class="row-item">${av(e.n, "s")}<span class="grow"><b>${esc(e.n)}</b><small>${esc(e.g)}</small></span>${e.done ? status(e.done) : `<span class="gage-ab"><button class="pill ghost" data-act="gageOne" data-arg="${i}|0">Refusé</button><button class="pill" data-act="gageOne" data-arg="${i}|1">Fait</button></span>`}</li>`).join("")}</ul>
+        ${all ? `<button class="btn ghost" data-act="gageClose">Fermer</button>` : ""}`;
+    } else if (sheet.done) inner = `<h2 class="sheet-title">${who ? `Gage de ${who}` : "Le gage"}</h2>${card(sheet.chosen)}
+        <p class="lead center">${sheet.done === "done" ? "Gage fait, c'est noté au classement." : `Gage refusé : ${pen}${sheet.multi ? " chacun" : ""}, c'est noté au classement.`}</p>
+        <button class="btn ghost" data-act="closeSheet">Fermer</button>`;
+    else if (sheet.chosen == null) inner = `<h2 class="sheet-title">${who ? `Gage pour ${who}` : "Choisis un gage"}</h2>
+        <p class="sheet-text">${sheet.multi ? `${sheet.who.length} personnes ont un gage : un gage à faire ensemble, ou un gage chacun.` : "Choisis parmi ces trois propositions."}</p>
+        <ul class="list">${sheet.opts.map((o, i) => `<li><button class="row-item gage-opt" data-act="gagePick" data-arg="${i}"><span class="opt">${i + 1}</span><span class="grow">${sheet.multi ? `<small>Ensemble</small>` : ""}${esc(o)}</span></button></li>`).join("")}
+        <li><button class="row-item gage-opt" data-act="gagePick" data-arg="2"><span class="opt">${ic("users", 16)}</span><span class="grow"><b>Le groupe choisit le gage</b><small>Si aucune proposition ne convient</small></span></button></li>
+        ${sheet.multi ? `<li><button class="row-item gage-opt" data-act="gageEach"><span class="opt">${ic("split", 16)}</span><span class="grow"><b>Un gage chacun</b><small>Chaque personne tire son propre gage</small></span></button></li>` : ""}</ul>`;
+    else inner = `<h2 class="sheet-title">${who ? `Gage de ${who}` : "Le gage"}</h2>${card(sheet.chosen)}
         ${sheet.who.length ? "" : `<span class="label">Qui fait le gage ?</span><div class="pick">${players.map(n => `<button class="${sheet.pick.includes(n) ? "on" : ""}" data-act="gageWho" data-arg="${esc(n)}">${esc(n)}</button>`).join("")}</div>`}
-        <div class="row2">${btn(`Refusé <small>−${GAGE_PENALTY} pts</small>`, "gageRefuse", { kind: "ghost", icon: "x" })}${btn("Gage fait", "gageDone", { icon: "check" })}</div>
-        <p class="hint center">Refuser un gage coûte ${GAGE_PENALTY} points. Tout est noté dans le classement.</p>`;
+        <div class="row2">${btn(`Refusé <small>${pen}${sheet.multi ? " chacun" : ""}</small>`, "gageRefuse", { kind: "ghost", icon: "x" })}${btn("Gage fait", "gageDone", { icon: "check" })}</div>
+        <p class="hint center">${sheet.multi ? `Un gage à faire ensemble. S'il est refusé, chacun perd ${GAGE_PENALTY} points.` : `Refuser un gage coûte ${GAGE_PENALTY} points. Tout est noté dans le classement.`}</p>`;
   } else if (sheet.type === "rules") {
     const g = GAMES.find(x => x.id === sheet.id), r = RULES[sheet.id];
     inner = `<div class="rules-head" style="--tc:${g.c}"><span class="tile-ic">${ic(g.icon, 26)}</span><div><span class="label">Règles du jeu</span><h2 class="sheet-title">${esc(g.name)}</h2></div></div>
@@ -371,17 +396,24 @@ function sheetHTML() {
 function confirmSheet(o) { sheet = { type: "confirm", ...o }; draw(); }
 /* Gages : deux propositions tirées au sort, plus le choix du groupe */
 /* spicy : false, "hot" (gage épicé) ou "x18" (gage épicé ou réservé aux adultes) */
-function gageOpts(spicy) {
-  const d = spicy === "x18" ? pdeck("gages-x18", GAGES_X18) : spicy ? pdeck("gages-hot", GAGES_HOT) : pdeck("gages", GAGES);
+/* Paquet de gages du niveau de la partie : gages individuels, ou gages de groupe à faire ensemble */
+function gageDeck(spicy, group = false) {
+  if (group) return spicy === "x18" ? pdeck("groupe-x18", GROUPE_A) : spicy ? pdeck("groupe-hot", GROUPE_E) : pdeck("groupe", GROUPE_N);
+  return spicy === "x18" ? pdeck("gages-x18", GAGES_X18) : spicy ? pdeck("gages-hot", GAGES_HOT) : pdeck("gages", GAGES);
+}
+function gageOpts(spicy, group = false) {
+  const d = gageDeck(spicy, group);
   const a = d.draw(); let b = d.draw(); if (b === a) b = d.draw();
   return [a, b];
 }
+const andList = l => l.length > 1 ? `${l.slice(0, -1).join(", ")} et ${l[l.length - 1]}` : l.join("");
 function openGage(who, spicy = false, then = null) {
   const list = who == null ? [] : Array.isArray(who) ? who : [who];
   /* Rouvrir le gage du même tour affiche les mêmes propositions, ou le gage déjà choisi */
   const prev = G && G.gage;
   if (prev && prev.spicy === spicy && prev.then === then && prev.who.join("|") === list.join("|")) { sheet = prev; return draw(); }
-  sheet = { type: "gage", who: list, pick: [], spicy, opts: gageOpts(spicy), chosen: null, then, done: null };
+  const multi = list.length > 1;
+  sheet = { type: "gage", who: list, pick: [], spicy, multi, opts: gageOpts(spicy, multi), chosen: null, then, done: null, each: null };
   if (G) G.gage = sheet;
   draw();
 }
@@ -413,7 +445,7 @@ function teamSetup() {
     </div>
     ${G.kind === "mime" ? `<div class="panel"><span class="label">Mots</span>
       <div class="seg">${[["easy", "Faciles"], ["hard", "Difficiles"], ["mix", "Mélange"]].map(([k, l]) => `<button class="${G.diff === k ? "on" : ""}" data-act="diff" data-arg="${k}">${l}</button>`).join("")}</div>
-      <p class="hint">${G.diff === "easy" ? "Animaux, objets, métiers, sports : des mots simples à mimer." : G.diff === "hard" ? "Films, personnages et actions détaillées : pour les pros du mime." : "Un peu de tout."}</p></div>` : ""}
+      <p class="hint">${G.diff === "easy" ? "Animaux, objets, métiers, sports : des mots simples à mimer." : G.diff === "hard" ? "Émotions, métiers rares, personnages et lieux, toujours en un seul mot : pour les pros du mime." : "Un peu de tout."}</p></div>` : ""}
     ${G.kind === "tu" ? `<div class="panel"><span class="label">Nombre de mots</span>
       <div class="seg">${[30, 40, 50].map(n => `<button class="${G.nWords === n ? "on" : ""}" data-act="tuWords" data-arg="${n}">${n} mots</button>`).join("")}</div></div>` : ""}
     ${G.kind === "quiz" ? `<div class="panel"><span class="label">Thème</span>
@@ -1178,7 +1210,7 @@ function most() {
     return screen({
       title: "Le plus susceptible de", color: MOSTC, body: `
       <div class="hero">${one ? av(tops[0], "xl") : `<div class="pair-av">${tops.slice(0, 3).map(n => av(n, "l")).join("")}</div>`}
-      <span class="kicker">${one ? fe(tops[0], "Élue par le groupe", "Élu par le groupe") : "Égalité"}</span><h2 class="big">${tops.map(esc).join(" et ")}</h2></div>
+      <span class="kicker">${one ? fe(tops[0], "Élue par le groupe", "Élu par le groupe") : "Égalité"}</span><h2 class="big">${esc(andList(tops))}</h2></div>
       ${mostCard()}
       ${G.tally.length ? `<ul class="list">${G.tally.map(([n, v]) => `<li class="row-item${tops.includes(n) ? " lead" : ""}">${av(n, "s")}<span class="grow">${esc(n)}</span><b class="num">${v} voix</b></li>`).join("")}</ul>
       <p class="hint">${G.winners.length ? `1 point pour ${G.winners.map(esc).join(", ")}, qui ont voté comme la majorité.` : "Personne n'a voté comme la majorité."}</p>` : ""}`,
@@ -1472,6 +1504,19 @@ const A = {
   closeSheet() { sheet = null; draw(); },
   dupBack() { sheet = sheet.back; draw(); const i = document.getElementById("pname"); if (i) { i.focus(); i.select(); } },
   gagePick(i) { sheet.chosen = +i === 2 ? "group" : sheet.opts[+i]; draw(); },
+  /* Un gage chacun : un gage individuel tiré pour chaque personne */
+  gageEach() { const d = gageDeck(sheet.spicy); sheet.each = sheet.who.map(n => ({ n, g: d.draw(), done: null })); draw(); },
+  gageOne(arg) {
+    const [i, ok] = arg.split("|"), e = sheet.each[+i];
+    if (!e || e.done) return;
+    e.done = +ok ? "done" : "ref";
+    const st = gstats[e.n] = gstats[e.n] || { done: 0, ref: 0 };
+    if (+ok) st.done++; else { st.ref++; addPts(e.n, -GAGE_PENALTY); }
+    store.set("gagestats", gstats);
+    if (sheet.each.every(x => x.done)) sheet.done = "each";
+    draw(); toast(+ok ? `Gage fait par ${e.n}` : `Gage refusé : −${GAGE_PENALTY} pts pour ${e.n}`);
+  },
+  gageClose() { const then = sheet.then; sheet = null; if (then) A[then](); else draw(); },
   gageWho(n) { sheet.pick = toggleIn(sheet.pick, n); draw(); },
   gageDone() { gageResolve(true); },
   gageRefuse() { gageResolve(false); },
@@ -2031,7 +2076,7 @@ Object.assign(A, {
 });
 
 document.addEventListener("click", e => {
-  keepAwake();
+  keepAwake(); unlockAudio();
   const t = e.target.closest("[data-act]");
   if (!t || t.disabled) return;
   const fn = A[t.dataset.act];

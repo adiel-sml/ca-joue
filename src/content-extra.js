@@ -959,16 +959,6 @@ Bouchon:bouteille,vin,embouteillage,liège
 Puzzle:pièces,assembler,image,boîte
 `).map(l => { const [w, f] = l.split(":"); return { w, f: f.split(",") }; });
 
-/* Mimes difficiles */
-export const MIMES_HARD_EXTRA = {
-  "Action": ["Faire du parapente", "Faire de l'escrime", "Se faire couper les cheveux", "Faire un plongeon de haut vol", "Déboucher un évier", "Jouer au flipper", "Gonfler un matelas pneumatique", "Faire un château de sable", "Prendre un bain glacé", "Peindre un mur au rouleau", "Chanter au karaoké sans connaître les paroles", "Rentrer en cachette sans faire de bruit", "Rater un gâteau au four", "Cueillir des cerises sur une échelle", "Laver un chien qui ne veut pas", "Danser le french cancan"],
-  "Métier": ["Sommelier", "Guide de musée", "Vendeur au marché", "Fleuriste", "Chef de chantier", "Agent de sécurité à l'aéroport", "Lanceur de couteaux", "Équilibriste", "Vigneron", "Moniteur d'auto-école", "Pâtissier"],
-  "Animal": ["Ours qui pêche un saumon", "Chèvre de montagne", "Paon qui fait la roue", "Pélican", "Phoque qui joue au ballon", "Chimpanzé qui épluche une banane", "Taupe", "Grenouille qui attrape une mouche", "Araignée qui tisse sa toile", "Autruche qui cache sa tête dans le sable"],
-  "Film / série": ["Avengers", "Moi, moche et méchant", "Hunger Games", "La La Land", "Gladiator", "Peter Pan", "Le Petit Prince", "Cars", "Le Livre de la jungle", "Les Bronzés font du ski"],
-  "Personnage": ["Zorro", "Robin des Bois", "Le Petit Chaperon rouge", "Lucky Luke", "Marilyn Monroe", "Mr Bean", "Wonder Woman", "Le capitaine Haddock"],
-  "Objet": ["Machine à café", "Tronçonneuse", "Lave-vaisselle", "Lance à incendie", "Cafetière italienne", "Rouleau à pâtisserie", "Tapis roulant", "Store vénitien", "Thermomètre", "Chaise pliante"]
-};
-
 /* Jeu mystère : type, texte, chrono facultatif en secondes */
 export const MYS_EXTRA = [
   { t: "qui", x: "…se perdre dans un aéroport ?" },

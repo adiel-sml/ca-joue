@@ -1,23 +1,17 @@
-import { MIMES_EASY, TABOO_PLUS, UC_PLUS, AV_PLUS, TVM_PLUS, MYS_PLUS } from "./content-plus.js";
-import { MIMES_EASY_MORE, MIMES_HARD_MORE, TABOO_MORE, UC_MORE, AV_MORE, MYS_MORE, TVM_MORE } from "./content-more.js";
+import { TABOO_PLUS, UC_PLUS, AV_PLUS, TVM_PLUS, MYS_PLUS } from "./content-plus.js";
+import { TABOO_MORE, UC_MORE, AV_MORE, MYS_MORE, TVM_MORE } from "./content-more.js";
 import { AV_EXTRA } from "./content-av.js";
-import { MIMES_HARD_EXTRA, TABOO_EXTRA, TVM_EXTRA, MYS_EXTRA } from "./content-extra.js";
+import { TABOO_EXTRA, TVM_EXTRA, MYS_EXTRA } from "./content-extra.js";
 import { GAGES_N, GAGES_E, GAGES_A } from "./content-gages.js";
+import { MIMES_FACILES, MIMES_DIFFICILES } from "./content-mimes.js";
 
 /* ---------- Contenu ----------
    Gabarits : {joueur} = autre joueur au hasard, {opp} = joueur du sexe opposé (sinon un autre),
    {p1} {p2} = joueurs tirés, {fille|garçon} = accord selon le joueur concerné ({…|…:p2} pour un autre). */
-export const MIMES = {
-  "Action":["Se brosser les dents","Faire du ski","Changer une couche","Rater son bus","Faire un selfie","Monter un meuble IKEA","Se faire piquer par une guêpe","Danser la macarena","Faire du surf","Promener un chien qui tire","Marcher sur un Lego","Faire sauter des crêpes","Se maquiller dans le métro","Faire un créneau","Avoir le hoquet","Jouer au bowling","Traire une vache","Se réveiller en retard","Faire du yoga","Ouvrir un bocal récalcitrant","Pêcher un gros poisson","Faire du lèche-vitrine"],
-  "Métier":["Pompier","Dentiste","Coiffeur","Chef d'orchestre","Policier qui règle la circulation","Astronaute","Magicien","Chirurgien","Serveur","Photographe","Prof de sport","Boulanger","Plombier","Influenceuse","Arbitre de foot","DJ"],
-  "Animal":["Pingouin","Kangourou","Gorille","Serpent","Flamant rose","Poulpe","Paresseux","Crabe","Chat qui chasse une mouche","Éléphant","Dauphin","Poule","Girafe","Escargot","Moustique"],
-  "Film / série":["Titanic","Le Roi Lion","Harry Potter","Spider-Man","La Reine des neiges","Les Dents de la mer","Star Wars","Squid Game","Shrek","Pirates des Caraïbes","Matrix","Le Seigneur des anneaux","Mission impossible","Cendrillon","Jurassic Park","Rocky","Barbie","Intouchables"],
-  "Personnage":["Michael Jackson","Le Père Noël","Dracula","Beyoncé","Napoléon","Mario","Tarzan","Superman","Une sirène","Un zombie","Charlie Chaplin","Freddie Mercury","Un mannequin sur le podium","Une reine d'Angleterre"],
-  "Objet":["Parapluie","Aspirateur","Trottinette","Machine à laver","Sèche-cheveux","Montgolfière","Grille-pain","Tondeuse","Photomaton","Ascenseur","Balançoire","Brosse à dents électrique","Trampoline","Tire-bouchon"]
-};
 const toCards = o => Object.entries(o).flatMap(([cat,ws])=>ws.map(w=>({w,cat})));
-export const MIME_HARD = [...toCards(MIMES), ...toCards(MIMES_HARD_MORE), ...toCards(MIMES_HARD_EXTRA)];
-export const MIME_EASY = [...toCards(MIMES_EASY), ...toCards(MIMES_EASY_MORE)];
+/* Mimes : listes dans content-mimes.js, un seul mot par carte */
+export const MIME_HARD = toCards(MIMES_DIFFICILES);
+export const MIME_EASY = toCards(MIMES_FACILES);
 
 const TABOO_BASE = [
  ["Plage","sable","mer","soleil","vacances"],["Pizza","Italie","fromage","four","livraison"],["Mariage","robe","bague","église","mariés"],
