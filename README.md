@@ -9,7 +9,7 @@ L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPho
 | Jeu | Joueurs | Principe | Contenu |
 |---|---|---|---|
 | **En équipes** | | | |
-| Mimes | dès 2 | Faire deviner sans parler, au chrono. Mots faciles, difficiles ou mélangés. | 322 mots faciles, 344 difficiles, un seul mot français par carte |
+| Mimes | dès 2 | Faire deviner sans parler, au chrono. Mots faciles, difficiles ou mélangés. | 386 mots faciles, 447 difficiles, jamais de phrase à mimer |
 | Mot interdit | dès 2 | Faire deviner un mot sans dire les 4 mots interdits. | 274 cartes |
 | Time's Up | dès 4 | Trois manches avec les mêmes mots : décrire, un seul mot, mimer. | 335 mots |
 | Quiz | dès 2 | Questions à 4 choix, chaque équipe à son tour. On joue sur un thème ou sur tous. | 2 250 questions en 8 thèmes, au moins 250 par thème |

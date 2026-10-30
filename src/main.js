@@ -447,7 +447,7 @@ function teamSetup() {
     </div>
     ${G.kind === "mime" ? `<div class="panel"><span class="label">Mots</span>
       <div class="seg">${[["easy", "Faciles"], ["hard", "Difficiles"], ["mix", "Mélange"]].map(([k, l]) => `<button class="${G.diff === k ? "on" : ""}" data-act="diff" data-arg="${k}">${l}</button>`).join("")}</div>
-      <p class="hint">${G.diff === "easy" ? "Animaux, objets, métiers, sports : des mots simples à mimer." : G.diff === "hard" ? "Émotions, métiers rares, personnages et lieux, toujours en un seul mot : pour les pros du mime." : "Un peu de tout."}</p></div>` : ""}
+      <p class="hint">${G.diff === "easy" ? "Animaux, objets, métiers, sports : des mots simples à mimer." : G.diff === "hard" ? "Films, personnages, émotions et métiers rares : pour les pros du mime." : "Un peu de tout."}</p></div>` : ""}
     ${G.kind === "tu" ? `<div class="panel"><span class="label">Nombre de mots</span>
       <div class="seg">${[30, 40, 50].map(n => `<button class="${G.nWords === n ? "on" : ""}" data-act="tuWords" data-arg="${n}">${n} mots</button>`).join("")}</div></div>` : ""}
     ${G.kind === "quiz" ? `<div class="panel"><span class="label">Thème</span>
