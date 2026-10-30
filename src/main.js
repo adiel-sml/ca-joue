@@ -298,13 +298,17 @@ function sheetHTML() {
     inner = `<h2 class="sheet-title">${sheet.id ? "Modifier le joueur" : "Nouveau joueur"}</h2>
     <form id="pform" class="stack">
       <label class="field"><span>Prénom</span><input id="pname" value="${esc(d.name)}" maxlength="16" autocomplete="off" enterkeyhint="done" required></label>
+      ${sheet.err ? `<p class="hint warn">${sheet.err}</p>` : ""}
       <div class="seg" role="radiogroup" aria-label="Sexe">${[["f", "Fille"], ["h", "Garçon"]].map(([k, l]) => `<button type="button" role="radio" aria-checked="${d.g === k}" class="${d.g === k ? "on" : ""}" data-act="draftG" data-arg="${k}">${l}</button>`).join("")}</div>
       <span class="label">Personnage</span>
       <div class="avgrid">${list.map(a => `<button type="button" class="avpick${d.av === a.id ? " on" : ""}" data-act="draftAv" data-arg="${a.id}" aria-label="Personnage ${a.id}" aria-pressed="${d.av === a.id}"><span class="av av-m">${avatarSvg(a.id)}</span></button>`).join("")}</div>
-      ${sheet.err ? `<p class="hint warn">${sheet.err}</p>` : ""}
       <button class="btn" type="submit">${ic("check", 20)}<span>${sheet.id ? "Enregistrer" : "Ajouter"}</span></button>
       ${sheet.id ? `<button type="button" class="textbtn danger" data-act="rmP">Retirer ce joueur</button>` : ""}
     </form>`;
+  } else if (sheet.type === "dup") {
+    inner = `<div class="rules-head" style="--tc:var(--c-tvm)"><span class="tile-ic">${ic("users", 26)}</span><h2 class="sheet-title">Ce prénom est déjà pris</h2></div>
+    <p class="sheet-text">« ${esc(sheet.name)} » est déjà dans la liste des joueurs. Ajoute une initiale ou un surnom pour les différencier, par exemple « ${esc(sheet.name)} B. ».</p>
+    ${btn("Changer le prénom", "dupBack", { icon: "pencil" })}`;
   } else if (sheet.type === "confirm") {
     inner = `<h2 class="sheet-title">${sheet.title}</h2><p class="sheet-text">${sheet.text}</p>
     <div class="stack">${btn(sheet.ok, sheet.act, { kind: sheet.danger ? "danger" : "" })}<button class="btn ghost" data-act="closeSheet">Annuler</button></div>`;
@@ -604,6 +608,7 @@ function ucProcess() {
       if (p.lover != null && G.ps[p.lover].alive && !G.queue.some(x => x.i === p.lover)) G.queue.push({ i: p.lover, cause: "love" });
     }
   }
+  G.input = "";
   go(ucReveal);
 }
 function ucReveal() {
@@ -615,17 +620,15 @@ function ucReveal() {
   const why = q.cause === "love" ? `meurt de chagrin, ${fe(p.name, "amoureuse", "amoureux")} de ${esc(G.ps[p.lover].name)}` : q.cause === "revenge" ? `est ${fe(p.name, "emportée", "emporté")} par le Vengeur` : `est ${fe(p.name, "éliminée", "éliminé")} par le vote`;
   const sp = p.sp ? spOf(p.sp) : null;
   let body = `<div class="hero">${av(p.name, "xl")}<p class="lead">${esc(p.name)} ${why}.</p></div>
-    <div class="card" style="--gc:${roleCol(p.role)}"><span class="card-label">Son rôle</span><div class="word">${roleName(p.role)}</div>${p.role !== "white" ? `<p class="card-foot">Son mot : <b>${esc(p.word)}</b></p>` : ""}
+    <div class="card" style="--gc:${roleCol(p.role)}"><span class="card-label">Son rôle</span><div class="word">${roleName(p.role)}</div>${p.role !== "white" ? `<p class="card-foot">Son mot reste secret jusqu'à la fin de la partie.</p>` : ""}
     ${sp ? `<div class="special"><span class="role-ic">${ic(sp.icon, 20)}</span><div><span class="card-label">Rôle spécial</span><b>${sp.name}</b>${p.clownWin ? `<p>Éliminé au premier vote : 3 points pour ${esc(p.name)}.</p>` : ""}</div></div>` : ""}</div>`;
   let foot = btn("Continuer", "ucNext", { icon: "play" });
+  if (q.wFail) body += `<p class="lead">Raté, ce n'est pas le mot des civils. La partie continue.</p>`;
   if (p.role === "white" && !q.wDone) {
-    if (q.wShown) {
-      body += `<div class="hero"><span class="kicker">Le mot des civils était</span><h2 class="big">${esc(G.pair[0])}</h2></div>`;
-      foot = `<div class="row2">${btn("Raté", "ucWhite", { arg: "0", kind: "ghost", icon: "x" })}${btn("Trouvé", "ucWhite", { arg: "1", icon: "check" })}</div>`;
-    } else {
-      body += `<p class="lead center">Dernière chance : ${esc(p.name)} annonce à voix haute le mot des civils.</p>`;
-      foot = btn("Révéler le mot des civils", "ucWShow", { icon: "eye" });
-    }
+    /* Mr White tape sa réponse : l'appli vérifie sans afficher le mot des civils */
+    body += `<p class="lead">Dernière chance : ${esc(p.name)} tape le mot des civils. L'appli vérifie sans le dévoiler.</p>
+      <label class="field"><span>Le mot des civils</span><input id="txtIn" value="${esc(G.input)}" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"></label>`;
+    foot = btn("Vérifier", "ucWhiteTry", { icon: "check" });
   } else if (p.sp === "avenger" && !q.revDone) {
     const alive = G.ps.map((x, i) => i).filter(i => G.ps[i].alive && !G.queue.some(y => y.i === i));
     body += `<h2 class="h2">${ic("swords", 20)} Vengeance</h2><p class="hint">${esc(p.name)} choisit qui emporter avec ${fe(p.name, "elle", "lui")}.</p>
@@ -1440,6 +1443,7 @@ const A = {
   home() { stopTimer(); try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) {} G = null; tab = "games"; go(root); },
   askQuit() { confirmSheet({ title: "Quitter la partie ?", text: "Les points déjà gagnés restent au classement.", ok: "Quitter", act: "home", danger: true }); },
   closeSheet() { sheet = null; draw(); },
+  dupBack() { sheet = sheet.back; draw(); const i = document.getElementById("pname"); if (i) { i.focus(); i.select(); } },
   gagePick(i) { sheet.chosen = +i === 2 ? "group" : sheet.opts[+i]; draw(); },
   gageReroll() { sheet.opts = gageOpts(sheet.spicy); draw(); },
   gageWho(n) { sheet.pick = toggleIn(sheet.pick, n); draw(); },
@@ -1593,8 +1597,12 @@ const A = {
   ucPeekList() { G.peek = null; go(ucPeek); },
   ucPeek(i) { G.peek = +i; draw(); },
   ucPeekDone() { G.peek = null; go(ucTalk); },
-  ucWShow() { G.queue[0].wShown = true; draw(); },
-  ucWhite(ok) { if (+ok) { G.queue = []; return ucFinish("white"); } G.queue[0].wDone = true; draw(); },
+  ucWhiteTry() {
+    const n = w => String(w).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "").replace(/s$/, "");
+    if (!n(G.input)) return toast("Tape un mot.");
+    if (n(G.input) === n(G.pair[0])) { G.queue = []; return ucFinish("white"); }
+    Object.assign(G.queue[0], { wDone: true, wFail: true }); draw();
+  },
   ucRevenge(i) { G.queue[0].revDone = true; G.queue.push({ i: +i, cause: "revenge" }); draw(); },
   ucNext() { G.queue.shift(); ucProcess(); },
   /* mystère */
@@ -2005,8 +2013,9 @@ document.addEventListener("submit", e => {
   e.preventDefault();
   const d = sheet.draft, name = d.name.trim();
   if (!name) { sheet.err = "Écris un prénom."; return draw(); }
-  const dup = roster.find(p => p.id !== sheet.id && p.name.toLowerCase() === name.toLowerCase());
-  if (dup) { sheet.err = `${esc(dup.name)} est déjà dans la liste.`; return draw(); }
+  /* La liste d'exemple est remplacée au premier ajout : pas de doublon possible avec elle */
+  const dup = !isSample && roster.find(p => p.id !== sheet.id && p.name.toLowerCase() === name.toLowerCase());
+  if (dup) { sheet = { type: "dup", name: dup.name, back: { ...sheet, err: "" } }; return draw(); }
   if (isSample) roster = [];
   const p = sheet.id && roster.find(x => x.id === sheet.id);
   if (p) {
@@ -2018,6 +2027,7 @@ document.addEventListener("submit", e => {
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && sheet) { sheet = null; draw(); }
   if (e.key === "Enter" && e.target.id === "numIn") { e.preventDefault(); A.numSet(); }
+  if (e.key === "Enter" && e.target.id === "txtIn" && G && G.kind === "uc") { e.preventDefault(); A.ucWhiteTry(); }
 });
 
 /* Mises à jour : la nouvelle version se télécharge en arrière-plan, puis l'accueil propose de l'installer.
