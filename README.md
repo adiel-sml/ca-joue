@@ -43,7 +43,7 @@ L'appli s'installe sur l'écran d'accueil du téléphone ou de la tablette (iPho
 - **Quiz par thèmes** : Culture générale (283 questions), Géographie (294), Histoire (275), Sciences et nature (286), Cinéma et séries (280), Musique (268), Sport (284) et Pop culture (280). L'appli retient le dernier thème choisi.
 - **Joueurs** avec prénom, sexe et personnage illustré. Le sexe sert à adapter les cartes : bisous entre fille et garçon, accords « la reine » ou « le roi ».
 - **Classement de la soirée** : les points de tous les jeux s'additionnent.
-- **Gages au choix** : deux gages tirés au sort, plus « Le groupe choisit le gage ». Proposés quand un joueur refuse une carte, rate un défi, perd un duel, perd à La Bombe ou se retrouve dans la minorité de Tu préfères. 258 gages et 262 gages épicés. Au niveau +18, le gage épicé peut aussi être un gage réservé aux adultes.
+- **Gages au choix** : deux gages tirés au sort au niveau de la partie, plus « Le groupe choisit le gage ». Proposés quand un joueur refuse une carte, rate un défi, perd un duel, perd à La Bombe ou se retrouve dans la minorité de Tu préfères. Trois niveaux : 258 gages normaux (défis, téléphone, aveux), 274 gages épicés (séduction) et 270 gages +18. Revoir le gage d'un tour réaffiche les mêmes propositions, ou le gage déjà choisi.
 - **Suivi des gages** : chaque gage est noté comme fait ou refusé. Un gage refusé coûte 2 points. Le classement affiche les gages de chacun et désigne la personne qui en a fait le plus et celle qui en a refusé le plus.
 - **Pas de répétition** : sur un même appareil, une carte, un mot ou une question ne revient qu'une fois tous les autres passés, même d'une soirée à l'autre et après fermeture de l'appli. Les cartes déjà vues restent mémorisées quand de nouvelles cartes arrivent, et les paquets qui se recoupent partagent leur historique : thèmes du Quiz, niveaux des Mimes, Tu préfères et Même longueur d'onde.
 - **Jeux en couple** : on choisit les deux personnes du couple dans la liste des joueurs, l'appli s'en souvient. Les cartes s'accordent au sexe de chacun, que le couple soit mixte ou non.
@@ -88,7 +88,8 @@ npm run preview    # teste la version de production (installation et hors ligne 
 | `src/content-couple.js` | Les jeux en couple. |
 | `src/content-rules.js` | Règles de chaque jeu, affichées à la première ouverture et avec le bouton d'information. |
 | `src/content-quiz.js` | Questions du Quiz classées par thème. |
-| `src/content-extra.js` | Cartes supplémentaires de Tu préfères, Quiz, La Bombe, Mot interdit, Mimes, Jeu mystère, 2 vérités 1 mensonge et des gages. |
+| `src/content-gages.js` | Gages des trois niveaux : normal, épicé et +18. |
+| `src/content-extra.js` | Cartes supplémentaires de Tu préfères, Quiz, La Bombe, Mot interdit, Mimes, Jeu mystère, 2 vérités 1 mensonge. |
 | `src/styles.css` | Le design. |
 | `src/avatars.js` | Les personnages des joueurs. |
 | `src/icons.js` | Les icônes utilisées. |

@@ -1,7 +1,8 @@
-import { MIMES_EASY, TABOO_PLUS, UC_PLUS, AV_PLUS, GAGES_PLUS, TVM_PLUS, MYS_PLUS } from "./content-plus.js";
-import { MIMES_EASY_MORE, MIMES_HARD_MORE, TABOO_MORE, UC_MORE, AV_MORE, GAGES_MORE, GAGES_HOT as GAGES_HOT_MORE, MYS_MORE, TVM_MORE } from "./content-more.js";
+import { MIMES_EASY, TABOO_PLUS, UC_PLUS, AV_PLUS, TVM_PLUS, MYS_PLUS } from "./content-plus.js";
+import { MIMES_EASY_MORE, MIMES_HARD_MORE, TABOO_MORE, UC_MORE, AV_MORE, MYS_MORE, TVM_MORE } from "./content-more.js";
 import { AV_EXTRA } from "./content-av.js";
-import { MIMES_HARD_EXTRA, TABOO_EXTRA, GAGES_EXTRA, GAGES_HOT_EXTRA, GAGES_X18_EXTRA, TVM_EXTRA, MYS_EXTRA } from "./content-extra.js";
+import { MIMES_HARD_EXTRA, TABOO_EXTRA, TVM_EXTRA, MYS_EXTRA } from "./content-extra.js";
+import { GAGES_N, GAGES_E, GAGES_A } from "./content-gages.js";
 
 /* ---------- Contenu ----------
    Gabarits : {joueur} = autre joueur au hasard, {opp} = joueur du sexe opposé (sinon un autre),
@@ -53,7 +54,6 @@ const AV_BASE = {
   a:["Embrasse {opp} sur la bouche, ou prends 2 gages.","Fais un lap dance de 30 secondes à {opp}.","Enlève un vêtement de ton choix jusqu'à la fin du jeu.","Fais un suçon à {opp}, là où {elle|il:opp} accepte.","Mime ta position préférée avec un coussin.","Mordille l'oreille de {opp} pendant 5 secondes.","Body shot : bois un shot (ou mange un bonbon) posé sur le ventre de {opp}.","Embrasse le cou de {opp} pendant 10 secondes.","Strip-tease de 20 secondes. Tu gardes tes sous-vêtements.","Laisse {opp} t'embrasser où {elle|il:opp} veut, au-dessus de la ceinture.","7 minutes au paradis : isole-toi 7 minutes avec {opp}.","Chuchote à l'oreille de {opp} ce que tu lui ferais si vous étiez seuls.","Fais un massage sensuel d'une minute à {opp}.","Passe un glaçon sur le cou et le ventre de {opp}.","Montre la couleur de tes sous-vêtements à {opp}, et seulement à {elle|lui:opp}.","Simule un orgasme, le plus fort possible.","Fais un bisou à {opp} à l'endroit que le groupe choisit (au-dessus de la ceinture).","Les yeux bandés, laisse {opp} t'embrasser où {elle|il:opp} veut sur le visage et le cou.","Assieds-toi à califourchon sur {opp} pendant un tour complet.","Embrasse {opp} avec la langue pendant 5 secondes, ou prends 2 gages.","Lèche de la chantilly ou du chocolat sur le doigt de {opp}.","Envoie un message coquin à ton crush, le groupe le relit avant.","Enlève un vêtement à {opp}, avec son accord.","Fais la pose la plus hot possible avec {opp} pendant 10 secondes."]
  }
 };
-const GAGES_BASE = ["Bois un grand verre d'eau cul sec.","Fais 15 pompes (sur les genoux autorisé).","Garde les yeux fermés pendant tout le prochain tour.","Parle de toi à la 3e personne jusqu'à ton prochain tour.","Laisse le groupe te dessiner une moustache à l'eye-liner.","Interdit de dire « je » jusqu'à ton prochain tour.","Chante une chanson choisie par le groupe.","Mange une cuillère d'un condiment choisi par le groupe.","Fais le tour de la pièce à cloche-pied.","Pose ton téléphone au centre, écran visible, jusqu'à ton prochain tour."];
 export const AV_LEVELS = [["chill","Chill"],["fun","Fun"],["hot","Épicé"],["x18","+18"]];
 export const AV_PTS = {v:1,a:2};
 export const AV_BONUS = {chill:0,fun:0,hot:1,x18:2};
@@ -164,10 +164,10 @@ export const AV = Object.fromEntries(Object.entries(AV_BASE).map(([k, l]) => [k,
   v: uniqBy([...l.v, ...AV_PLUS[k].v, ...AV_MORE[k].v, ...AV_EXTRA[k].v], x => x),
   a: uniqBy([...l.a, ...AV_PLUS[k].a, ...AV_MORE[k].a, ...AV_EXTRA[k].a], x => x)
 }]));
-export const GAGES = uniqBy([...GAGES_BASE, ...GAGES_PLUS, ...GAGES_MORE, ...GAGES_EXTRA], x => x);
-export const GAGES_HOT = uniqBy([...GAGES_HOT_MORE, ...GAGES_HOT_EXTRA], x => x);
-/* Au niveau +18, le gage épicé est tiré parmi les gages épicés et des gages réservés aux adultes */
-export const GAGES_X18 = uniqBy([...GAGES_HOT, ...GAGES_X18_EXTRA], x => x);
+/* Gages : un paquet par niveau, voir content-gages.js */
+export const GAGES = uniqBy(GAGES_N, x => x);
+export const GAGES_HOT = uniqBy(GAGES_E, x => x);
+export const GAGES_X18 = uniqBy(GAGES_A, x => x);
 export const TVM_THEMES = uniqBy([...TVM_BASE, ...TVM_PLUS, ...TVM_MORE, ...TVM_EXTRA], x => x);
 export const UC_PAIRS = uniqPairs([...UC_BASE, ...UC_PLUS, ...UC_MORE]);
 export const MYS = uniqBy([...MYS_BASE, ...MYS_PLUS, ...MYS_MORE, ...MYS_EXTRA], x => x.x);
