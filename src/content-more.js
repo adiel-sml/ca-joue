@@ -2,26 +2,6 @@
 const lines = s => s.trim().split("\n").map(x => x.trim()).filter(Boolean);
 const pairs = s => lines(s).map(l => l.split("|").map(x => x.trim()));
 
-export const MIMES_EASY_MORE = {
-  "Animal": ["Taureau", "Âne", "Chèvre", "Loup", "Renard", "Écureuil", "Hérisson", "Chauve-souris", "Pieuvre", "Baleine", "Phoque", "Panda", "Koala", "Zèbre", "Hippopotame", "Rhinocéros", "Perroquet", "Aigle", "Corbeau", "Coq", "Dinosaure", "Licorne", "Dragon", "Fourmi", "Coccinelle", "Ver de terre", "Chenille", "Paon", "Autruche", "Castor"],
-  "Sport": ["Badminton", "Handball", "Karaté", "Plongeon", "Aviron", "Canoë", "Lancer de javelot", "Saut en hauteur", "Saut à la perche", "Curling", "Hockey", "Baseball", "Roller", "Sumo", "Fléchettes", "Billard", "Pétanque", "Danse classique"],
-  "Métier": ["Vétérinaire", "Pêcheur", "Bûcheron", "Électricien", "Pharmacien", "Juge", "Avocat", "Soldat", "Marin", "Hôtesse de l'air", "Mannequin", "Acteur", "Journaliste", "Livreur", "Éboueur", "Maître-nageur", "Nounou", "Coach sportif", "Barman", "Sculpteur", "Détective", "Espion", "Moine"],
-  "Objet": ["Perceuse", "Agrafeuse", "Stylo", "Gomme", "Calculatrice", "Tablette", "Manette", "Jumelles", "Loupe", "Boussole", "Sablier", "Horloge", "Râteau", "Pelle", "Arrosoir", "Tournevis", "Scie", "Cintre", "Oreiller", "Couverture", "Bouée", "Masque de plongée", "Palmes", "Raquette", "Gants de boxe", "Perche à selfie", "Paille", "Assiette", "Théière", "Mixeur", "Fer à repasser", "Ampoule"],
-  "Action": ["Plonger", "Ramer", "Pédaler", "Ramper", "Glisser", "Trébucher", "Se coiffer", "S'habiller", "Lacer ses chaussures", "Faire un nœud de cravate", "Mettre du vernis", "Se parfumer", "Se moucher", "Tousser", "Avoir froid", "Avoir chaud", "Avoir peur", "Être en colère", "Être amoureux", "Être fatigué", "Avoir faim", "Faire du stop", "Envoyer un SMS", "Jouer aux cartes", "Lancer un dé", "Passer l'aspirateur", "Tondre la pelouse", "Arroser les plantes", "Laver la voiture", "Faire des pompes", "Faire un câlin", "Jongler", "Faire du hula hoop", "Souffler des bougies", "Ouvrir un cadeau"],
-  "Nourriture": ["Fraise", "Cerise", "Raisin", "Ananas", "Noix de coco", "Kiwi", "Orange", "Carotte", "Brocoli", "Oignon", "Champignon", "Œuf", "Croissant", "Baguette", "Fromage", "Sandwich", "Yaourt", "Chocolat", "Bonbon", "Cookie", "Donut", "Kebab", "Tacos", "Riz", "Jus d'orange", "Thé", "Champagne", "Cocktail"],
-  "Transport et lieu": ["Bus", "Métro", "Taxi", "Camion", "Tracteur", "Sous-marin", "Parachute", "Téléphérique", "Désert", "Jungle", "Igloo", "Château", "Pyramide", "Hôpital", "École", "Supermarché", "Prison", "Cirque", "Zoo", "Ferme", "Aéroport", "Discothèque", "Salle de sport", "Bibliothèque"],
-  "Personnage": ["Fée", "Elfe", "Lutin", "Géant", "Pirate", "Extraterrestre", "Batman", "Hulk", "Dark Vador", "Harry Potter", "Mickey", "Lapin de Pâques", "Cupidon", "Diable", "Ange", "Squelette", "Loup-garou"]
-};
-
-export const MIMES_HARD_MORE = {
-  "Action": ["Faire un tour de magie", "Se faire arrêter par la police", "Promener un chat en laisse", "Faire une demande en mariage", "Changer une roue", "Monter une tente", "Danser le tango", "Faire du ski nautique", "Traverser une rivière sur des pierres", "Se faire griffer par un chat", "Héler un taxi à New York", "Chasser un moustique la nuit", "Préparer des sushis", "Se faire tatouer", "Faire du rodéo", "Dresser un lion", "Faire la course en sac", "Patiner sur un lac gelé", "Chercher ses clés", "Réveiller quelqu'un qui ronfle", "Faire un barbecue", "Tomber amoureux au premier regard", "Se faire larguer par SMS", "Glisser sur une peau de banane", "Passer un entretien d'embauche", "Escalader l'Everest", "Se faire piquer par une méduse", "Ouvrir une huître", "Jouer de la harpe", "Être poursuivi par un taureau"],
-  "Métier": ["Dompteur", "Cascadeur", "Mime", "Contrôleur de train", "Sage-femme", "Apiculteur", "Pilote de Formule 1", "Gardien de zoo", "Garde du corps", "Majordome", "Ramoneur", "Tatoueur", "Plongeur sous-marin", "Archéologue", "Présentateur météo", "Commissaire-priseur", "Contrôleur aérien"],
-  "Animal": ["Chameau qui crache", "Pingouin qui glisse", "Chien qui fait le beau", "Kangourou boxeur", "Hérisson en boule", "Chat qui fait sa toilette", "Taureau en colère", "Cygne", "Lama", "Morse", "Scorpion", "Méduse", "Libellule"],
-  "Film / série": ["E.T.", "Retour vers le futur", "Avatar", "Les Visiteurs", "Astérix et Obélix", "La Casa de Papel", "Stranger Things", "King Kong", "SOS Fantômes", "Karaté Kid", "Le Parrain", "Pretty Woman", "Dirty Dancing", "Grease", "Mamma Mia", "Top Gun", "Mary Poppins", "Bambi", "Ratatouille", "Le Monde de Nemo", "Toy Story", "Les Indestructibles", "Kung Fu Panda", "Madagascar", "Aladdin", "La Belle et la Bête"],
-  "Personnage": ["Elvis Presley", "Bruce Lee", "Usain Bolt", "Le pape", "Cléopâtre", "Mozart", "Albert Einstein", "Jack Sparrow", "Indiana Jones", "Gandalf", "Yoda", "Le Grinch", "Sherlock Holmes", "James Bond", "Rambo"],
-  "Objet": ["Éventail", "Machine à écrire", "Tourne-disque", "Taille-crayon", "Distributeur de billets", "Escalator", "Photocopieuse", "Moulin à vent", "Boule de cristal", "Lance-pierre", "Boomerang", "Pistolet à eau", "Yo-yo", "Toupie", "Hamac"]
-};
-
 export const TABOO_MORE = lines(`Plongée:eau,mer,bouteille,poissons
 Camping:tente,nature,vacances,sac de couchage
 Barbecue:grillade,viande,charbon,été
