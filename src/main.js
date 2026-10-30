@@ -192,7 +192,23 @@ function draw() {
   $app.innerHTML = frSpaces(view() + sheetHTML()) + '<div id="toast" class="toast" role="status" hidden></div>';
   document.body.classList.toggle("locked", !!sheet);
   catsSync();
+  guardSync();
 }
+/* Bouton ou geste retour (Android, navigateur) : il ferme le panneau ouvert, revient aux jeux ou demande avant de quitter
+   la partie, au lieu de fermer l'appli et de perdre la partie en cours */
+let guarded = false;
+function guardSync() {
+  if (guarded || (!sheet && view === root && tab === "games")) return;
+  try { history.pushState({ cajoue: 1 }, ""); guarded = true; } catch (e) {}
+}
+window.addEventListener("popstate", () => {
+  guarded = false;
+  if (sheet) { sheet = null; draw(); }
+  else if (view === boardScreen) A.boardBack();
+  else if (view !== root) A.askQuit();
+  else if (tab !== "games") A.tab("games");
+  guardSync();
+});
 function toast(t) { const el = document.getElementById("toast"); if (!el) return; el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 1800); }
 
 /* Gabarit d'écran : barre du haut, contenu, zone d'actions en bas */
@@ -311,7 +327,7 @@ function sheetHTML() {
     ${btn("Changer le prénom", "dupBack", { icon: "pencil" })}`;
   } else if (sheet.type === "confirm") {
     inner = `<h2 class="sheet-title">${sheet.title}</h2><p class="sheet-text">${sheet.text}</p>
-    <div class="stack">${btn(sheet.ok, sheet.act, { kind: sheet.danger ? "danger" : "" })}<button class="btn ghost" data-act="closeSheet">Annuler</button></div>`;
+    <div class="stack">${btn(sheet.ok, sheet.act, { kind: sheet.danger ? "danger" : "", arg: sheet.arg ?? "" })}<button class="btn ghost" data-act="closeSheet">Annuler</button></div>`;
   } else if (sheet.type === "gage") {
     const who = sheet.who.map(esc).join(", ");
     inner = sheet.chosen == null
@@ -953,7 +969,7 @@ function lgDayIntro() {
   const dead = G.queue.map(q => G.ps[q.i]);
   return screen({
     title: `Jour ${G.night}`, color: LGC, body: `<div class="hero">${ic("sun", 56)}<h2 class="big">Le village se réveille</h2>
-    <p class="lead">${dead.length ? `Cette nuit, ${dead.map(p => esc(p.name)).join(" et ")} ${dead.length > 1 ? "ont été retrouvés morts" : `a été ${fe(dead[0].name, "retrouvée morte", "retrouvé mort")}`}.` : "Personne n'est mort cette nuit."}</p></div>`,
+    <p class="lead">${dead.length ? `Cette nuit, ${dead.map(p => esc(p.name)).join(" et ")} ${dead.length > 1 ? (dead.every(p => gOf(p.name) === "f") ? "ont été retrouvées mortes" : "ont été retrouvés morts") : `a été ${fe(dead[0].name, "retrouvée morte", "retrouvé mort")}`}.` : "Personne n'est mort cette nuit."}</p></div>`,
     foot: dead.length ? btn("Révéler les rôles", "lgProcess", { icon: "eye" }) : btn("Passer au débat", "lgDebate", { icon: "play" })
   });
 }
@@ -1023,7 +1039,7 @@ function lgDawn() {
   if (G.poison != null && !deaths.some(d => d.i === G.poison)) deaths.push({ i: G.poison, cause: "poison" });
   G.queue = deaths; G.after = "debate";
   go(lgDayIntro);
-  say(deaths.length ? `Le village se réveille. Cette nuit, ${deaths.map(d => G.ps[d.i].name).join(" et ")} ${deaths.length > 1 ? "sont morts" : fe(G.ps[deaths[0].i].name, "est morte", "est mort")}.` : "Le village se réveille. Personne n'est mort cette nuit.");
+  say(deaths.length ? `Le village se réveille. Cette nuit, ${deaths.map(d => G.ps[d.i].name).join(" et ")} ${deaths.length > 1 ? (deaths.every(d => gOf(G.ps[d.i].name) === "f") ? "sont mortes" : "sont morts") : fe(G.ps[deaths[0].i].name, "est morte", "est mort")}.` : "Le village se réveille. Personne n'est mort cette nuit.");
 }
 function lgProcessQueue() {
   if (!G.queue.length) {
@@ -1100,7 +1116,7 @@ function spyVoteScreen() {
   return screen({
     title: solo ? "L'espion se dévoile" : "Le vote", color: SPYC, body: solo
       ? `<h2 class="h2">Qui se dévoile ?</h2><p class="hint">L'espion se désigne, puis tente de deviner le lieu. S'il trouve, il gagne.</p>
-      <div class="pickgrid">${G.ps.map((p, i) => `<button class="pickav" data-act="spySelf" data-arg="${i}">${av(p.name, "m")}<span>${esc(p.name)}</span></button>`).join("")}</div>`
+      <div class="pickgrid">${G.ps.map((p, i) => `<button class="pickav" data-act="spySelfAsk" data-arg="${i}">${av(p.name, "m")}<span>${esc(p.name)}</span></button>`).join("")}</div>`
       : `<h2 class="h2">Qui est l'espion ?</h2><p class="hint">À trois, tout le monde pointe un suspect. Touche la personne la plus désignée.</p>
       <div class="pickgrid">${G.ps.map((p, i) => `<button class="pickav${G.pick === i ? " on" : ""}" data-act="spyPick" data-arg="${i}">${av(p.name, "m")}<span>${esc(p.name)}</span></button>`).join("")}</div>`,
     foot: (solo ? "" : btn(G.pick != null ? `Accuser ${esc(G.ps[G.pick].name)}` : "Choisis un suspect", "spyAccuse", { kind: "danger", icon: "crosshair", dis: G.pick == null }))
@@ -1828,12 +1844,17 @@ Object.assign(A, {
   spyPeek(i) { G.peek = +i; draw(); },
   spyPeekDone() { G.peek = null; draw(); },
   spyVote() { G.step = "vote"; G.pick = null; go(spyVoteScreen); },
-  spyUnmask() { if (G.nS === 1) return A.spySelf(G.ps.findIndex(p => p.spy)); G.step = "unmask"; go(spyVoteScreen); },
+  /* Se dévoiler demande une confirmation : un toucher par erreur ne doit pas révéler l'espion */
+  spyUnmask() {
+    if (G.nS > 1) { G.step = "unmask"; return go(spyVoteScreen); }
+    confirmSheet({ title: "L'espion se dévoile ?", text: "Seul l'espion touche ce bouton. Il révèle son rôle et tente de deviner le lieu : s'il trouve, il gagne.", ok: "Je suis l'espion, je me dévoile", act: "spySelf", arg: G.ps.findIndex(p => p.spy) });
+  },
+  spySelfAsk(i) { const p = G.ps[+i]; confirmSheet({ title: `${esc(p.name)} se dévoile ?`, text: `${esc(p.name)} annonce être ${fe(p.name, "une espionne", "un espion")} et tente de deviner le lieu. Seule une personne espionne peut se dévoiler.`, ok: "Confirmer", act: "spySelf", arg: +i }); },
   spyBack() { G.step = "play"; go(spyPlay); },
   spyPick(i) { G.pick = G.pick === +i ? null : +i; draw(); },
   spyOpts() { G.opts = shuffle([G.place, ...shuffle(SPY_PLACES.filter(x => x !== G.place)).slice(0, 11)]); },
   spySelf(i) {
-    if (!G.ps[+i].spy) return toast("Seul l'espion peut se dévoiler");
+    if (!G.ps[+i].spy) { sheet = null; draw(); return toast(`${G.ps[+i].name} n'est pas ${fe(G.ps[+i].name, "espionne", "espion")}`); }
     stopTimer(); G.caught = +i; G.self = true; A.spyOpts(); go(spyGuess);
   },
   spyAccuse() {
@@ -2019,7 +2040,12 @@ document.addEventListener("submit", e => {
   if (isSample) roster = [];
   const p = sheet.id && roster.find(x => x.id === sheet.id);
   if (p) {
-    if (p.name !== name) { if (scores[p.name] != null) { scores[name] = (scores[name] || 0) + scores[p.name]; delete scores[p.name]; store.set("scores", scores); } p.name = name; }
+    if (p.name !== name) {
+      if (scores[p.name] != null) { scores[name] = (scores[name] || 0) + scores[p.name]; delete scores[p.name]; store.set("scores", scores); }
+      if (gstats[p.name]) { const a = gstats[p.name], b = gstats[name] || { done: 0, ref: 0 }; gstats[name] = { done: a.done + b.done, ref: a.ref + b.ref }; delete gstats[p.name]; store.set("gagestats", gstats); }
+      const cp = store.get("couple", null); if (Array.isArray(cp) && cp.includes(p.name)) store.set("couple", cp.map(n => n === p.name ? name : n));
+      p.name = name;
+    }
     p.g = d.g; p.av = d.av;
   } else roster.push({ id: uid(), name, g: d.g, av: d.av });
   saveRoster(); syncNames(); sheet = null; draw();
