@@ -140,6 +140,7 @@ small { font-size: 13px; color: var(--muted); }
 .brand-mark i:nth-child(3) { background: var(--c-tvm); transform: rotate(18deg) translateX(8px); }
 .crew, .install { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: var(--r); background: var(--surface); text-align: left; }
 .crew .ic { color: var(--muted); }
+.crew.add { box-shadow: inset 0 0 0 2px var(--accent); }
 .stack-av { display: flex; flex: none; }
 .stack-av .av { margin-left: -10px; box-shadow: 0 0 0 2px var(--surface); }
 .stack-av .av:first-child { margin-left: 0; }

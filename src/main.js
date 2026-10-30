@@ -72,15 +72,13 @@ const MIME_SETS = { easy: MIME_EASY, hard: MIME_HARD, mix: [...MIME_EASY, ...MIM
 
 /* ---------- Joueurs ---------- */
 const uid = () => Math.random().toString(36).slice(2, 9);
-const SAMPLE = [["Léa", "f", "f0"], ["Inès", "f", "f2"], ["Sarah", "f", "f5"], ["Léo", "h", "h0"], ["Camille", "f", "f7"], ["Yanis", "h", "h2"]];
 let roster = store.get("roster", null);
-let isSample = false;
 if (!roster) {
   const old = store.get("players", null), oldG = store.get("genders", {});
   if (old && old.length) roster = old.map((n, i) => ({ id: uid(), name: n, g: oldG[n] === "h" ? "h" : "f", av: (oldG[n] === "h" ? "h" : "f") + (i % 12) }));
-  else { roster = SAMPLE.map(([name, g, av]) => ({ id: uid(), name, g, av })); isSample = true; }
+  else roster = [];
 }
-const saveRoster = () => { isSample = false; store.set("roster", roster); };
+const saveRoster = () => store.set("roster", roster);
 let players = roster.map(p => p.name);
 const syncNames = () => { players = roster.map(p => p.name); };
 const byName = n => roster.find(p => p.name === n);
@@ -265,11 +263,15 @@ function root() {
     left: null, right: null, tabs: true, body: `
     <div class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-name">Ça Joue</span></div>
     ${applyUpdate ? `<div class="install update"><span class="install-ic">${ic("refresh", 22)}</span><span class="grow"><b>Nouvelle version disponible</b><small>Nouveaux contenus et corrections. Joueurs et classement sont conservés.</small></span><button class="pill" data-act="update" ${updating ? "disabled" : ""}>${updating ? "Un instant" : "Mettre à jour"}</button></div>` : ""}
-    <button class="crew" data-act="tab" data-arg="players">
+    ${players.length ? `<button class="crew" data-act="tab" data-arg="players">
       <span class="stack-av">${players.slice(0, 6).map(n => av(n, "s")).join("")}</span>
-      <span class="grow"><b>${plural(players.length, "joueur")}</b><small>${isSample ? "Exemples à remplacer" : "Modifier la liste"}</small></span>
+      <span class="grow"><b>${plural(players.length, "joueur")}</b><small>Modifier la liste</small></span>
       ${ic("pencil", 18)}
-    </button>
+    </button>` : `<button class="crew add" data-act="tab" data-arg="players">
+      <span class="install-ic">${ic("userPlus", 22)}</span>
+      <span class="grow"><b>Ajoute les joueurs</b><small>Il en faut au moins 2 pour jouer.</small></span>
+      ${ic("pencil", 18)}
+    </button>`}
     ${showInstall ? `<div class="install"><span class="install-ic">${ic("phone", 22)}</span><span class="grow"><b>Installer l'appli</b><small>Plein écran, même sans réseau.</small></span><button class="pill" data-act="install">Installer</button><button class="iconbtn sm" data-act="hideInstall" aria-label="Masquer">${ic("x", 18)}</button></div>` : ""}
     <div class="cats-top"></div>
     <nav class="cats" aria-label="Catégories de jeux">${cats.map(([k, l, n]) => `<button class="${cur === k ? "on" : ""}" data-act="homeCat" data-arg="${k}" aria-pressed="${cur === k}">${l} <small>${n}</small></button>`).join("")}</nav>
@@ -300,7 +302,7 @@ function catsSync() {
 }
 window.addEventListener("scroll", catsSync, { passive: true });
 function playersBody() {
-  return `${isSample ? `<p class="hint">Ce sont des prénoms d'exemple. Ajoute tes amis, la liste d'exemple disparaîtra.</p>` : `<p class="hint">Le sexe sert à adapter les cartes : bisous entre fille et garçon, « la reine » ou « le roi ».</p>`}
+  return `${roster.length ? "" : `<p class="lead">Ajoute les joueurs de la soirée : il en faut au moins 2 pour jouer.</p>`}<p class="hint">Le sexe sert à adapter les cartes : bisous entre fille et garçon, « la reine » ou « le roi ».</p>
   ${btn("Ajouter un joueur", "editP", { icon: "userPlus" })}
   <ul class="list two-col">${roster.map(p => `<li><button class="row-item" data-act="editP" data-arg="${p.id}">${av(p.name, "m")}<span class="grow"><b>${esc(p.name)}</b><small>${p.g === "h" ? "Garçon" : "Fille"}</small></span>${ic("pencil", 18)}</button></li>`).join("")}</ul>
   ${roster.length ? `<button class="textbtn danger" data-act="askClear">Vider la liste</button>` : ""}`;
@@ -450,7 +452,10 @@ function teamSetup() {
       <div class="seg">${[30, 40, 50].map(n => `<button class="${G.nWords === n ? "on" : ""}" data-act="tuWords" data-arg="${n}">${n} mots</button>`).join("")}</div></div>` : ""}
     ${G.kind === "quiz" ? `<div class="panel"><span class="label">Thème</span>
       <div class="pick themes">${[["all", "Tous les thèmes", QUIZ.length], ...QUIZ_THEMES.map(t => [t, t, QUIZ.filter(q => q.cat === t).length])].map(([k, l, n]) => `<button class="${G.qtheme === k ? "on" : ""}" data-act="quizTheme" data-arg="${esc(k)}" aria-pressed="${G.qtheme === k}">${esc(l)} <small>${n}</small></button>`).join("")}</div></div>` : ""}
-    ${G.kind === "quiz" || G.kind === "num" ? `<div class="panel"><span class="label">${G.kind === "num" ? "Questions" : "Questions par équipe"}</span>
+    ${G.kind !== "tu" ? `<div class="panel"><span class="label">Objectif</span>
+      <div class="seg">${[15, 30, 40, 0].map(n => `<button class="${G.target === n ? "on" : ""}" data-act="target" data-arg="${n}">${n ? `${n} pts` : "Sans"}</button>`).join("")}</div>
+      <p class="hint">${G.target ? `La première équipe à ${G.target} points gagne la partie.` : G.kind === "quiz" || G.kind === "num" ? "Pas d'objectif : la partie s'arrête après le nombre de questions choisi." : "Pas d'objectif : vous arrêtez quand vous voulez avec « Terminer la partie »."}</p></div>` : ""}
+    ${(G.kind === "quiz" || G.kind === "num") && G.target ? "" : G.kind === "quiz" || G.kind === "num" ? `<div class="panel"><span class="label">${G.kind === "num" ? "Questions" : "Questions par équipe"}</span>
       <div class="seg">${[5, 10, 15].map(n => `<button class="${G.nQ === n ? "on" : ""}" data-act="quizN" data-arg="${n}">${n}</button>`).join("")}</div></div>` : `<div class="panel"><span class="label">Durée d'un tour</span>
       <div class="seg">${(G.kind === "tu" ? [30, 45, 60] : [45, 60, 90]).map(n => `<button class="${G.dur === n ? "on" : ""}" data-act="dur" data-arg="${n}">${n} s</button>`).join("")}</div>
     </div>`}`,
@@ -461,6 +466,11 @@ const teamScore = () => {
   const best = Math.max(...G.teams.map(t => t.score));
   return `<ul class="list">${G.teams.map(t => `<li class="row-item${t.score === best && best > 0 ? " lead" : ""}" style="--tc:${t.c}"><i class="dot"></i><span class="grow"><b>${esc(t.name)}</b><small>${t.members.map(esc).join(", ")}</small></span><b class="num">${t.score}</b></li>`).join("")}</ul>`;
 };
+/* Objectif de points : la première équipe qui l'atteint gagne. Sans objectif, Quiz et Ordre de grandeur suivent le nombre de questions. */
+const targetHit = () => !!G.target && G.teams.some(t => t.score >= G.target);
+const lastQ = (k = 0) => G.target ? targetHit() : G.asked + k >= G.total;
+const targetTxt = () => G.target ? `Premier à ${G.target} points` : "";
+const qTitle = () => G.target ? `Question ${G.asked + 1}, premier à ${G.target}` : `Question ${G.asked + 1} sur ${G.total}`;
 const actorOf = t => t.members[t.k % t.members.length];
 function turnIntro() {
   const t = G.teams[G.cur], a = actorOf(t);
@@ -469,7 +479,7 @@ function turnIntro() {
     title: `${teamName()}, tour ${G.round}`, color: t.c, body: `
     <div class="hero">${av(a, "xl")}<span class="kicker">${esc(t.name)}</span><h2 class="big">${esc(a)}</h2>
     <p class="lead">${t.members.length === 1 ? `${verb} pour les autres joueurs.` : `${verb} pour son équipe. Les autres équipes ne regardent pas l'écran.`}</p></div>
-    <span class="label">Scores</span>${teamScore()}`,
+    <span class="label">Scores${G.target ? `, premier à ${G.target} points` : ""}</span>${teamScore()}`,
     foot: btn(`Lancer le chrono, ${G.dur} s`, "turnStart", { icon: "timer" }) + `<button class="textbtn" data-act="teamEnd">Terminer la partie</button>`
   });
 }
@@ -504,7 +514,7 @@ function teamFinal() {
   return screen({
     title: "Résultats", color: s[0].c, left: null, body: `
     <div class="hero">${ic(tie ? "medal" : "trophy", 44)}<span class="kicker">${tie ? "Égalité" : "Victoire"}</span><h2 class="big">${tie ? "Match nul" : esc(s[0].name)}</h2>
-    ${tie ? "" : `<p class="lead">3 points bonus au classement pour ${s[0].members.map(esc).join(", ")}.</p>`}</div>
+    ${tie ? "" : `<p class="lead">${G.target && s[0].score >= G.target ? `Objectif de ${G.target} points atteint. ` : ""}3 points bonus au classement pour ${s[0].members.map(esc).join(", ")}.</p>`}</div>
     ${teamScore()}`,
     foot: btn("Rejouer avec les mêmes équipes", "teamsAgain", { icon: "undo" }) + `<button class="textbtn" data-act="home">Retour aux jeux</button>`
   });
@@ -800,7 +810,7 @@ function tuTurnEnd() {
 function quizQ() {
   const t = G.teams[G.cur], q = G.q, done = G.ans != null;
   return screen({
-    title: `Question ${G.asked + 1} sur ${G.total}`, color: t.c, body: `
+    title: qTitle(), color: t.c, body: `
     <div class="who"><i class="dot" style="--tc:${t.c};width:16px;height:16px"></i><div><span class="kicker">Au tour de</span><b>${esc(t.name)}</b></div></div>
     <div class="card"><span class="card-label">${esc(q.cat)}</span><div class="txt">${esc(q.q)}</div></div>
     <ul class="list">${G.opts.map((o, i) => {
@@ -808,7 +818,7 @@ function quizQ() {
       return `<li><button class="row-item answer${cls}" data-act="quizAns" data-arg="${i}" ${done ? "disabled" : ""}><span class="opt">${"ABCD"[i]}</span><span class="grow">${esc(o)}</span>${done && o === q.a ? ic("check", 20) : done && i === G.ans ? ic("x", 20) : ""}</button></li>`;
     }).join("")}</ul>
     ${done ? `<p class="lead center">${G.opts[G.ans] === q.a ? `Bonne réponse, un point pour ${esc(t.name)}.` : `Raté. Bonne réponse : <strong>${esc(q.a)}</strong>`}</p>` : ""}`,
-    foot: done ? btn(G.asked + 1 >= G.total ? "Voir les résultats" : "Question suivante", "quizNext", { icon: "play" }) : `<p class="hint center">${esc(t.name)} se met d'accord, puis touche sa réponse.</p>`
+    foot: done ? btn(lastQ(1) ? "Voir les résultats" : "Question suivante", "quizNext", { icon: "play" }) : `<p class="hint center">${esc(t.name)} se met d'accord, puis touche sa réponse.</p>`
   });
 }
 
@@ -1237,7 +1247,7 @@ function numQ() {
   if (G.ti < G.teams.length) {
     const t = G.teams[G.ti];
     return screen({
-      title: `Question ${G.asked + 1} sur ${G.total}`, color: t.c, body: `
+      title: qTitle(), color: t.c, body: `
       <div class="who"><i class="dot" style="--tc:${t.c};width:16px;height:16px"></i><div><span class="kicker">Estimation de</span><b>${esc(t.name)}</b></div></div>
       <div class="card"><span class="card-label">${ic("ruler", 16)} Ordre de grandeur</span><div class="txt">${esc(q.q)}</div>${q.u && q.u !== "année" ? `<p class="card-foot">Réponse en ${esc(q.u)}</p>` : ""}</div>
       <label class="field"><span>Votre estimation</span><input id="numIn" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" value="${esc(G.input)}" placeholder="Un nombre"></label>
@@ -1247,11 +1257,11 @@ function numQ() {
   }
   const year = q.u === "année";
   return screen({
-    title: `Question ${G.asked + 1} sur ${G.total}`, color: "var(--c-num)", body: `
+    title: qTitle(), color: "var(--c-num)", body: `
     <div class="card"><span class="card-label">${esc(q.q)}</span><div class="word">${fmtNum(q.a, year)}${esc(numUnit(q))}</div></div>
     <ul class="list">${G.rank.map(r => { const t = G.teams[r.i]; return `<li class="row-item${r.win ? " lead" : ""}" style="--tc:${t.c}"><i class="dot"></i><span class="grow"><b>${esc(t.name)}</b><small>${fmtNum(r.v, year)}${esc(numUnit(q))}</small></span>${r.win ? `<b class="badge b-good">+${G.gain}</b>` : `<b class="badge">0</b>`}</li>`; }).join("")}</ul>
     <p class="hint center">${G.gain === 2 ? "Pile la bonne réponse : 2 points." : "L'équipe la plus proche marque 1 point. Pile la bonne réponse en rapporte 2."}</p>`,
-    foot: btn(G.asked + 1 >= G.total ? "Voir les résultats" : "Question suivante", "numNext", { icon: "play" })
+    foot: btn(lastQ(1) ? "Voir les résultats" : "Question suivante", "numNext", { icon: "play" })
   });
 }
 
@@ -1561,13 +1571,13 @@ const A = {
   openGame(id) {
     stopTimer();
     const g = GAMES.find(x => x.id === id);
-    if (players.length < g.min) { tab = "players"; go(root); toast(`${g.name} se joue à ${g.min} minimum`); return; }
-    if (id === "mime" || id === "taboo") { G = { kind: id, nTeams: 2, dur: 60, round: 1, diff: store.get("mimeDiff", "easy") }; makeTeams(); return go(teamSetup); }
+    if (players.length < g.min) { tab = "players"; go(root); toast(`${g.name} se joue à ${g.min} joueurs minimum. Ajoute les joueurs.`); return; }
+    if (id === "mime" || id === "taboo") { G = { kind: id, nTeams: 2, dur: 60, round: 1, diff: store.get("mimeDiff", "easy"), target: store.get("target-" + id, 30) }; makeTeams(); return go(teamSetup); }
     if (id === "av") { G = { kind: "av", order: shuffle(players), i: 0, level: store.get("avlvl", "fun"), decks: {} }; if (G.level === "x18" && !adultOk) G.level = "hot"; return go(avTurn); }
     if (id === "tvm") { G = { kind: "tvm", order: shuffle(players), i: 0, scores: Object.fromEntries(players.map(p => [p, 0])), step: "prep", td: pdeck("tvm", TVM_THEMES), sel: [] }; G.theme = G.td.draw(); return go(tvm); }
     if (id === "uc") { const n = players.length; G = { kind: "uc", nU: n >= 13 ? 3 : n >= 7 ? 2 : 1, nW: n >= 11 ? 2 : n >= 5 ? 1 : 0, ucScores: {} }; return go(ucSetup); }
     if (id === "tu") { G = { kind: "tu", nTeams: 2, dur: 45, nWords: 40, round: 0 }; makeTeams(); return go(teamSetup); }
-    if (id === "quiz") { G = { kind: "quiz", nTeams: 2, nQ: 10, round: 1, qtheme: store.get("quizTheme", "all") }; makeTeams(); return go(teamSetup); }
+    if (id === "quiz") { G = { kind: "quiz", nTeams: 2, nQ: 10, round: 1, qtheme: store.get("quizTheme", "all"), target: store.get("target-quiz", 0) }; makeTeams(); return go(teamSetup); }
     if (id === "bomb") { G = { kind: "bomb", d: pdeck("bomb", BOMB_THEMES), gd: pdeck("gages", GAGES), state: "idle", loser: null }; G.theme = G.d.draw(); return go(bomb); }
     if (id === "wyr") { let l = store.get("wyrlvl", "normal"); if (l === "x18" && !adultOk) l = "hot"; G = { kind: "wyr", level: l, decks: {} }; wyrDraw(); return go(wyr); }
     if (id === "nhie") { let l = store.get("nhielvl", "fun"); if (l === "x18" && !adultOk) l = "hot"; G = { kind: "nhie", level: l, decks: {} }; nhieDraw(); return go(nhie); }
@@ -1575,7 +1585,7 @@ const A = {
     if (id === "mys") { G = { kind: "mys", d: pdeck("mys", MYS), card: null, rule: null }; return go(mys); }
     if (id === "spy") { G = { kind: "spy", nS: 1, mins: 6 }; return go(spySetup); }
     if (id === "most") { let l = store.get("mostlvl", "soft"); if (l === "x18" && !adultOk) l = "hot"; G = { kind: "most", level: l, mode: store.get("mostmode", "secret"), decks: {} }; mostDraw(); return go(most); }
-    if (id === "num") { G = { kind: "num", nTeams: 2, nQ: 10, round: 1 }; makeTeams(); return go(teamSetup); }
+    if (id === "num") { G = { kind: "num", nTeams: 2, nQ: 10, round: 1, target: store.get("target-num", 0) }; makeTeams(); return go(teamSetup); }
     if (id === "dico") { G = { kind: "dico", d: pdeck("dico", DICO), scores: Object.fromEntries(players.map(p => [p, 0])) }; dicoNewWord(); return go(dico); }
     if (id === "chain") { G = { kind: "chain", d: pdeck("chain", CHAIN_WORDS), sec: store.get("chainsec", 5), order: shuffle(players), cur: 0, step: "start" }; G.word = G.d.draw(); return go(chain); }
     if (g.cat === "couple") {
@@ -1597,6 +1607,7 @@ const A = {
   turnValidate() {
     const t = G.teams[G.cur], pts = G.log.reduce((s, l) => s + l.v, 0);
     t.score += pts; t.members.forEach(m => addPts(m, pts)); t.k++;
+    if (targetHit()) return A.teamEnd();
     G.cur = (G.cur + 1) % G.teams.length; if (G.cur === 0) G.round++;
     go(turnIntro); if (pts) toast(`${ptsTxt(pts)} pour ${t.name}`);
   },
@@ -1744,6 +1755,7 @@ Object.assign(A, {
   },
   /* Quiz */
   quizN(n) { G.nQ = +n; draw(); },
+  target(n) { G.target = +n; store.set("target-" + G.kind, G.target); draw(); },
   quizTheme(t) { G.qtheme = t; store.set("quizTheme", t); draw(); },
   quizGo() {
     const all = G.qtheme === "all" || !QUIZ_THEMES.includes(G.qtheme);
@@ -1759,7 +1771,7 @@ Object.assign(A, {
   },
   quizNext() {
     G.asked++;
-    if (G.asked >= G.total) return A.teamEnd();
+    if (lastQ()) return A.teamEnd();
     G.cur = (G.cur + 1) % G.teams.length;
     quizDrawQ(); go(quizQ);
   },
@@ -1963,7 +1975,7 @@ Object.assign(A, {
     }
     go(numQ);
   },
-  numNext() { G.asked++; if (G.asked >= G.total) return A.teamEnd(); numDraw(); go(numQ); },
+  numNext() { G.asked++; if (lastQ()) return A.teamEnd(); numDraw(); go(numQ); },
   /* Le faux dictionnaire */
   dicoOther() { dicoNewWord(); draw(); },
   dicoWrite() { Object.assign(G, { step: "write", wi: 0, show: false, input: "", fakes: {} }); go(dico); },
@@ -2093,10 +2105,8 @@ document.addEventListener("submit", e => {
   e.preventDefault();
   const d = sheet.draft, name = d.name.trim();
   if (!name) { sheet.err = "Écris un prénom."; return draw(); }
-  /* La liste d'exemple est remplacée au premier ajout : pas de doublon possible avec elle */
-  const dup = !isSample && roster.find(p => p.id !== sheet.id && p.name.toLowerCase() === name.toLowerCase());
+  const dup = roster.find(p => p.id !== sheet.id && p.name.toLowerCase() === name.toLowerCase());
   if (dup) { sheet = { type: "dup", name: dup.name, back: { ...sheet, err: "" } }; return draw(); }
-  if (isSample) roster = [];
   const p = sheet.id && roster.find(x => x.id === sheet.id);
   if (p) {
     if (p.name !== name) {
