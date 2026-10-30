@@ -141,7 +141,6 @@ export const AV_PLUS = {
  }
 };
 
-export const GAGES_PLUS = ["Fais un compliment à chaque personne en 30 secondes.","Fais la poule pendant 10 secondes.","Laisse le groupe choisir ta prochaine boisson.","Raconte ta pire honte.","Fais 20 squats.","Chante La Marseillaise.","Garde un objet sur la tête jusqu'à ton prochain tour.","Parle en chuchotant jusqu'à ton prochain tour.","Fais une déclaration d'amour à la personne à ta droite.","Laisse quelqu'un t'écrire un mot sur la main."];
 
 export const TVM_PLUS = ["Ton premier boulot","Tes vacances d'enfance","Ta première soirée","Une rencontre improbable","Tes collections","Un voyage raté","Ta pire coupe de cheveux","Un secret de famille"];
 
