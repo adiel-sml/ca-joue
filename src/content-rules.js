@@ -123,7 +123,7 @@ export const RULES = {
       "Réglez le nombre d'Undercover et de Mr White, et choisissez les rôles spéciaux.",
       "Chacun découvre son mot en secret. L'Undercover a un mot proche de celui des civils, Mr White n'en a pas.",
       "Dans l'ordre affiché, chacun dit un seul mot pour décrire le sien, puis on débat.",
-      "Tout le monde vote. La personne éliminée révèle son rôle. Mr White éliminé peut encore gagner en devinant le mot des civils.",
+      "Tout le monde vote. La personne éliminée révèle son rôle, mais son mot reste secret jusqu'à la fin. Mr White éliminé peut encore gagner : il tape le mot des civils et l'appli vérifie sans le dévoiler.",
       "Les civils gagnent quand tous les intrus sont éliminés. Les intrus gagnent s'il ne reste qu'un civil."
     ],
     pts: "Civil gagnant : 2 points. Undercover gagnant : 5 points. Mr White gagnant : 6 points."

@@ -124,7 +124,7 @@ small { font-size: 13px; color: var(--muted); }
 .h2 { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
 .lead { color: var(--muted); font-size: 16px; max-width: 36ch; }
 .hint { color: var(--muted); font-size: 14px; }
-.hint.warn { color: var(--c-tvm); }
+.hint.warn { color: var(--bad); font-weight: 700; }
 .label { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .kicker { font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--gc); display: inline-flex; align-items: center; gap: 6px; }
 .big { font-family: var(--f-display); font-weight: 400; font-size: clamp(30px, 9vw, 44px); line-height: 1.05; text-wrap: balance; overflow-wrap: anywhere; }
