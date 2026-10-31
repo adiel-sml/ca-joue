@@ -408,6 +408,9 @@ function gageOpts(spicy, group = false) {
   const a = d.draw(); let b = d.draw(); if (b === a) b = d.draw();
   return [a, b];
 }
+/* Après une défaite, on ne passe à la suite qu'une fois le gage noté, fait ou refusé */
+const gageOk = () => !!(G && G.gage && G.gage.done);
+const lossGageBtn = (act, who) => btn(`Le gage${who ? ` de ${esc(andList(who))}` : ""}`, act, { icon: "flame" });
 const andList = l => l.length > 1 ? `${l.slice(0, -1).join(", ")} et ${l[l.length - 1]}` : l.join("");
 function openGage(who, spicy = false, then = null) {
   const list = who == null ? [] : Array.isArray(who) ? who : [who];
@@ -756,7 +759,8 @@ function mys() {
     ${win}
     ${G.rule && c.t !== "regle" ? `<div class="rule"><span class="label">${ic("gavel", 14)} Règle en cours</span><p>${G.rule}</p></div>` : ""}` : `
     <div class="hero">${ic("dices", 48)}<h2 class="big">Paquet mystère</h2><p class="lead">Qui pourrait, Je n'ai jamais, défis, duels, patate chaude, devinettes et règles absurdes. On tire une carte et on voit.</p></div>`,
-    foot: btn(c ? "Carte suivante" : "Tirer une carte", "mysDraw", { icon: "dices" }) + (c ? `<button class="textbtn" data-act="mysGage">Quelqu'un ne peut pas le faire : gage</button>` : "")
+    foot: G.loser && !gageOk() ? lossGageBtn("mysLossGage", [G.loser])
+      : btn(c ? "Carte suivante" : "Tirer une carte", "mysDraw", { icon: "dices" }) + (c && !G.loser ? `<button class="textbtn" data-act="mysGage">Quelqu'un ne peut pas le faire : gage</button>` : "")
   });
 }
 
@@ -837,7 +841,7 @@ function bomb() {
     <div class="hero">${ic("bomb", 56)}<h2 class="big boom">Boum !</h2><p class="lead">Qui tenait la bombe ?</p></div>
     <div class="pickgrid">${players.map(n => `<button class="pickav" data-act="bombLoser" data-arg="${esc(n)}">${av(n, "m")}<span>${esc(n)}</span></button>`).join("")}</div>` : `
     <div class="hero">${av(G.loser, "xl")}<span class="kicker">Perdu</span><h2 class="big">${esc(G.loser)}</h2><p class="lead">Les autres gagnent 1 point. ${esc(G.loser)} choisit son gage.</p></div>`,
-    foot: G.loser == null ? "" : btn("Nouvelle manche", "bombNew", { icon: "undo" }) + `<button class="textbtn" data-act="bombGage">Revoir les gages</button>`
+    foot: G.loser == null ? "" : gageOk() ? btn("Nouvelle manche", "bombNew", { icon: "undo" }) : lossGageBtn("bombGage", [G.loser])
   });
   return screen({
     title: "La Bombe", color: C, body: `
@@ -868,11 +872,9 @@ function wyr() {
     return screen({
       title: "Tu préfères", color: C, body: `
       <h2 class="h2">${!minority ? "Égalité parfaite" : minority.length ? `Gage pour ${minority.map(esc).join(", ")}` : "Tout le monde est d'accord"}</h2>
-      <p class="hint">${minority && minority.length ? "La majorité gagne 1 point. La minorité prend un gage." : "Personne ne gagne de point sur ce dilemme."}</p>
+      <p class="hint">${minority && minority.length ? "La majorité gagne 1 point. La minorité fait son gage ou le refuse, puis on passe au dilemme suivant." : "Personne ne gagne de point sur ce dilemme."}</p>
       <div class="wyr-result">${side("A", a, A_, "a")}${side("B", b, B_, "b")}</div>`,
-      foot: minority && minority.length
-        ? `<div class="row2">${btn("Le gage", "wyrGage", { kind: "ghost", icon: "flame" })}${btn("Suivant", "wyrNext", { icon: "play" })}</div>`
-        : btn("Dilemme suivant", "wyrNext", { icon: "play" })
+      foot: minority && minority.length && !gageOk() ? lossGageBtn("wyrGage", minority) : btn("Dilemme suivant", "wyrNext", { icon: "play" })
     });
   }
   const voted = A_.length + B_.length;
@@ -1336,7 +1338,7 @@ function chain() {
   if (G.step === "lost") return screen({
     title: "Mot pour mot", color: CHAINC, body: `
     <div class="hero">${av(G.loser, "xl")}<span class="kicker">${G.n ? `Après ${plural(G.n, "mot")}` : "Dès le premier mot"}</span><h2 class="big">${esc(G.loser)} a perdu</h2><p class="lead">Les autres gagnent 1 point.</p></div>`,
-    foot: `<div class="row2">${btn("Le gage", "chainGage", { kind: "ghost", icon: "flame" })}${btn("Nouvelle manche", "chainNew", { icon: "undo" })}</div>`
+    foot: gageOk() ? btn("Nouvelle manche", "chainNew", { icon: "undo" }) : lossGageBtn("chainGage", [G.loser])
   });
   return screen({
     title: "Mot pour mot", color: CHAINC, body: `
@@ -1694,7 +1696,7 @@ const A = {
     stopTimer();
     const c = G.d.draw(), p1 = pick(players);
     const o = others(p1), p2 = c.opp ? oppOf(p1) : pick(o.length ? o : players);
-    Object.assign(G, { card: c, p1, p2, scored: false });
+    Object.assign(G, { card: c, p1, p2, scored: false, loser: null });
     G.text = fill(c.x, { cur: p1, p1, p2 });
     if (c.t === "regle") G.rule = G.text;
     go(mys); beep(520, .06);
@@ -1704,10 +1706,11 @@ const A = {
     const k = arg.lastIndexOf("|"), n = arg.slice(0, k), v = +arg.slice(k + 1);
     G.scored = true;
     if (n && v) { addPts(n, v); }
-    if (G.card.t === "defi" && !v) return openGage(G.p1);
-    if (G.card.t === "duel" && n) return openGage(n === G.p1 ? G.p2 : G.p1);
+    if (G.card.t === "defi" && !v) { G.loser = G.p1; return openGage(G.loser); }
+    if (G.card.t === "duel" && n) { G.loser = n === G.p1 ? G.p2 : G.p1; return openGage(G.loser); }
     draw(); if (n && v) toast(`${ptsTxt(v)} pour ${n}`);
   },
+  mysLossGage() { openGage(G.loser); },
   mysGage() { openGage(G.card.t === "defi" || G.card.t === "devine" ? G.p1 : null); },
   mysTimer() { runTimer(G.card.s, draw); draw(); },
   stopClock() { stopTimer(); draw(); }

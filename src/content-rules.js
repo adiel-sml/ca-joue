@@ -83,7 +83,7 @@ export const RULES = {
       "Chacun choisit A ou B. On peut voter à main levée, puis entrer les choix de chacun.",
       "Touchez « Résultat » pour voir les deux camps."
     ],
-    pts: "La majorité gagne 1 point. La minorité peut prendre un gage. En cas d'égalité, personne ne marque."
+    pts: "La majorité gagne 1 point. La minorité fait son gage ou le refuse (2 points en moins) avant le dilemme suivant. En cas d'égalité, personne ne marque."
   },
   bomb: {
     but: "Ne pas tenir le téléphone quand la bombe explose.",
@@ -94,7 +94,7 @@ export const RULES = {
       "La bombe explose au bout d'un temps imprévisible, entre 20 secondes et 1 minute.",
       "On touche le personnage de la personne qui tenait la bombe."
     ],
-    pts: "Tous les autres gagnent 1 point. La personne qui a perdu choisit un gage."
+    pts: "Tous les autres gagnent 1 point. La personne qui a perdu fait son gage ou le refuse (2 points en moins) avant la manche suivante."
   },
   tvm: {
     but: "Trouver l'anecdote inventée parmi trois.",
@@ -180,7 +180,7 @@ export const RULES = {
       "Elle touche le bouton avant la fin du chrono, et c'est au tour de la suivante.",
       "Perdu si le chrono se termine, si le mot a déjà été dit ou s'il n'a aucun lien : le groupe peut contester."
     ],
-    pts: "Tous les autres gagnent 1 point. La personne qui a perdu choisit un gage."
+    pts: "Tous les autres gagnent 1 point. La personne qui a perdu fait son gage ou le refuse (2 points en moins) avant la manche suivante."
   },
   know: {
     but: "Prouver que vous vous connaissez par cœur.",
