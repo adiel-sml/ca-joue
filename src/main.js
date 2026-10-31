@@ -357,10 +357,8 @@ function sheetHTML() {
     const status = d => d === "done" ? `<b class="badge b-good">Fait</b>` : `<b class="badge b-bad">Refusé ${pen}</b>`;
     if (sheet.each) {
       /* Un gage chacun : chaque personne a le sien, noté séparément */
-      const all = sheet.each.every(e => e.done);
       inner = `<h2 class="sheet-title">Un gage chacun</h2><p class="sheet-text">Chacun fait son gage. Refuser coûte ${GAGE_PENALTY} points à la personne qui refuse.</p>
-        <ul class="list gage-each">${sheet.each.map((e, i) => `<li class="row-item">${av(e.n, "s")}<span class="grow"><b>${esc(e.n)}</b><small>${esc(e.g)}</small></span>${e.done ? status(e.done) : `<span class="gage-ab"><button class="pill ghost" data-act="gageOne" data-arg="${i}|0">Refusé</button><button class="pill" data-act="gageOne" data-arg="${i}|1">Fait</button></span>`}</li>`).join("")}</ul>
-        ${all ? `<button class="btn ghost" data-act="gageClose">Fermer</button>` : ""}`;
+        <ul class="list gage-each">${sheet.each.map((e, i) => `<li class="row-item">${av(e.n, "s")}<span class="grow"><b>${esc(e.n)}</b><small>${esc(e.g)}</small></span>${e.done ? status(e.done) : `<span class="gage-ab"><button class="pill ghost" data-act="gageOne" data-arg="${i}|0">Refusé</button><button class="pill" data-act="gageOne" data-arg="${i}|1">Fait</button></span>`}</li>`).join("")}</ul>`;
     } else if (sheet.done) inner = `<h2 class="sheet-title">${who ? `Gage de ${who}` : "Le gage"}</h2>${card(sheet.chosen)}
         <p class="lead center">${sheet.done === "done" ? "Gage fait, c'est noté au classement." : `Gage refusé : ${pen}${sheet.multi ? " chacun" : ""}, c'est noté au classement.`}</p>
         <button class="btn ghost" data-act="closeSheet">Fermer</button>`;
@@ -1525,10 +1523,10 @@ const A = {
     const st = gstats[e.n] = gstats[e.n] || { done: 0, ref: 0 };
     if (+ok) st.done++; else { st.ref++; addPts(e.n, -GAGE_PENALTY); }
     store.set("gagestats", gstats);
-    if (sheet.each.every(x => x.done)) sheet.done = "each";
-    draw(); toast(+ok ? `Gage fait par ${e.n}` : `Gage refusé : −${GAGE_PENALTY} pts pour ${e.n}`);
+    const msg = +ok ? `Gage fait par ${e.n}` : `Gage refusé : −${GAGE_PENALTY} pts pour ${e.n}`;
+    if (sheet.each.every(x => x.done)) { sheet.done = "each"; const then = sheet.then; sheet = null; if (then) A[then](); else draw(); return toast(msg); }
+    draw(); toast(msg);
   },
-  gageClose() { const then = sheet.then; sheet = null; if (then) A[then](); else draw(); },
   gageWho(n) { sheet.pick = toggleIn(sheet.pick, n); draw(); },
   gageDone() { gageResolve(true); },
   gageRefuse() { gageResolve(false); },
@@ -1706,12 +1704,12 @@ const A = {
     const k = arg.lastIndexOf("|"), n = arg.slice(0, k), v = +arg.slice(k + 1);
     G.scored = true;
     if (n && v) { addPts(n, v); }
-    if (G.card.t === "defi" && !v) { G.loser = G.p1; return openGage(G.loser); }
-    if (G.card.t === "duel" && n) { G.loser = n === G.p1 ? G.p2 : G.p1; return openGage(G.loser); }
+    if (G.card.t === "defi" && !v) { G.loser = G.p1; return openGage(G.loser, false, "mysDraw"); }
+    if (G.card.t === "duel" && n) { G.loser = n === G.p1 ? G.p2 : G.p1; return openGage(G.loser, false, "mysDraw"); }
     draw(); if (n && v) toast(`${ptsTxt(v)} pour ${n}`);
   },
-  mysLossGage() { openGage(G.loser); },
-  mysGage() { openGage(G.card.t === "defi" || G.card.t === "devine" ? G.p1 : null); },
+  mysLossGage() { openGage(G.loser, false, "mysDraw"); },
+  mysGage() { openGage(G.card.t === "defi" || G.card.t === "devine" ? G.p1 : null, false, "mysDraw"); },
   mysTimer() { runTimer(G.card.s, draw); draw(); },
   stopClock() { stopTimer(); draw(); }
 };
@@ -1796,8 +1794,8 @@ Object.assign(A, {
     };
     draw(); tick();
   },
-  bombLoser(n) { G.loser = n; G.gage = null; others(n).forEach(o => addPts(o, 1)); openGage(n); },
-  bombGage() { openGage(G.loser); },
+  bombLoser(n) { G.loser = n; G.gage = null; others(n).forEach(o => addPts(o, 1)); openGage(n, false, "bombNew"); },
+  bombGage() { openGage(G.loser, false, "bombNew"); },
   bombNew() { G.state = "idle"; G.loser = null; G.theme = G.d.draw(); draw(); },
   /* Tu préfères */
   wyrLevel(k) { if (k === "x18" && !adultOk) { G.gate = true; return draw(); } G.level = k; store.set("wyrlvl", k); wyrDraw(); draw(); },
@@ -1813,7 +1811,7 @@ Object.assign(A, {
   },
 
   wyrNext() { wyrDraw(); go(wyr); },
-  wyrGage() { const a = players.filter(n => G.votes[n] === "A"), b = players.filter(n => G.votes[n] === "B"); openGage(a.length < b.length ? a : b, G.level !== "normal" && G.level); },
+  wyrGage() { const a = players.filter(n => G.votes[n] === "A"), b = players.filter(n => G.votes[n] === "B"); openGage(a.length < b.length ? a : b, G.level !== "normal" && G.level, "wyrNext"); },
   /* Je n'ai jamais */
   nhieLevel(k) { if (k === "x18" && !adultOk) { G.gate = true; return draw(); } G.level = k; store.set("nhielvl", k); nhieDraw(); draw(); },
   nhieAdult() { adultOk = true; G.gate = false; G.level = "x18"; store.set("nhielvl", "x18"); nhieDraw(); draw(); },
@@ -1962,7 +1960,7 @@ Object.assign(A, {
     mostResult(Object.entries(c).sort((a, b) => b[1] - a[1]));
   },
   mostUncast() { G.vi--; delete G.votes[players[G.vi]]; draw(); },
-  mostGage() { openGage(G.tops, G.level !== "soft" && G.level); },
+  mostGage() { openGage(G.tops, G.level !== "soft" && G.level, "mostNext"); },
   mostNext() { mostDraw(); go(most); },
   /* Ordre de grandeur */
   numGo() { Object.assign(G, { cur: 0, asked: 0, total: G.nQ, qd: pdeck("num", NUM_Q) }); numDraw(); go(numQ); },
@@ -2021,7 +2019,7 @@ Object.assign(A, {
     others(G.loser).forEach(o => addPts(o, 1));
     explosion(); vib(); go(chain);
   },
-  chainGage() { openGage(G.loser); },
+  chainGage() { openGage(G.loser, false, "chainNew"); },
   chainNew() { G.word = G.d.draw(); G.order = shuffle(players); G.cur = 0; G.step = "start"; go(chain); },
   /* Couple : réglages communs */
   cpPick(n) {

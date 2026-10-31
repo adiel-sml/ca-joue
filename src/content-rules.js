@@ -83,7 +83,7 @@ export const RULES = {
       "Chacun choisit A ou B. On peut voter à main levée, puis entrer les choix de chacun.",
       "Touchez « Résultat » pour voir les deux camps."
     ],
-    pts: "La majorité gagne 1 point. La minorité fait son gage ou le refuse (2 points en moins) avant le dilemme suivant. En cas d'égalité, personne ne marque."
+    pts: "La majorité gagne 1 point. La minorité fait son gage ou le refuse (2 points en moins), puis le dilemme suivant s'affiche tout seul. En cas d'égalité, personne ne marque."
   },
   bomb: {
     but: "Ne pas tenir le téléphone quand la bombe explose.",
@@ -94,7 +94,7 @@ export const RULES = {
       "La bombe explose au bout d'un temps imprévisible, entre 20 secondes et 1 minute.",
       "On touche le personnage de la personne qui tenait la bombe."
     ],
-    pts: "Tous les autres gagnent 1 point. La personne qui a perdu fait son gage ou le refuse (2 points en moins) avant la manche suivante."
+    pts: "Tous les autres gagnent 1 point. La personne qui a perdu fait son gage ou le refuse (2 points en moins), puis on passe tout seul à la manche suivante."
   },
   tvm: {
     but: "Trouver l'anecdote inventée parmi trois.",
@@ -115,7 +115,7 @@ export const RULES = {
       "Défi et duel : on joue, puis on indique le résultat. Patate chaude : chacun son tour, le premier qui sèche perd.",
       "Devinette : la première personne qui trouve marque. Nouvelle règle : elle reste valable jusqu'à la prochaine carte Nouvelle règle."
     ],
-    pts: "Défi réussi : 2 points. Duel gagné : 2 points. Patate chaude gagnée : 2 points. Devinette trouvée : 1 point. Défi raté ou duel perdu : un gage."
+    pts: "Défi réussi : 2 points. Duel gagné : 2 points. Patate chaude gagnée : 2 points. Devinette trouvée : 1 point. Défi raté ou duel perdu : un gage, puis la carte suivante se tire toute seule."
   },
   uc: {
     but: "Pour les civils, démasquer les intrus. Pour les intrus, survivre sans se faire repérer.",
@@ -159,7 +159,7 @@ export const RULES = {
       "À main levée : à trois, tout le monde pointe quelqu'un, puis on touche la personne la plus désignée.",
       "Le résultat affiche la personne élue et le détail des voix."
     ],
-    pts: "En vote secret, 1 point pour chaque personne qui a voté comme la majorité. La personne élue peut prendre un gage."
+    pts: "En vote secret, 1 point pour chaque personne qui a voté comme la majorité. La personne élue peut prendre un gage. Une fois noté, la carte suivante arrive toute seule."
   },
   dico: {
     but: "Inventer une fausse définition assez crédible pour piéger les autres, et trouver la vraie.",
@@ -180,7 +180,7 @@ export const RULES = {
       "Elle touche le bouton avant la fin du chrono, et c'est au tour de la suivante.",
       "Perdu si le chrono se termine, si le mot a déjà été dit ou s'il n'a aucun lien : le groupe peut contester."
     ],
-    pts: "Tous les autres gagnent 1 point. La personne qui a perdu fait son gage ou le refuse (2 points en moins) avant la manche suivante."
+    pts: "Tous les autres gagnent 1 point. La personne qui a perdu fait son gage ou le refuse (2 points en moins), puis on passe tout seul à la manche suivante."
   },
   know: {
     but: "Prouver que vous vous connaissez par cœur.",
