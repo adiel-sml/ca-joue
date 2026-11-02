@@ -8,7 +8,7 @@ export const RULES = {
       "Choisissez des mots faciles, difficiles ou mélangés, la durée d'un tour et l'objectif : 15, 30 ou 40 points, ou sans limite.",
       "La personne désignée prend le téléphone et lance le chrono. Un mot s'affiche, elle seule le voit.",
       "Elle le mime : interdit de parler, de faire des bruits ou de montrer un objet. Son équipe propose des réponses.",
-      "« Trouvé » quand l'équipe a deviné, « Passer » pour changer de mot. On enchaîne jusqu'à la fin du chrono.",
+      "« Trouvé » quand l'équipe a deviné, « Passer » pour changer de mot. On enchaîne jusqu'à la fin du chrono. Le bouton pause, à côté du chrono, arrête le temps et cache le mot. « Reprendre » repart d'où il s'était arrêté.",
       "À la fin du tour, on corrige si besoin, puis le téléphone passe à l'équipe suivante."
     ],
     pts: "1 point par mot trouvé, pour chaque membre de l'équipe. La première équipe à atteindre l'objectif gagne et reçoit 3 points de plus. À deux, chacun fait deviner à l'autre."
@@ -20,7 +20,7 @@ export const RULES = {
       "Choisissez la durée d'un tour et l'objectif : 15, 30 ou 40 points, ou sans limite.",
       "La personne désignée lance le chrono. Un mot s'affiche avec quatre mots interdits en rouge.",
       "Elle décrit le mot sans le dire, sans mot de la même famille et sans les mots interdits.",
-      "Une personne de l'équipe adverse surveille l'écran et touche « Mot interdit prononcé » à la moindre faute.",
+      "Une personne de l'équipe adverse surveille l'écran et touche « Mot interdit prononcé » à la moindre faute. Le bouton pause, à côté du chrono, arrête le temps et cache le mot. « Reprendre » repart d'où il s'était arrêté.",
       "À la fin du tour, le récapitulatif rappelle les mots interdits de chaque carte pour vérifier."
     ],
     pts: "1 point par mot trouvé, 1 point en moins par mot interdit prononcé. La première équipe à atteindre l'objectif gagne et reçoit 3 points de plus."
@@ -30,7 +30,7 @@ export const RULES = {
     steps: [
       "Formez les équipes : de 2 à 12, avec le bouton plus au-delà de 4. Les équipes de la partie précédente sont reprises, même dans un autre jeu en équipes. « Mélanger » en forme de nouvelles.",
       "Choisissez le nombre de mots de la partie.",
-      "Manche 1 : décrire. On fait deviner avec autant de mots qu'on veut, sans dire le mot.",
+      "Manche 1 : décrire. On fait deviner avec autant de mots qu'on veut, sans dire le mot. Le bouton pause, à côté du chrono, arrête le temps et cache le mot. « Reprendre » repart d'où il s'était arrêté.",
       "Manche 2 : un seul mot. Un seul indice par mot, l'équipe n'a droit qu'à une proposition.",
       "Manche 3 : mimer. Uniquement des gestes et des bruitages.",
       "Une manche se termine quand tous les mots ont été trouvés. Les mots passés reviennent plus tard."
@@ -88,7 +88,7 @@ export const RULES = {
       "Chacun choisit A ou B. On peut voter à main levée, puis entrer les choix de chacun.",
       "Touchez « Résultat » pour voir les deux camps."
     ],
-    pts: "La majorité gagne 1 point. La minorité fait son gage ou le refuse (2 points en moins), puis le dilemme suivant s'affiche tout seul. En cas d'égalité, personne ne marque."
+    pts: "La majorité gagne 1 point. La minorité fait son gage ou le refuse (2 points en moins). Le bouton du dilemme suivant n'apparaît qu'ensuite. En cas d'égalité, personne ne marque."
   },
   bomb: {
     but: "Ne pas tenir le téléphone quand la bombe explose.",
@@ -99,7 +99,7 @@ export const RULES = {
       "La bombe explose au bout d'un temps imprévisible, entre 20 secondes et 1 minute.",
       "On touche le personnage de la personne qui tenait la bombe."
     ],
-    pts: "Tous les autres gagnent 1 point. La personne qui a perdu fait son gage ou le refuse (2 points en moins), puis on passe tout seul à la manche suivante."
+    pts: "Tous les autres gagnent 1 point. La personne qui a perdu fait son gage ou le refuse (2 points en moins). Le bouton de la manche suivante n'apparaît qu'ensuite."
   },
   tvm: {
     but: "Trouver l'anecdote inventée parmi trois.",
@@ -120,7 +120,7 @@ export const RULES = {
       "Défi et duel : on joue, puis on indique le résultat. Patate chaude : chacun son tour, le premier qui sèche perd.",
       "Devinette : la première personne qui trouve marque. Nouvelle règle : elle reste valable jusqu'à la prochaine carte Nouvelle règle."
     ],
-    pts: "Défi réussi : 2 points. Duel gagné : 2 points. Patate chaude gagnée : 2 points. Devinette trouvée : 1 point. Défi raté ou duel perdu : un gage, puis la carte suivante se tire toute seule."
+    pts: "Défi réussi : 2 points. Duel gagné : 2 points. Patate chaude gagnée : 2 points. Devinette trouvée : 1 point. Défi raté ou duel perdu : un gage, puis le bouton de la carte suivante."
   },
   uc: {
     but: "Pour les civils, démasquer les intrus. Pour les intrus, survivre sans se faire repérer.",
@@ -165,7 +165,7 @@ export const RULES = {
       "À main levée : à trois, tout le monde pointe quelqu'un, puis on touche la personne la plus désignée.",
       "Le résultat affiche la personne élue et le détail des voix."
     ],
-    pts: "En vote secret, 1 point pour chaque personne qui a voté comme la majorité. La personne élue peut prendre un gage. Une fois noté, la carte suivante arrive toute seule."
+    pts: "En vote secret, 1 point pour chaque personne qui a voté comme la majorité. Les personnes élues font un gage ou le refusent (2 points en moins). Le bouton de la carte suivante n'apparaît qu'ensuite."
   },
   dico: {
     but: "Inventer une fausse définition assez crédible pour piéger les autres, et trouver la vraie.",
@@ -186,7 +186,7 @@ export const RULES = {
       "Elle touche le bouton avant la fin du chrono, et c'est au tour de la suivante.",
       "Perdu si le chrono se termine, si le mot a déjà été dit ou s'il n'a aucun lien : le groupe peut contester."
     ],
-    pts: "Tous les autres gagnent 1 point. La personne qui a perdu fait son gage ou le refuse (2 points en moins), puis on passe tout seul à la manche suivante."
+    pts: "Tous les autres gagnent 1 point. La personne qui a perdu fait son gage ou le refuse (2 points en moins). Le bouton de la manche suivante n'apparaît qu'ensuite."
   },
   know: {
     but: "Prouver que vous vous connaissez par cœur.",

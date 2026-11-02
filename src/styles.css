@@ -433,3 +433,14 @@ button.wyr-choice:active { transform: scale(.99); }
 @media (max-width: 359px) { .seg .seg-unit { display: none; } }
 .hint.with-ic { display: flex; align-items: flex-start; gap: 8px; }
 .hint.with-ic .ic { margin-top: 2px; }
+
+/* Panneau « Qui joue ? » : l'aide et le bouton restent visibles même avec une longue liste */
+.sheet-foot { position: sticky; bottom: calc(-20px - var(--safe-b)); margin-bottom: calc(-20px - var(--safe-b)); padding-bottom: calc(20px + var(--safe-b)); display: flex; flex-direction: column; gap: 10px; background: var(--surface); box-shadow: 0 -12px 0 6px var(--surface); }
+@media (max-width: 359px) { .appbar .iconbtn { width: 40px; } }
+
+/* Pause du chrono */
+.timer .tpause { flex: none; }
+.timer.paused .tbar i { opacity: .4; }
+.timer.paused .tnum { color: var(--muted); }
+.tpaused { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: -4px; color: var(--muted); font-size: 14px; font-weight: 700; }
+.paused-card .txt { color: var(--muted); }

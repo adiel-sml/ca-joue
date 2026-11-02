@@ -5,11 +5,11 @@ import {
   Crown, Ghost, Heart, Swords, Shield, Laugh, Hourglass, Lightbulb, Shuffle, Info, Hand, Zap, Gavel,
   MessageSquareQuote, Square, Minus, UserPlus, Vote, Medal, Smartphone, Skull, HeartCrack, SkipForward,
   Bomb, Brain, Wine, Split, Moon, Sun, PawPrint, FlaskConical, Crosshair, House, Volume2, VolumeX,
-  MapPin, Pointer, Ruler, BookOpen, Link, Target, Telescope, HeartHandshake, AudioWaveform, Gift, MessageCircleHeart, RefreshCw
+  MapPin, Pointer, Ruler, BookOpen, Link, Target, Telescope, HeartHandshake, AudioWaveform, Gift, MessageCircleHeart, RefreshCw, Pause
 } from "lucide";
 
 const I = {
-  grid: LayoutGrid, users: Users, trophy: Trophy, drama: Drama, ban: Ban, flame: Flame, scanSearch: ScanSearch,
+  grid: LayoutGrid, users: Users, trophy: Trophy, pause: Pause, drama: Drama, ban: Ban, flame: Flame, scanSearch: ScanSearch,
   mask: VenetianMask, dices: Dices, x: X, back: ChevronLeft, plus: Plus, pencil: Pencil, trash: Trash2,
   check: Check, undo: RotateCcw, timer: Timer, play: Play, eye: Eye, eyeOff: EyeOff, share: Share,
   squarePlus: SquarePlus, download: Download, crown: Crown, ghost: Ghost, heart: Heart, swords: Swords,
