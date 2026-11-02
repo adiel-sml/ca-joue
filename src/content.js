@@ -60,12 +60,12 @@ const UC_BASE = [["Mojito","Caïpirinha"],["Tinder","Hinge"],["Amsterdam","Copen
 export const UC_SPECIALS = [
  {id:"boss",icon:"crown",name:"Le Boss",d:"Son vote compte double. Personne ne sait qui c'est."},
  {id:"ghost",icon:"ghost",name:"Le Fantôme",d:"Continue de voter après son élimination."},
- {id:"lovers",icon:"heart",name:"Les Amoureux",d:"Deux joueurs liés, de sexe opposé si possible. Si l'un tombe, l'autre meurt de chagrin. +2 pts chacun s'ils survivent ensemble."},
+ {id:"lovers",icon:"heart",name:"Les Amoureux",d:"Deux joueurs liés, de sexe opposé si possible. Si l'un tombe, l'autre meurt de chagrin. Ils gagnent ensemble : si l'un gagne, l'autre marque les mêmes points. +2 pts chacun s'ils survivent ensemble."},
  {id:"avenger",icon:"swords",name:"Le Vengeur",d:"Quand il est éliminé, il emporte la personne de son choix avec lui."},
  {id:"shield",icon:"shield",name:"Le Bouclier",d:"Survit au premier vote qui l'élimine."},
  {id:"clown",icon:"laugh",name:"Le Clown",d:"Gagne 3 points s'il se fait éliminer au premier vote."}
 ];
-export const UC_PTS = {civil:2, under:5, white:6};
+export const UC_PTS = {civil:2, under:5, white:6, lovers:4};
 
 export const MYS_TYPES = {
   qui:{label:"Qui pourrait…",icon:"hand",c:"var(--c-tvm)",foot:"À 3, tout le monde pointe quelqu'un. La personne la plus désignée fait un gage."},
@@ -121,8 +121,8 @@ const MYS_BASE = [
  {t:"devine",x:"{p1} chante une chanson en remplaçant toutes les paroles par « la la la »."}
 ];
 
-export const TEAM_NAMES = ["Les Paillettes","Les Cactus","Les Disco","Les Pirates"];
-export const TEAM_COLORS = ["var(--c-mime)","var(--c-taboo)","var(--c-tvm)","var(--c-uc)"];
+export const TEAM_NAMES = ["Les Paillettes","Les Cactus","Les Disco","Les Pirates","Les Requins","Les Comètes","Les Pingouins","Les Volcans","Les Hiboux","Les Ninjas","Les Bisons","Les Astronautes"];
+export const TEAM_COLORS = ["var(--c-mime)","var(--c-taboo)","var(--c-tvm)","var(--c-uc)","var(--c-nhie)","var(--c-mys)","var(--c-dare2)","var(--c-tu)","var(--c-team9)","var(--c-lg)","var(--c-dico)","var(--c-quiz)"];
 export const GAMES = [
  {id:"mime",cat:"team",name:"Mimes",icon:"drama",min:2,c:"var(--c-mime)",desc:"Fais deviner sans parler."},
  {id:"taboo",cat:"team",name:"Mot interdit",icon:"ban",min:2,c:"var(--c-taboo)",desc:"Fais deviner sans les mots en rouge."},

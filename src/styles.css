@@ -33,6 +33,7 @@
   --c-wave: #4fb3a9;
   --c-dare2: #e63946;
   --c-talk: #f7a8b8;
+  --c-team9: #a47148;
   --good: #3ddc97;
   --bad: #ff4d6d;
   --accent: #ffbe0b;
@@ -421,3 +422,14 @@ button.wyr-choice:active { transform: scale(.99); }
 }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* Undercover : rôles encore en jeu */
+.uc-left { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; margin-bottom: 14px; }
+.uc-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; padding: 8px 4px 10px; border-radius: 14px; background: var(--surface-2); border-top: 4px solid var(--tc); font-size: 13px; font-weight: 700; color: var(--muted); text-align: center; }
+.uc-chip .num { font-size: 22px; line-height: 1.1; color: var(--text); }
+.seg button.seg-more { display: inline-flex; align-items: center; justify-content: center; }
+.seg button.seg-more:not(.on) { flex: 0 0 52px; }
+.seg.compact .seg-unit { display: none; }
+@media (max-width: 359px) { .seg .seg-unit { display: none; } }
+.hint.with-ic { display: flex; align-items: flex-start; gap: 8px; }
+.hint.with-ic .ic { margin-top: 2px; }

@@ -118,22 +118,31 @@ function gageResolve(ok) {
 }
 
 /* ---------- Son, chrono, écran allumé ---------- */
-let actx;
+let actx, actxAt = 0, lastSound = 0;
+const quiet = p => { if (p && p.catch) p.catch(() => {}); };
 /* Son : sur iPhone, l'audio n'est autorisé qu'après un toucher. On le prépare dès le premier toucher,
    et on demande à jouer même si le téléphone est en mode silencieux (Safari 16.4 et plus). */
 function audio() {
   try {
     if (navigator.audioSession && navigator.audioSession.type !== "playback") navigator.audioSession.type = "playback";
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-    if (actx.state === "suspended") actx.resume();
+    if (!actx || actx.state === "closed") { actx = new (window.AudioContext || window.webkitAudioContext)(); actxAt = Date.now(); }
+    /* « interrupted » sur iPhone après un verrouillage d'écran ou un appel : on relance aussi */
+    if (actx.state !== "running") quiet(actx.resume());
   } catch (e) {}
   return actx;
 }
+/* À chaque toucher : si le son ne tourne plus, ou après un long silence, on repart d'un contexte neuf.
+   Sur iPhone, un contexte interrompu peut rester muet même relancé, d'où le son qui ne revenait pas après la première manche. */
 function unlockAudio() {
-  const c = audio(); if (!c || unlockAudio.done) return;
-  try { const b = c.createBuffer(1, 1, 22050), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); unlockAudio.done = true; } catch (e) {}
+  try {
+    const idle = Date.now() - Math.max(lastSound, actxAt) > 20000;
+    if (actx && Date.now() - actxAt > 1000 && (actx.state !== "running" || idle)) { const old = actx; actx = null; quiet(old.close()); }
+    const c = audio(); if (!c || c.unlocked) return;
+    const b = c.createBuffer(1, 1, 22050), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); c.unlocked = true;
+  } catch (e) {}
 }
 function tone(f, d, at = 0, type = "triangle", vol = .22) {
+  lastSound = Date.now() + (at + d) * 1000;
   try { const c = audio(), t = c.currentTime + at, o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.value = f; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + d); o.connect(g).connect(c.destination); o.start(t); o.stop(t + d); } catch (e) {}
 }
 function beep(f, d) { tone(f, d); }
@@ -141,6 +150,7 @@ function beep(f, d) { tone(f, d); }
 function endSound() { [0, .22, .44].forEach(at => tone(880, .16, at, "square", .25)); tone(440, .9, .7, "square", .3); }
 /* Explosion : souffle de bruit filtré qui s'éteint, plus un grondement grave */
 function explosion() {
+  lastSound = Date.now() + 2200;
   try {
     audio();
     const t0 = actx.currentTime, len = 2.2, sr = actx.sampleRate;
@@ -348,6 +358,15 @@ function sheetHTML() {
     inner = `<div class="rules-head" style="--tc:var(--c-tvm)"><span class="tile-ic">${ic("users", 26)}</span><h2 class="sheet-title">Ce prénom est déjà pris</h2></div>
     <p class="sheet-text">« ${esc(sheet.name)} » est déjà dans la liste des joueurs. Ajoute une initiale ou un surnom pour les différencier, par exemple « ${esc(sheet.name)} B. ».</p>
     ${btn("Changer le prénom", "dupBack", { icon: "pencil" })}`;
+  } else if (sheet.type === "nteams") {
+    const max = maxTeams();
+    inner = `<h2 class="sheet-title">Nombre d'équipes</h2>
+    <form id="tform" class="stack" novalidate>
+      <p class="sheet-text">De 2 à ${max} équipes avec ${plural(players.length, "joueur")}.${max < TEAM_NAMES.length ? " Il faut au moins une personne par équipe." : ""}</p>
+      <label class="field"><span>Équipes</span><input id="tnum" type="number" inputmode="numeric" pattern="[0-9]*" min="2" max="${max}" value="${esc(sheet.val)}" autocomplete="off" enterkeyhint="done"></label>
+      ${sheet.err ? `<p class="hint warn">${sheet.err}</p>` : ""}
+      <button class="btn" type="submit">${ic("check", 20)}<span>Valider</span></button>
+    </form>`;
   } else if (sheet.type === "confirm") {
     inner = `<h2 class="sheet-title">${sheet.title}</h2><p class="sheet-text">${sheet.text}</p>
     <div class="stack">${btn(sheet.ok, sheet.act, { kind: sheet.danger ? "danger" : "", arg: sheet.arg ?? "" })}<button class="btn ghost" data-act="closeSheet">Annuler</button></div>`;
@@ -422,10 +441,28 @@ function openGage(who, spicy = false, then = null) {
 }
 
 /* ---------- Mimes & Mot interdit ---------- */
+const maxTeams = () => Math.min(TEAM_NAMES.length, players.length);
 function makeTeams() {
+  G.sameTeams = false;
   const sh = shuffle(players);
   G.teams = Array.from({ length: G.nTeams }, (_, i) => ({ name: TEAM_NAMES[i], c: TEAM_COLORS[i], members: [], score: 0, k: 0 }));
   sh.forEach((p, i) => G.teams[i % G.nTeams].members.push(p));
+}
+/* Les dernières équipes reviennent à la partie suivante, même dans un autre jeu en équipes.
+   Un joueur parti est retiré, un nouveau rejoint l'équipe la plus petite. */
+function loadTeams() {
+  const saved = store.get("lastTeams", null);
+  if (Array.isArray(saved)) {
+    const left = new Set(players);
+    const groups = saved.map(g => (Array.isArray(g) ? g : []).filter(n => left.delete(n))).filter(g => g.length);
+    if (groups.length >= 2 && groups.length <= maxTeams()) {
+      shuffle([...left]).forEach(n => groups.reduce((a, b) => b.length < a.length ? b : a).push(n));
+      G.nTeams = groups.length; G.sameTeams = true;
+      G.teams = groups.map((m, i) => ({ name: TEAM_NAMES[i], c: TEAM_COLORS[i], members: m, score: 0, k: 0 }));
+      return;
+    }
+  }
+  makeTeams();
 }
 const teamName = () => ({ mime: "Mimes", taboo: "Mot interdit", tu: "Time's Up", quiz: "Quiz", num: "Ordre de grandeur" })[G.kind];
 const TEAM_LEADS = {
@@ -437,12 +474,13 @@ const TEAM_LEADS = {
 };
 const gameColor = id => GAMES.find(g => g.id === id).c;
 function teamSetup() {
-  const max = Math.min(4, players.length), solo = G.teams.some(t => t.members.length === 1);
+  const max = maxTeams(), solo = G.teams.some(t => t.members.length === 1);
   return screen({
     title: teamName(), color: gameColor(G.kind), body: `
     <p class="lead">${TEAM_LEADS[G.kind]}</p>
     <div class="panel"><div class="panel-head"><span class="label">Équipes</span><button class="pill ghost" data-act="reTeams">${ic("shuffle", 16)} Mélanger</button></div>
-      <div class="seg">${[2, 3, 4].map(n => `<button class="${G.nTeams === n ? "on" : ""}" data-act="nTeams" data-arg="${n}" ${n > max ? "disabled" : ""}>${n} équipes</button>`).join("")}</div>
+      <div class="seg${G.nTeams > 4 ? " compact" : ""}">${[2, 3, 4].map(n => `<button class="${G.nTeams === n ? "on" : ""}" data-act="nTeams" data-arg="${n}" aria-label="${n} équipes" ${n > max ? "disabled" : ""}>${n}<span class="seg-unit"> équipes</span></button>`).join("")}${max > 4 ? `<button class="seg-more${G.nTeams > 4 ? " on" : ""}" data-act="nTeamsAsk" aria-label="${G.nTeams > 4 ? `${G.nTeams} équipes, changer` : "Plus de 4 équipes"}">${G.nTeams > 4 ? `${G.nTeams}<span class="seg-unit"> équipes</span>` : ic("plus", 20)}</button>` : ""}</div>
+      ${G.sameTeams ? `<p class="hint with-ic">${ic("users", 16)}<span>Mêmes équipes que la dernière partie. Touche Mélanger pour en former de nouvelles.</span></p>` : ""}
       <div class="teams">${G.teams.map(t => `<div class="team" style="--tc:${t.c}"><b>${esc(t.name)}</b><div class="team-members">${t.members.map(m => `<span class="mini">${av(m, "xs")}${esc(m)}</span>`).join("")}</div></div>`).join("")}</div>
       ${solo && G.kind !== "quiz" && G.kind !== "num" ? `<p class="hint">Dans une équipe d'une personne, ce sont les autres qui devinent. Les points vont à celle ou celui qui fait deviner.</p>` : ""}
     </div>
@@ -517,7 +555,7 @@ function teamFinal() {
     <div class="hero">${ic(tie ? "medal" : "trophy", 44)}<span class="kicker">${tie ? "Égalité" : "Victoire"}</span><h2 class="big">${tie ? "Match nul" : esc(s[0].name)}</h2>
     ${tie ? "" : `<p class="lead">${G.target && s[0].score >= G.target ? `Objectif de ${G.target} points atteint. ` : ""}3 points bonus au classement pour ${s[0].members.map(esc).join(", ")}.</p>`}</div>
     ${teamScore()}`,
-    foot: btn("Rejouer avec les mêmes équipes", "teamsAgain", { icon: "undo" }) + `<button class="textbtn" data-act="home">Retour aux jeux</button>`
+    foot: btn("Rejouer avec les mêmes équipes", "teamsAgain", { icon: "undo" }) + `<div class="row2 links"><button class="textbtn" data-act="teamsNew">Nouvelles équipes</button><button class="textbtn" data-act="home">Retour aux jeux</button></div>`
   });
 }
 
@@ -619,6 +657,12 @@ function ucDeal() {
   });
   return screen({ title: t, color: UCC, body: ucWordCard(p), foot: btn("J'ai retenu, je cache", "ucHide", { icon: "eyeOff" }) });
 }
+/* Rôles encore en jeu, visibles de tous pendant la partie */
+function ucLeft() {
+  const alive = G.ps.filter(p => p.alive), n = r => alive.filter(p => p.role === r).length;
+  const chip = (r, one, many) => `<span class="uc-chip" style="--tc:${roleCol(r)}"><b class="num">${n(r)}</b>${n(r) > 1 ? many : one}</span>`;
+  return `<div class="uc-left" role="group" aria-label="Encore en jeu">${chip("civil", "Civil", "Civils")}${G.nU ? chip("under", "Undercover", "Undercover") : ""}${G.nW ? chip("white", "Mr White", "Mr White") : ""}</div>`;
+}
 function ucOrder() {
   const alive = shuffle(G.ps.filter(p => p.alive));
   const k = alive.findIndex(p => p.role !== "white");
@@ -626,17 +670,23 @@ function ucOrder() {
 }
 function ucTalk() {
   return screen({
-    title: `Undercover, manche ${G.round}`, color: UCC, body: `
+    title: `Undercover, manche ${G.round}`, color: UCC, body: `${ucLeft()}
     <h2 class="h2">Ordre de parole</h2><p class="hint">Chacun dit un seul mot pour décrire le sien, dans cet ordre. Puis débat libre.</p>
-    <ol class="list">${G.order.map((p, i) => `<li class="row-item"><span class="rank">${i + 1}</span>${av(p.name, "s")}<span class="grow">${esc(p.name)}</span></li>`).join("")}</ol>`,
+    <ol class="list">${G.order.map((p, i) => `<li class="row-item"><span class="rank">${i + 1}</span>${av(p.name, "s")}<span class="grow">${esc(p.name)}</span></li>`).join("")}</ol>
+    ${G.peeks.length ? `<p class="hint with-ic">${ic("eye", 16)}<span>A revu son mot : ${G.peeks.map(esc).join(", ")}.</span></p>` : ""}`,
     foot: btn("Passer au vote", "ucVoteStart", { icon: "vote" }) + `<button class="textbtn" data-act="ucPeekList">Quelqu'un a oublié son mot ?</button>`
   });
 }
 function ucPeek() {
-  if (G.peek != null) return screen({ title: "Revoir un mot", color: UCC, body: ucWordCard(G.ps[G.peek]), foot: btn("Cacher", "ucPeekDone", { icon: "eyeOff" }) });
+  if (G.peek != null && G.peekShow) return screen({ title: "Revoir un mot", color: UCC, body: ucWordCard(G.ps[G.peek]), foot: btn("Cacher", "ucPeekDone", { icon: "eyeOff" }) });
+  /* Le nom choisi s'affiche en grand devant tout le monde : personne ne peut ouvrir le mot d'un autre en douce */
+  if (G.peek != null) { const p = G.ps[G.peek]; return screen({
+    title: "Revoir un mot", color: UCC, body: `<div class="hero">${av(p.name, "xl")}<span class="kicker">Seule cette personne peut voir le mot</span><h2 class="big">${esc(p.name)}</h2><p class="lead">Tout le monde vérifie que c'est bien ${esc(p.name)} qui tient le téléphone, puis les autres détournent les yeux.</p></div>`,
+    foot: btn(`Je suis ${esc(p.name)}, voir mon mot`, "ucPeekShow", { icon: "eye" }) + `<button class="textbtn" data-act="ucPeekList">Ce n'est pas la bonne personne</button>`
+  }); }
   return screen({
-    title: "Revoir un mot", color: UCC, body: `<h2 class="h2">Qui a oublié ?</h2><p class="hint">Seule cette personne regarde l'écran.</p>
-    <div class="pickgrid">${G.ps.map((p, i) => `<button class="pickav" data-act="ucPeek" data-arg="${i}">${av(p.name, "m")}<span>${esc(p.name)}</span></button>`).join("")}</div>`,
+    title: "Revoir un mot", color: UCC, body: `<h2 class="h2">Qui a oublié ?</h2><p class="hint">Choisissez devant tout le monde. Le nom s'affiche en grand avant le mot, et la liste « A revu son mot » le garde jusqu'à la fin de la partie.</p>
+    <div class="pickgrid">${G.ps.map((p, i) => p.alive ? `<button class="pickav" data-act="ucPeek" data-arg="${i}">${av(p.name, "m")}<span>${esc(p.name)}</span></button>` : "").join("")}</div>`,
     foot: btn("Retour", "ucBack", { kind: "ghost", icon: "back" })
   });
 }
@@ -646,7 +696,7 @@ function ucVote() {
   if (G.vi < voters.length) {
     const vIdx = voters[G.vi], v = G.ps[vIdx];
     return screen({
-      title: `Vote ${G.vi + 1} sur ${voters.length}`, color: UCC, body: `
+      title: `Vote ${G.vi + 1} sur ${voters.length}`, color: UCC, body: `${ucLeft()}
       <div class="who">${av(v.name, "m")}<div><span class="kicker">${v.alive ? "Vote de" : "Vote du fantôme"}</span><b>${esc(v.name)}</b></div></div>
       <p class="hint">À trois, tout le monde pointe quelqu'un. Puis entre le vote de chacun ici.</p>
       <div class="pickgrid">${G.ps.map((p, i) => p.alive && i !== vIdx ? `<button class="pickav" data-act="ucCast" data-arg="${i}">${av(p.name, "m")}<span>${esc(p.name)}</span></button>` : "").join("")}</div>`,
@@ -658,7 +708,7 @@ function ucVote() {
   const rows = Object.entries(tally).sort((a, b) => b[1] - a[1]);
   const top = rows[0][1], tied = rows.filter(r => r[1] === top).map(r => +r[0]);
   return screen({
-    title: "Résultat du vote", color: UCC, body: `
+    title: "Résultat du vote", color: UCC, body: `${ucLeft()}
     <ul class="list">${rows.map(([i, v]) => `<li class="row-item${v === top ? " lead" : ""}">${av(G.ps[i].name, "s")}<span class="grow">${esc(G.ps[i].name)}</span><b class="num">${v} voix</b></li>`).join("")}</ul>
     ${tied.length > 1 ? `<h2 class="h2">Égalité</h2><p class="hint">Débat express entre ${tied.map(i => esc(G.ps[i].name)).join(" et ")}, puis le groupe choisit qui part.</p>
     <div class="pickgrid">${tied.map(i => `<button class="pickav" data-act="ucElim" data-arg="${i}">${av(G.ps[i].name, "m")}<span>${esc(G.ps[i].name)}</span></button>`).join("")}</div>` : ""}`,
@@ -684,12 +734,12 @@ function ucProcess() {
 function ucReveal() {
   const q = G.queue[0], p = G.ps[q.i];
   if (q.saved) return screen({
-    title: "Révélation", color: UCC, body: `<div class="hero">${av(p.name, "xl")}<span class="kicker">${ic("shield", 16)} Bouclier</span><h2 class="big">${esc(p.name)} reste en jeu</h2><p class="lead">${fe(p.name, "Elle", "Il")} était ${fe(p.name, "protégée", "protégé")}. Son rôle reste secret.</p></div>`,
+    title: "Révélation", color: UCC, body: `${ucLeft()}<div class="hero">${av(p.name, "xl")}<span class="kicker">${ic("shield", 16)} Bouclier</span><h2 class="big">${esc(p.name)} reste en jeu</h2><p class="lead">${fe(p.name, "Elle", "Il")} était ${fe(p.name, "protégée", "protégé")}. Son rôle reste secret.</p></div>`,
     foot: btn("Continuer", "ucNext", { icon: "play" })
   });
   const why = q.cause === "love" ? `meurt de chagrin, ${fe(p.name, "amoureuse", "amoureux")} de ${esc(G.ps[p.lover].name)}` : q.cause === "revenge" ? `est ${fe(p.name, "emportée", "emporté")} par le Vengeur` : `est ${fe(p.name, "éliminée", "éliminé")} par le vote`;
   const sp = p.sp ? spOf(p.sp) : null;
-  let body = `<div class="hero">${av(p.name, "xl")}<p class="lead">${esc(p.name)} ${why}.</p></div>
+  let body = `${ucLeft()}<div class="hero">${av(p.name, "xl")}<p class="lead">${esc(p.name)} ${why}.</p></div>
     <div class="card" style="--gc:${roleCol(p.role)}"><span class="card-label">Son rôle</span><div class="word">${roleName(p.role)}</div>${p.role !== "white" ? `<p class="card-foot">Son mot reste secret jusqu'à la fin de la partie.</p>` : ""}
     ${sp ? `<div class="special"><span class="role-ic">${ic(sp.icon, 20)}</span><div><span class="card-label">Rôle spécial</span><b>${sp.name}</b>${p.clownWin ? `<p>Éliminé au premier vote : 3 points pour ${esc(p.name)}.</p>` : ""}</div></div>` : ""}</div>`;
   let foot = btn("Continuer", "ucNext", { icon: "play" });
@@ -710,25 +760,29 @@ function ucReveal() {
 function ucFinish(w) {
   G.winner = w; G.gamePts = {};
   const give = (n, v) => { G.gamePts[n] = (G.gamePts[n] || 0) + v; };
+  const wins = p => w === "lovers" ? p.sp === "lovers" : w === "civ" ? p.role === "civil" : w === "imp" ? p.role !== "civil" : p.role === "white";
+  const winPts = p => w === "lovers" ? UC_PTS.lovers : UC_PTS[p.role];
   G.ps.forEach(p => {
-    if (w === "civ" && p.role === "civil") give(p.name, UC_PTS.civil);
-    if (w === "imp" && p.role !== "civil") give(p.name, UC_PTS[p.role]);
-    if (w === "white" && p.role === "white") give(p.name, UC_PTS.white);
+    const mate = p.lover != null ? G.ps[p.lover] : null;
+    p.loveWin = false;
+    if (wins(p)) give(p.name, winPts(p));
+    /* Les amoureux gagnent ensemble : si l'un gagne, l'autre marque les mêmes points */
+    else if (mate && wins(mate)) { give(p.name, winPts(mate)); p.loveWin = true; }
     if (p.clownWin) give(p.name, 3);
-    if (p.sp === "lovers" && p.alive && G.ps[p.lover].alive) give(p.name, 2);
+    if (mate && p.alive && mate.alive) give(p.name, 2);
   });
   Object.entries(G.gamePts).forEach(([n, v]) => { addPts(n, v); G.ucScores[n] = (G.ucScores[n] || 0) + v; });
   go(ucEnd);
 }
 function ucEnd() {
   const civWin = G.winner === "civ";
-  const title = civWin ? "Les civils gagnent" : G.winner === "white" ? "Mr White gagne" : "Les intrus gagnent";
+  const title = civWin ? "Les civils gagnent" : G.winner === "white" ? "Mr White gagne" : G.winner === "lovers" ? "Les amoureux gagnent" : "Les intrus gagnent";
   const session = Object.entries(G.ucScores).sort((a, b) => b[1] - a[1]);
   return screen({
     title: "Fin de la partie", color: UCC, left: null, body: `
     <div class="hero">${ic("trophy", 44)}<h2 class="big">${title}</h2>
     <div class="pair"><span><small>Civils</small><b>${esc(G.pair[0])}</b></span><span><small>Undercover</small><b>${esc(G.pair[1])}</b></span></div></div>
-    <ul class="list">${G.ps.map(p => `<li class="row-item" style="--tc:${roleCol(p.role)}">${av(p.name, "s")}<span class="grow"><b>${esc(p.name)}</b><small>${roleName(p.role)}${p.sp ? ", " + spOf(p.sp).name : ""}${p.alive ? "" : ", " + fe(p.name, "éliminée", "éliminé")}</small></span><b class="badge ${G.gamePts[p.name] ? "b-good" : ""}">${G.gamePts[p.name] ? "+" + G.gamePts[p.name] : "0"}</b></li>`).join("")}</ul>
+    <ul class="list">${G.ps.map(p => `<li class="row-item" style="--tc:${roleCol(p.role)}">${av(p.name, "s")}<span class="grow"><b>${esc(p.name)}</b><small>${roleName(p.role)}${p.sp ? ", " + spOf(p.sp).name : ""}${p.alive ? "" : ", " + fe(p.name, "éliminée", "éliminé")}${p.loveWin ? `, gagne avec ${esc(G.ps[p.lover].name)}` : ""}</small></span><b class="badge ${G.gamePts[p.name] ? "b-good" : ""}">${G.gamePts[p.name] ? "+" + G.gamePts[p.name] : "0"}</b></li>`).join("")}</ul>
     ${session.length ? `<span class="label">Points Undercover de la soirée</span>${scoreList(session)}` : ""}`,
     foot: btn("Rejouer avec d'autres mots", "ucGo", { icon: "undo" }) + `<div class="row2 links"><button class="textbtn" data-act="ucSettings">Réglages</button><button class="textbtn" data-act="home">Retour aux jeux</button></div>`
   });
@@ -736,6 +790,8 @@ function ucEnd() {
 function ucCheck() {
   const alive = G.ps.filter(p => p.alive);
   const imp = alive.filter(p => p.role !== "civil").length, civ = alive.length - imp;
+  /* Il ne reste que les deux amoureux, un civil et un intrus : leur amour l'emporte */
+  if (alive.length === 2 && alive[0].lover === G.ps.indexOf(alive[1]) && imp === 1) return ucFinish("lovers");
   if (imp === 0) return ucFinish("civ");
   if (civ <= 1) return ucFinish("imp");
   G.round++; ucOrder(); go(ucTalk);
@@ -1572,12 +1628,12 @@ const A = {
     stopTimer();
     const g = GAMES.find(x => x.id === id);
     if (players.length < g.min) { tab = "players"; go(root); toast(`${g.name} se joue à ${g.min} joueurs minimum. Ajoute les joueurs.`); return; }
-    if (id === "mime" || id === "taboo") { G = { kind: id, nTeams: 2, dur: 60, round: 1, diff: store.get("mimeDiff", "easy"), target: store.get("target-" + id, 30) }; makeTeams(); return go(teamSetup); }
+    if (id === "mime" || id === "taboo") { G = { kind: id, nTeams: 2, dur: 60, round: 1, diff: store.get("mimeDiff", "easy"), target: store.get("target-" + id, 30) }; loadTeams(); return go(teamSetup); }
     if (id === "av") { G = { kind: "av", order: shuffle(players), i: 0, level: store.get("avlvl", "fun"), decks: {} }; if (G.level === "x18" && !adultOk) G.level = "hot"; return go(avTurn); }
     if (id === "tvm") { G = { kind: "tvm", order: shuffle(players), i: 0, scores: Object.fromEntries(players.map(p => [p, 0])), step: "prep", td: pdeck("tvm", TVM_THEMES), sel: [] }; G.theme = G.td.draw(); return go(tvm); }
     if (id === "uc") { const n = players.length; G = { kind: "uc", nU: n >= 13 ? 3 : n >= 7 ? 2 : 1, nW: n >= 11 ? 2 : n >= 5 ? 1 : 0, ucScores: {} }; return go(ucSetup); }
-    if (id === "tu") { G = { kind: "tu", nTeams: 2, dur: 45, nWords: 40, round: 0 }; makeTeams(); return go(teamSetup); }
-    if (id === "quiz") { G = { kind: "quiz", nTeams: 2, nQ: 10, round: 1, qtheme: store.get("quizTheme", "all"), target: store.get("target-quiz", 0) }; makeTeams(); return go(teamSetup); }
+    if (id === "tu") { G = { kind: "tu", nTeams: 2, dur: 45, nWords: 40, round: 0 }; loadTeams(); return go(teamSetup); }
+    if (id === "quiz") { G = { kind: "quiz", nTeams: 2, nQ: 10, round: 1, qtheme: store.get("quizTheme", "all"), target: store.get("target-quiz", 0) }; loadTeams(); return go(teamSetup); }
     if (id === "bomb") { G = { kind: "bomb", d: pdeck("bomb", BOMB_THEMES), gd: pdeck("gages", GAGES), state: "idle", loser: null }; G.theme = G.d.draw(); return go(bomb); }
     if (id === "wyr") { let l = store.get("wyrlvl", "normal"); if (l === "x18" && !adultOk) l = "hot"; G = { kind: "wyr", level: l, decks: {} }; wyrDraw(); return go(wyr); }
     if (id === "nhie") { let l = store.get("nhielvl", "fun"); if (l === "x18" && !adultOk) l = "hot"; G = { kind: "nhie", level: l, decks: {} }; nhieDraw(); return go(nhie); }
@@ -1585,7 +1641,7 @@ const A = {
     if (id === "mys") { G = { kind: "mys", d: pdeck("mys", MYS), card: null, rule: null }; return go(mys); }
     if (id === "spy") { G = { kind: "spy", nS: 1, mins: 6 }; return go(spySetup); }
     if (id === "most") { let l = store.get("mostlvl", "soft"); if (l === "x18" && !adultOk) l = "hot"; G = { kind: "most", level: l, mode: store.get("mostmode", "secret"), decks: {} }; mostDraw(); return go(most); }
-    if (id === "num") { G = { kind: "num", nTeams: 2, nQ: 10, round: 1, target: store.get("target-num", 0) }; makeTeams(); return go(teamSetup); }
+    if (id === "num") { G = { kind: "num", nTeams: 2, nQ: 10, round: 1, target: store.get("target-num", 0) }; loadTeams(); return go(teamSetup); }
     if (id === "dico") { G = { kind: "dico", d: pdeck("dico", DICO), scores: Object.fromEntries(players.map(p => [p, 0])) }; dicoNewWord(); return go(dico); }
     if (id === "chain") { G = { kind: "chain", d: pdeck("chain", CHAIN_WORDS), sec: store.get("chainsec", 5), order: shuffle(players), cur: 0, step: "start" }; G.word = G.d.draw(); return go(chain); }
     if (g.cat === "couple") {
@@ -1596,10 +1652,16 @@ const A = {
   },
   /* équipes */
   nTeams(n) { G.nTeams = +n; makeTeams(); draw(); },
+  nTeamsAsk() { sheet = { type: "nteams", val: String(G.nTeams > 4 ? G.nTeams : Math.min(5, maxTeams())), err: "" }; draw(); setTimeout(() => { const i = document.getElementById("tnum"); try { if (i) { i.focus(); i.select(); } } catch (e) {} }, 60); },
+  nTeamsSet() {
+    const n = Number(String(sheet.val).trim()), max = maxTeams();
+    if (!Number.isInteger(n) || n < 2 || n > max) { sheet.err = `Choisis un nombre entre 2 et ${max}.`; return draw(); }
+    sheet = null; A.nTeams(n);
+  },
   reTeams() { makeTeams(); draw(); },
   dur(n) { G.dur = +n; draw(); },
   diff(k) { G.diff = k; store.set("mimeDiff", k); draw(); },
-  teamsGo() { if (G.kind === "tu") return A.tuGo(); if (G.kind === "quiz") return A.quizGo(); if (G.kind === "num") return A.numGo(); G.cur = 0; G.round = 1; G.deck = G.kind === "mime" ? pdeck("mime", MIME_SETS[G.diff], "mime-" + G.diff) : pdeck("taboo", TABOO); go(turnIntro); },
+  teamsGo() { store.set("lastTeams", G.teams.map(t => t.members)); if (G.kind === "tu") return A.tuGo(); if (G.kind === "quiz") return A.quizGo(); if (G.kind === "num") return A.numGo(); G.cur = 0; G.round = 1; G.deck = G.kind === "mime" ? pdeck("mime", MIME_SETS[G.diff], "mime-" + G.diff) : pdeck("taboo", TABOO); go(turnIntro); },
   turnStart() { G.log = []; G.card = G.deck.draw(); go(turnPlay); runTimer(G.dur, A.turnStop); },
   mark(v) { G.log.push({ c: G.card, v: +v }); G.card = G.deck.draw(); beep(+v === 1 ? 880 : +v === -1 ? 220 : 440, .08); draw(); },
   turnStop() { stopTimer(); if (G.card) { G.log.push({ c: G.card, v: 0, last: true }); G.card = null; } go(turnEnd); },
@@ -1616,7 +1678,8 @@ const A = {
     if (!G.bonusGiven && s[0].score > s[1].score) s[0].members.forEach(m => addPts(m, 3));
     G.bonusGiven = true; go(teamFinal);
   },
-  teamsAgain() { G.teams.forEach(t => { t.score = 0; t.k = 0; }); G.bonusGiven = false; A.teamsGo(); },
+  teamsAgain() { G.teams.forEach(t => { t.score = 0; t.k = 0; }); G.bonusGiven = false; G.sameTeams = true; go(teamSetup); },
+  teamsNew() { G.bonusGiven = false; makeTeams(); go(teamSetup); },
   /* action ou vérité */
   avLevel(k) { if (k === "x18" && !adultOk) { G.gate = true; return go(avTurn); } G.level = k; store.set("avlvl", k); draw(); },
   avAdult() { adultOk = true; G.gate = false; G.level = "x18"; store.set("avlvl", "x18"); go(avTurn); },
@@ -1667,7 +1730,7 @@ const A = {
         Object.assign(G.ps[a], { sp: "lovers", lover: b }); Object.assign(G.ps[b], { sp: "lovers", lover: a });
       } else if (free.length) G.ps[free.shift()].sp = id;
     }
-    Object.assign(G, { i: 0, show: false, round: 1, queue: [], winner: null, peek: null });
+    Object.assign(G, { i: 0, show: false, round: 1, queue: [], winner: null, peek: null, peekShow: false, peeks: [] });
     go(ucDeal);
   },
   ucShow() { G.show = true; draw(); },
@@ -1676,10 +1739,11 @@ const A = {
   ucCast(i) { G.votes[G.voters[G.vi]] = +i; G.vi++; go(ucVote); },
   ucUncast() { G.vi--; draw(); },
   ucElim(i) { ucEliminate(+i, "vote"); },
-  ucBack() { G.peek = null; go(ucTalk); },
-  ucPeekList() { G.peek = null; go(ucPeek); },
-  ucPeek(i) { G.peek = +i; draw(); },
-  ucPeekDone() { G.peek = null; go(ucTalk); },
+  ucBack() { G.peek = null; G.peekShow = false; go(ucTalk); },
+  ucPeekList() { G.peek = null; G.peekShow = false; go(ucPeek); },
+  ucPeek(i) { G.peek = +i; G.peekShow = false; draw(); },
+  ucPeekShow() { G.peekShow = true; const n = G.ps[G.peek].name; if (!G.peeks.includes(n)) G.peeks.push(n); draw(); },
+  ucPeekDone() { G.peek = null; G.peekShow = false; go(ucTalk); },
   ucWhiteTry() {
     const n = w => String(w).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "").replace(/s$/, "");
     if (!n(G.input)) return toast("Tape un mot.");
@@ -2100,8 +2164,10 @@ document.addEventListener("click", e => {
 document.addEventListener("input", e => {
   if (e.target.id === "pname" && sheet && sheet.draft) sheet.draft.name = e.target.value;
   if ((e.target.id === "numIn" || e.target.id === "txtIn") && G) G.input = e.target.value;
+  if (e.target.id === "tnum" && sheet) sheet.val = e.target.value;
 });
 document.addEventListener("submit", e => {
+  if (e.target.id === "tform") { e.preventDefault(); return A.nTeamsSet(); }
   if (e.target.id !== "pform") return;
   e.preventDefault();
   const d = sheet.draft, name = d.name.trim();

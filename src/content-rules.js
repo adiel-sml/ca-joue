@@ -4,7 +4,8 @@ export const RULES = {
   mime: {
     but: "Faire deviner un mot à son équipe en le mimant, sans dire un seul mot.",
     steps: [
-      "Formez les équipes, choisissez des mots faciles, difficiles ou mélangés, la durée d'un tour et l'objectif : 15, 30 ou 40 points, ou sans limite.",
+      "Formez les équipes : de 2 à 12, avec le bouton plus au-delà de 4. Les équipes de la partie précédente sont reprises, même dans un autre jeu en équipes. « Mélanger » en forme de nouvelles.",
+      "Choisissez des mots faciles, difficiles ou mélangés, la durée d'un tour et l'objectif : 15, 30 ou 40 points, ou sans limite.",
       "La personne désignée prend le téléphone et lance le chrono. Un mot s'affiche, elle seule le voit.",
       "Elle le mime : interdit de parler, de faire des bruits ou de montrer un objet. Son équipe propose des réponses.",
       "« Trouvé » quand l'équipe a deviné, « Passer » pour changer de mot. On enchaîne jusqu'à la fin du chrono.",
@@ -15,7 +16,8 @@ export const RULES = {
   taboo: {
     but: "Faire deviner un mot avec des phrases, sans prononcer les mots interdits.",
     steps: [
-      "Formez les équipes, choisissez la durée d'un tour et l'objectif : 15, 30 ou 40 points, ou sans limite.",
+      "Formez les équipes : de 2 à 12, avec le bouton plus au-delà de 4. Les équipes de la partie précédente sont reprises, même dans un autre jeu en équipes. « Mélanger » en forme de nouvelles.",
+      "Choisissez la durée d'un tour et l'objectif : 15, 30 ou 40 points, ou sans limite.",
       "La personne désignée lance le chrono. Un mot s'affiche avec quatre mots interdits en rouge.",
       "Elle décrit le mot sans le dire, sans mot de la même famille et sans les mots interdits.",
       "Une personne de l'équipe adverse surveille l'écran et touche « Mot interdit prononcé » à la moindre faute.",
@@ -26,7 +28,8 @@ export const RULES = {
   tu: {
     but: "Faire deviner les mêmes mots pendant trois manches, de plus en plus difficiles.",
     steps: [
-      "Formez les équipes et choisissez le nombre de mots de la partie.",
+      "Formez les équipes : de 2 à 12, avec le bouton plus au-delà de 4. Les équipes de la partie précédente sont reprises, même dans un autre jeu en équipes. « Mélanger » en forme de nouvelles.",
+      "Choisissez le nombre de mots de la partie.",
       "Manche 1 : décrire. On fait deviner avec autant de mots qu'on veut, sans dire le mot.",
       "Manche 2 : un seul mot. Un seul indice par mot, l'équipe n'a droit qu'à une proposition.",
       "Manche 3 : mimer. Uniquement des gestes et des bruitages.",
@@ -37,7 +40,8 @@ export const RULES = {
   quiz: {
     but: "Répondre juste à des questions de culture, en équipes.",
     steps: [
-      "Formez les équipes, choisissez un thème ou tous les thèmes, puis un objectif de points ou un nombre de questions par équipe.",
+      "Formez les équipes : de 2 à 12, avec le bouton plus au-delà de 4. Les équipes de la partie précédente sont reprises, même dans un autre jeu en équipes. « Mélanger » en forme de nouvelles.",
+      "Choisissez un thème ou tous les thèmes, puis un objectif de points ou un nombre de questions par équipe.",
       "Chaque équipe reçoit une question à son tour, avec quatre réponses possibles.",
       "L'équipe se met d'accord, puis touche sa réponse. La bonne réponse s'affiche aussitôt.",
       "Quand toutes les questions sont posées, l'appli annonce l'équipe gagnante."
@@ -47,7 +51,8 @@ export const RULES = {
   num: {
     but: "Donner l'estimation la plus proche d'un chiffre : une date, une hauteur, une distance, un nombre.",
     steps: [
-      "Formez les équipes, puis choisissez un objectif de points ou un nombre de questions.",
+      "Formez les équipes : de 2 à 12, avec le bouton plus au-delà de 4. Les équipes de la partie précédente sont reprises, même dans un autre jeu en équipes. « Mélanger » en forme de nouvelles.",
+      "Choisissez un objectif de points ou un nombre de questions.",
       "Une question chiffrée s'affiche. Chaque équipe tape son estimation en secret, pendant que les autres ne regardent pas.",
       "Quand toutes les équipes ont répondu, l'appli révèle la bonne réponse et classe les estimations.",
       "On passe à la question suivante."
@@ -122,11 +127,12 @@ export const RULES = {
     steps: [
       "Réglez le nombre d'Undercover et de Mr White, et choisissez les rôles spéciaux.",
       "Chacun découvre son mot en secret. L'Undercover a un mot proche de celui des civils, Mr White n'en a pas.",
-      "Dans l'ordre affiché, chacun dit un seul mot pour décrire le sien, puis on débat.",
+      "Dans l'ordre affiché, chacun dit un seul mot pour décrire le sien, puis on débat. En haut de l'écran, le compteur montre combien de civils, d'Undercover et de Mr White sont encore en jeu.",
+      "Quelqu'un a oublié son mot ? Choisissez son nom devant tout le monde : il s'affiche en grand avant le mot, et l'appli note qui a revu son mot.",
       "Tout le monde vote. La personne éliminée révèle son rôle, mais son mot reste secret jusqu'à la fin. Mr White éliminé peut encore gagner : il tape le mot des civils et l'appli vérifie sans le dévoiler.",
-      "Les civils gagnent quand tous les intrus sont éliminés. Les intrus gagnent s'il ne reste qu'un civil."
+      "Les civils gagnent quand tous les intrus sont éliminés. Les intrus gagnent s'il ne reste qu'un civil. S'il ne reste que les deux amoureux, un civil et un intrus, les amoureux gagnent."
     ],
-    pts: "Civil gagnant : 2 points. Undercover gagnant : 5 points. Mr White gagnant : 6 points."
+    pts: "Civil gagnant : 2 points. Undercover gagnant : 5 points. Mr White gagnant : 6 points. Les amoureux gagnent ensemble : si l'un gagne, l'autre marque les mêmes points. Victoire des amoureux : 4 points chacun, plus 2 s'ils survivent ensemble."
   },
   lg: {
     but: "Pour le village, éliminer les loups-garous. Pour les loups, dévorer le village sans se faire prendre.",
