@@ -251,14 +251,47 @@ function guardSync() {
   if (guarded || (!sheet && view === root && tab === "games")) return;
   try { history.pushState({ cajoue: 1 }, ""); guarded = true; } catch (e) {}
 }
-window.addEventListener("popstate", () => {
-  guarded = false;
+/* Un pas en arrière : fermer le panneau ouvert, quitter le classement, ou demander avant de quitter la partie */
+function backStep() {
   if (sheet) { sheet = null; draw(); }
   else if (view === boardScreen) A.boardBack();
   else if (view !== root) A.askQuit();
   else if (tab !== "games") A.tab("games");
-  guardSync();
-});
+}
+window.addEventListener("popstate", () => { guarded = false; backStep(); guardSync(); });
+/* iPhone et iPad : glisser depuis le bord gauche ramène à l'écran d'accueil sans passer par l'appli.
+   Hors de l'accueil, on bloque ce geste et on le remplace par backStep(), qui demande avant de quitter la partie.
+   Un simple toucher au bord reste un toucher, et un glissement vertical fait toujours défiler. */
+const EDGE = 24;
+let edge = null;
+document.addEventListener("touchstart", e => {
+  edge = null;
+  if (!isIos() || e.touches.length !== 1 || (!sheet && view === root && tab === "games")) return;
+  const t = e.touches[0];
+  if (t.clientX > EDGE) return;
+  e.preventDefault();
+  edge = { x: t.clientX, y: t.clientY, ly: t.clientY, el: e.target };
+}, { passive: false });
+document.addEventListener("touchmove", e => {
+  if (!edge) return;
+  const t = e.touches[0];
+  if (Math.abs(t.clientY - edge.y) > Math.abs(t.clientX - edge.x)) {
+    const box = edge.el.closest && edge.el.closest(".sheet");
+    (box || document.scrollingElement).scrollTop += edge.ly - t.clientY;
+  }
+  edge.ly = t.clientY;
+}, { passive: true });
+document.addEventListener("touchend", e => {
+  if (!edge) return;
+  const t = e.changedTouches[0], dx = t.clientX - edge.x, dy = Math.abs(t.clientY - edge.y);
+  edge = null;
+  if (dx > 50 && dx > dy * 1.5) return backStep();
+  if (Math.abs(dx) < 12 && dy < 12) {
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    if (el && el.matches("input, textarea")) el.focus(); else if (el) el.click();
+  }
+}, { passive: true });
+document.addEventListener("touchcancel", () => { edge = null; });
 function toast(t) { const el = document.getElementById("toast"); if (!el) return; el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 1800); }
 
 /* Gabarit d'écran : barre du haut, contenu, zone d'actions en bas */
