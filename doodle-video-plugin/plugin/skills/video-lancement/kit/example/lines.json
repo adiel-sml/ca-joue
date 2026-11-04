@@ -1,11 +1,13 @@
 [
- {"id":"l1","text":"Ce soir, personne ne sait à quoi jouer ?","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
- {"id":"l2","text":"Sors ton téléphone. Ça Joue, c'est vingt-trois jeux de soirée dans une seule appli.","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
- {"id":"l3","text":"En équipes : les mimes, le mot interdit, Time's Up.","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
- {"id":"l4","text":"Tous ensemble : action ou vérité, la bombe, tu préfères.","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
- {"id":"l5","text":"Rôles secrets : Undercover, et un loup-garou où l'appli mène la partie.","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
- {"id":"l6","text":"En couple : des jeux rien que pour vous deux.","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
- {"id":"l7","text":"Et celui qui perd ? Il fait un gage.","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
- {"id":"l8","text":"Même sans réseau, ça marche.","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
- {"id":"l9","text":"Ça Joue. Ce soir, c'est toi qui lances la partie.","voice":"ff_siwis","lang":"fr-fr","speed":1.0}
+ {"id":"l1","text":"Ce soir, personne ne sait à quoi jouer ?","voice":"fr-FR-HenriNeural","rate":"+4%"},
+ {"id":"l2","text":"Sors ton téléphone. Ça Joue, c'est vingt-trois jeux de soirée dans une seule appli.","voice":"fr-FR-HenriNeural","rate":"+4%","show":{"vingt-trois":"23"}},
+ {"id":"l3","text":"Les mimes : fais deviner sans dire un mot.","voice":"fr-FR-HenriNeural","rate":"+4%"},
+ {"id":"l4","text":"La Bombe : réponds vite et passe le téléphone avant l'explosion.","voice":"fr-FR-HenriNeural","rate":"+4%"},
+ {"id":"l5","text":"Undercover : démasque l'intrus parmi vous.","voice":"fr-FR-HenriNeural","rate":"+4%"},
+ {"id":"l6","text":"Le Loup-garou : l'appli fait le meneur de jeu.","voice":"fr-FR-HenriNeural","rate":"+4%"},
+ {"id":"l7","text":"Tu préfères : choisis ton camp, la minorité perd.","voice":"fr-FR-HenriNeural","rate":"+4%"},
+ {"id":"l8","text":"Action ou vérité : à toi de choisir.","voice":"fr-FR-HenriNeural","rate":"+4%"},
+ {"id":"l9","text":"Et pour les couples, une partie rien qu'à deux : Tu me connais, Qui de nous deux, Cœur à cœur.","voice":"fr-FR-HenriNeural","rate":"+4%"},
+ {"id":"l10","text":"Et quand tu perds à la Bombe ou à Tu préfères ? Tu fais un gage.","voice":"fr-FR-HenriNeural","rate":"+4%"},
+ {"id":"l11","text":"Ça Joue. Ce soir, c'est toi qui lances la partie.","voice":"fr-FR-HenriNeural","rate":"+4%"}
 ]

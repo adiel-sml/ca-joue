@@ -1,6 +1,6 @@
 {
   "name": "doodle-video",
-  "description": "Vidéos de lancement en dessin animé pour tes projets : bonhommes doodle, vrais écrans de l'appli filmés image par image, voix off (la tienne ou de synthèse), sous-titres mot par mot et musique rythmée.",
+  "description": "Vidéos en dessin animé avec des bonhommes doodle : vidéos de lancement de tes projets (vrais écrans filmés image par image) et histoires ou explications (dialogues en bulles, schémas). Voix off ou dialogues (ta voix ou des voix Microsoft), sous-titres mot par mot, musique rythmée.",
   "author": { "name": "adiel-sml" },
   "version": "1.0.0",
   "license": "MIT"

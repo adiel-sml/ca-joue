@@ -36,4 +36,6 @@ await home();await c('[data-act=open][data-arg=wyr]');for(const [w,s] of [['Léa
 /* 9. Loup-garou : la carte du joueur qui est loup */
 await home();await c('[data-act=open][data-arg=lg]');await c('[data-act=lgGo]');
 for(let i=0;i<5;i++){await c('[data-act=lgShow]');const t=await p.textContent('.content');if(/Loup-garou/.test(t.split('Chaque nuit')[0])){await shot('lg');n++;break;}await c('[data-act=lgHide]');}
+/* 10. Autres jeux en couple */
+for(const g of ['who2','talk']){await home();await c(`[data-act=open][data-arg=${g}]`);await c('[data-act=cpPick][data-arg="Léa"]');await c('[data-act=cpPick][data-arg="Tom"]');await c('[data-act=cpGo]');await shot(g);n++;}
 console.log(n,'images');await b.close();})();

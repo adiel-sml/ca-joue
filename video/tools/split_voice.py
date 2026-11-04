@@ -48,7 +48,7 @@ k = Kokoro(os.path.join(lib, 'core/tts/kokoro-v1.0.onnx'), os.path.join(lib, 'co
 def to16(x, sr): g = np.gcd(sr, ASR); return resample_poly(x, ASR // g, sr // g).astype('float32')
 refs = []
 for L in lines:
-    s, sr = k.create(L['text'], voice=L.get('voice', 'ff_siwis'), speed=1.0, lang=L.get('lang', 'fr-fr'))
+    s, sr = k.create(L['text'], voice=(L.get('voice', 'ff_siwis') if not L.get('voice', '').endswith('Neural') else 'ff_siwis'), speed=1.0, lang=L.get('lang', 'fr-fr'))
     s = to16(s, sr); i0, i1 = trim(s); refs.append(mfcc(s[i0:i1]))
 a16 = to16(a, SR)
 def group_cost(li, g0, g1):

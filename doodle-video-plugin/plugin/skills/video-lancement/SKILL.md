@@ -5,6 +5,8 @@ description: Crée la vidéo de lancement d'un projet (appli, site, outil) en de
 
 # Vidéo de lancement en dessin animé
 
+Pour raconter une histoire ou expliquer un sujet sans présenter de produit, utilise le skill `histoire` du même plugin.
+
 Ce skill refait, pour n'importe quel projet, le film de lancement de Ça Joue : des bonhommes doodle sur un plateau de jeu coloré, le vrai produit dans un téléphone dessiné, une voix off, des sous-titres qui s'allument mot par mot et une musique rythmée calée sur l'image. Le film d'exemple complet est dans `kit/example/` (son traitement : `kit/example/TREATMENT.md`). Il sert à apprendre la mécanique ; l'histoire, les scènes et les textes de chaque nouveau film viennent du projet.
 
 Parle en français à l'utilisateur, sauf s'il écrit dans une autre langue.
@@ -71,7 +73,7 @@ Capture avec Playwright comme `kit/example/capture.cjs` : `deviceScaleFactor: 2`
 Crée le projet du film dans un dossier `<nom>-lancement/` du dossier de l'utilisateur (hors du dépôt de l'appli, sauf demande contraire). Copie-y `kit/` (sans `example/`), puis :
 1. **`TREATMENT.md`** : trois structures possibles et ton choix, la logline, le découpage scène par scène (décor, cadre, mouvement de caméra et pourquoi), la carte des repères musicaux, le tableau du son, la typographie. Modèle : `kit/example/TREATMENT.md`. L'histoire vient du projet, jamais de l'exemple.
 2. **`tools/timeline.py`** : d'après `kit/example/timeline.py`. Tempo fixe, sections sur des barres de mesure, longueur de chaque section calculée depuis la durée réelle de ses lignes de voix ; il produit aussi `TL.score` (la partition : modes par section, jingles, cymbales, roulements, silences, ambiances) que `tools/music.py` joue. Deux vrais silences au moins, avant la révélation et avant le moment de suspense.
-3. **`film.js`** : d'après `kit/example/film.js`. Le moteur (`engine.js`) fournit décors (`setBg` : rayures, pois, soleil), téléphone avec vrais écrans (`phone`, `set(nom)`), étiquettes (`sticker`), éclat (`burst`), mot de jugement (`judge`), tuiles d'icônes Lucide (`gameTile`), caméra, coups de zoom (`punch`), événements sonores (`ev`). `people.js` fournit les bonhommes (`person`, `pose`, `personHand`). Les sous-titres en plaque, mot par mot, sont déjà dans l'exemple.
+3. **`film.js`** : d'après `kit/example/film.js` ; il ne contient que les scènes, le socle commun (scènes, étiquettes, sous-titres mot par mot, caméra, rendu) est dans `runtime.js`. Le moteur (`engine.js`) fournit décors (`setBg` : rayures, pois, soleil), téléphone avec vrais écrans (`phone`, `set(nom)`), étiquettes (`sticker`), éclat (`burst`), mot de jugement (`judge`), tuiles d'icônes Lucide (`gameTile`), caméra, coups de zoom (`punch`), événements sonores (`ev`). `people.js` fournit les bonhommes (`person`, `pose`, `personHand`), `story.js` les lieux, bulles, étapes, flèches, gros chiffres, listes et la marche (voir le skill `histoire`).
 4. **Distribution** : trois bonhommes différents (peau, coiffure, vêtements, un accessoire chacun), aux couleurs qui ne sont jamais celles du décor où ils se tiennent.
 
 Mise en page verticale : sol à y = 1380, téléphone en haut au centre, bonhommes devant sur le sol, étiquettes en bas sur les côtés du téléphone (là où les écrans sont vides), plaque de sous-titres à y ≈ 1520, rien d'important au-dessus de y = 150, sous y = 1650 ni à droite de x = 950 entre y = 900 et 1650 (interface de TikTok).

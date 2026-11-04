@@ -20,7 +20,8 @@ cd "$HERE"
 if [ -n "$TTS" ]; then "$PY" tools/tts.py lines.json voice; VDIR=voice; fi
 if [ -n "$REC" ]; then "$PY" tools/split_voice.py "$REC" lines.json voice; VDIR=voice; fi
 "$PY" tools/align.py lines.json "$VDIR"
-"$PY" tools/timeline.py "$VDIR"
+TLPY=tools/timeline.py; [ -f story.json ] && TLPY=tools/timeline_story.py
+"$PY" "$TLPY" "$VDIR"
 cd "$LIB"
 node core/render/events.mjs "$HERE" --size 1080x1920
 node core/render/video.mjs "$HERE" --size 1080x1920 --fps 24 --workers ${WORKERS:-3} --out "$OUT/video.mp4"
