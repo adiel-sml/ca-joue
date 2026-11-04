@@ -21,7 +21,13 @@ function scene(t0, t1, build) {
 }
 function reg(id, text, t0, t1, x, y, w, h) { TEXTREG.push({ id, text, t0, t1, x0: x - w / 2, y0: y - h / 2, x1: x + w / 2, y1: y + h / 2 }); }
 function stick(g, s, text, o) { const st = sticker(g, text, o); s.fx.push(st.update); reg('st-' + text, text, st.t0, st.t1, st.x, st.y, st.w, st.h); if (o.sound !== false) { ev(st.t0, 'pop', { f: o.f || 880 }); punch(st.t0, 0.012); } return st; }
-function cast3(g) { const out = []; for (const [k, i] of [['gold', 0], ['blue', 1], ['red', 2]]) { const w = el('g', {}, g); out.push({ w, c: CAST[k](w), x: X3[i] }); } return out; }
+const PSC = 0.85;                      // échelle des bonhommes
+const PEOPLE = {
+  cap:  p => person(p, { skin: SKIN[1], hair: 'short', hat: 'cap', hatColor: K.yellow, shirt: '#4FC3F7', pants: '#1F4E3D', backpack: '#2EC4B6' }),
+  puff: p => person(p, { skin: SKIN[2], hair: 'puff', band: K.yellow, earring: true, shirt: '#FF8A65', pants: '#2E3440', shoe: '#FFD23F' }),
+  hat:  p => person(p, { skin: SKIN[0], hair: 'short', hat: 'bucket', hatColor: K.red, glasses: true, shirt: '#43AA8B', pants: '#2B2D42' }),
+};
+function cast3(g) { const out = []; for (const [k, i] of [['cap', 0], ['puff', 1], ['hat', 2]]) { const w = el('g', {}, g); out.push({ w, c: PEOPLE[k](w), x: X3[i] }); } return out; }
 
 // ======================= 1. Accroche =======================
 {
@@ -46,13 +52,13 @@ function cast3(g) { const out = []; for (const [k, i] of [['gold', 0], ['blue', 
       const still = t >= S.hook.silence;                       // le silence fige la scène
       const up = t >= L2a.t0;                                  // « Sors ton téléphone » : tout le monde lève les yeux
       M.forEach((m, i) => {
-        tf(m.w, m.x, FLOOR, 1);
+        tf(m.w, m.x, FLOOR, PSC);
         const sway = still ? 0 : 4 * Math.sin(t * 2.2 + i * 1.7);
         pose(m.c, up ? { eyes: 'n', open: t > (L2a.words[2]?.t0 ?? 99), lean: -3 + i * 3, armsL: 30, armsR: 30, sq: hitSq(t, L2a.t0, 0.08) }
                      : { eyes: 'meh', flat: true, lean: sway, armsL: 10, armsR: 10 });
       });
       const pb = t >= tQ && t < S.hook.silence ? E.back(seg(t, tQ, tQ + 0.3)) * (1 - E.in(seg(t, S.hook.silence - 0.15, S.hook.silence))) : 0;
-      op(bub, pb > 0 ? 1 : 0); tf(bub, 540, 990 + hopY(t, 6), pb, -4);
+      op(bub, pb > 0 ? 1 : 0); tf(bub, 540, 860 + hopY(t, 6), pb, -4);
       const pf = seg(t, land - 0.42, land);
       op(ph.g, pf > 0 ? 1 : 0); tf(ph.g, 540, lerp(-950, PHY, E.in(pf)));
     };
@@ -100,7 +106,7 @@ function cast3(g) { const out = []; for (const [k, i] of [['gold', 0], ['blue', 
       ph.set('home-' + String(idx).padStart(2, '0'));
       const cheer = nearestIn([R.n23], t, 0.02, 0.6);
       M.forEach((m, i) => {
-        tf(m.w, m.x, FLOOR + hopY(t + i * B / 2, 18), 1);
+        tf(m.w, m.x, FLOOR + hopY(t + i * B / 2, 18), PSC);
         pose(m.c, { eyes: 'up', open: cheer != null || frac(t) < 0.3, hey: cheer != null ? 1 : 0.15 + 0.15 * Math.sin(t * 6 + i), sq: hitSq(t, R.t0, 0.15) });
       });
       tiles.forEach(k => {
@@ -176,7 +182,7 @@ function roundCard(R, n, name, setKey, gid, tcol) {
         if (i === 1) o = { armsL: 50 + 30 * sw, armsR: 50 - 30 * sw, lean: 8 * sw, eyes: 'n', look: 6 * sw, flat: true, sq: 1 - 0.04 * Math.abs(sw) };
         else if (i === 0) o = found ? { hey: 1, open: true, eyes: 'up', sq: hitSq(t, tF, 0.2) } : { armsR: 150, armsL: 20, eyes: 'n', look: 6, flat: true, lean: -3 };
         else o = found ? { hey: 0.4, eyes: 'up', open: t < tF + 0.5 } : { armsL: 120, armsR: 20, eyes: 'n', look: -6, open: frac(t) < 0.25, lean: 3 };
-        tf(m.w, m.x, FLOOR + (i === 0 && found ? hopY(t, 26) : 0), 1);
+        tf(m.w, m.x, FLOOR + (i === 0 && found ? hopY(t, 26) : 0), PSC);
         pose(m.c, o);
       });
       s.fx.forEach(f => f(t));
@@ -216,7 +222,7 @@ function roundCard(R, n, name, setKey, gid, tcol) {
     stick(g, s, 'Tu préfères', { col: GAME.wyr.color, x: 215, y: 990, rot: -4, t0: q16(tw ?? R.card1 + 1), t1: R.t1, f: 988 });
     const scr = [[R.card1, 'bomb'], [q16(ta ?? R.card1), 'av'], [q16(tb ?? R.card1 + .5), 'bomb'], [q16(tw ?? R.card1 + 1), 'wyr'], [half, 'bomb'], [tBoom, 'bomb-end']];
     s.cam = t => t >= tBoom ? { x: 540, y: FLOOR - 170, z: 1.55 } : { x: 540, y: 920, z: 1 };
-    const handPos = (i, t) => ({ x: X3[i], y: FLOOR - 150 + hopY(t, 10) });
+    const handPos = (i, t) => ({ x: X3[i], y: FLOOR - 205 + hopY(t, 10) });
     return t => {
       bgU(t);
       tf(ph.g, 540, PHY);
@@ -225,7 +231,7 @@ function roundCard(R, n, name, setKey, gid, tcol) {
       const hold = holderAt(k + 1), prev = holderAt(k);
       const boom = t >= tBoom;
       M.forEach((m, i) => {
-        tf(m.w, m.x, FLOOR + (boom ? 0 : hopY(t + i * 0.13, 10)), 1);
+        tf(m.w, m.x, FLOOR + (boom ? 0 : hopY(t + i * 0.13, 10)), PSC);
         const has = i === hold;
         if (boom) pose(m.c, i === 1 ? { eyes: 'x', open: true, soot: true, armsL: 40, armsR: 40, sq: hitSq(t, tBoom, 0.3) } : { eyes: 'n', look: i === 0 ? 8 : -8, lean: i === 0 ? -10 : 10, sweat: true, open: true, armsL: 60, armsR: 60 });
         else pose(m.c, { armsL: has ? 62 : 25, armsR: has ? 62 : 25, eyes: 'n', look: (hold - i) * 5, open: has, sweat: has && t > half, sq: hitSq(t, passes[k] ?? -9, 0.1) });
@@ -274,7 +280,7 @@ function roundCard(R, n, name, setKey, gid, tcol) {
       ph.set(t < tu + 0.25 ? 'uc-hide' : t < tl ? 'uc-show' : 'lg');
       const b = Math.floor((t - R.card1) / B);
       M.forEach((m, i) => {
-        tf(m.w, m.x, FLOOR, 1);
+        tf(m.w, m.x, FLOOR, PSC);
         pose(m.c, { mask: true, eyes: 'n', look: ((b + i) % 2 ? 8 : -8), flat: true, armsL: 18, armsR: 18, sweat: i === 2, lean: ((b + i) % 2 ? 2 : -2) });
       });
       s.fx.forEach(f => f(t));
@@ -300,7 +306,7 @@ function roundCard(R, n, name, setKey, gid, tcol) {
     el('line', { x1: -400, y1: FLOOR, x2: W + 400, y2: FLOOR, stroke: K.ol, 'stroke-width': OW }, g);
     const ph = phone(g);
     const wb = el('g', {}, g), wg = el('g', {}, g);
-    const cb = CAST.blue(wb), cg = CAST.gold(wg);
+    const cb = PEOPLE.puff(wb), cg = PEOPLE.cap(wg);
     const H2 = hearts.map((x, i) => { const h = el('path', { d: 'M 0 26 C -60 -10 -40 -60 0 -30 C 40 -60 60 -10 0 26 Z', fill: i % 2 ? K.red : K.white, ...SO, 'stroke-width': 6 }, g); const r = rng(40 + i); return { h, t0: x, x: i % 2 ? 150 + r() * 160 : 770 + r() * 160, y: 420 + r() * 520 }; });
     const names = ['Tu me connais ?', 'Qui de nous deux', 'Cœur à cœur'].map(x => x.replace(' ?', ' ?'));
     const cols = [GAME.know.color, GAME.who2.color, GAME.talk.color];
@@ -309,8 +315,8 @@ function roundCard(R, n, name, setKey, gid, tcol) {
     return t => {
       tf(ph.g, 540, PHY); ph.set('know');
       const hb = nearestIn(hearts, t, 0.02, 0.25);
-      tf(wb, 250, FLOOR + hopY(t, 12), 1); pose(cb, { eyes: 'up', lean: 7, armsL: 20, armsR: 70, open: hb != null && Math.round((hb - R.card1) / B) % 2 === 0 });
-      tf(wg, 830, FLOOR + hopY(t + B / 2, 12), 1); pose(cg, { eyes: 'up', lean: -7, armsL: 70, armsR: 20, open: hb != null && Math.round((hb - R.card1) / B) % 2 === 1 });
+      tf(wb, 250, FLOOR + hopY(t, 12), PSC); pose(cb, { eyes: 'up', lean: 7, armsL: 20, armsR: 70, open: hb != null && Math.round((hb - R.card1) / B) % 2 === 0 });
+      tf(wg, 830, FLOOR + hopY(t + B / 2, 12), PSC); pose(cg, { eyes: 'up', lean: -7, armsL: 70, armsR: 20, open: hb != null && Math.round((hb - R.card1) / B) % 2 === 1 });
       H2.forEach(k => { const p = seg(t, k.t0, k.t0 + 1.2); op(k.h, t >= k.t0 && p < 1 ? 1 - p * p : 0); tf(k.h, k.x, k.y - 120 * p, E.back(seg(t, k.t0, k.t0 + 0.25)) * 1.2, Math.sin(t * 5 + k.x) * 8); });
       s.fx.forEach(f => f(t));
     };
@@ -348,7 +354,7 @@ function roundCard(R, n, name, setKey, gid, tcol) {
       beam.setAttribute('d', `M ${sx - 40} -100 L ${sx + 40} -100 L ${sx + 150} ${FLOOR + 20} L ${sx - 150} ${FLOOR + 20} Z`); op(beam, lit ? 0.35 : 0);
       const after = t >= G.stamp;
       M.forEach((m, i) => {
-        tf(m.w, m.x, FLOOR + (after && i !== 1 ? hopY(t, 20) : 0), 1);
+        tf(m.w, m.x, FLOOR + (after && i !== 1 ? hopY(t, 20) : 0), PSC);
         if (i === 1) pose(m.c, { soot: true, eyes: quiet || after ? 'n' : 'n', look: quiet ? 0 : (target - 540) / 60, flat: !after, open: after, sweat: quiet || after, sq: hitSq(t, G.stamp, 0.3), armsL: after ? 40 : 18, armsR: after ? 40 : 18 });
         else pose(m.c, after ? { hey: 1, eyes: 'up', open: true } : { eyes: 'n', look: (target - m.x) / 50, flat: true, lean: quiet ? 0 : Math.sin(t * 3 + i) * 2 });
       });
@@ -424,7 +430,7 @@ function roundCard(R, n, name, setKey, gid, tcol) {
       tf(ph.g, 540, PHY); ph.set('home-00');
       M.forEach((m, i) => {
         const tt = after ? snap - 0.02 : t;                     // la photo fige tout le monde en plein saut
-        tf(m.w, m.x, FLOOR + hopY(tt + i * B / 2, 30), 1);
+        tf(m.w, m.x, FLOOR + hopY(tt + i * B / 2, 30), PSC);
         pose(m.c, { eyes: 'up', open: true, hey: (Math.floor(tt / B) + i) % 2 ? 1 : 0.55, sq: 1 });
       });
       if (!after) { stage.removeAttribute('transform'); stage.removeAttribute('clip-path'); inner.removeAttribute('clip-path'); }

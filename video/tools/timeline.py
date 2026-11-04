@@ -74,7 +74,22 @@ snap = up_beat(l9['t1'] + 0.35)
 S['final'] = {'t0': t, 'snap': snap, 't1': up_bar(snap + 4.4)}
 dur = S['final']['t1']
 
-TL = {'B': B, 'BAR': BAR, 'dur': dur, 'S': S, 'lines': lines}
+# Partition : ce que tools/music.py joue, section par section (modes : sparse, brass, funk, quiz, quizFast, dream,
+# sweet, tension, pop, popBig, light, end ; tr = transposition en demi-tons).
+H, G, F = S['hook'], S['gage'], S['final']
+spans = [[0, H['silence'], 'sparse', 0], [S['reveal']['t0'], S['r1']['t0'], 'brass', 0]]
+for key, mode in [('r1', 'funk'), ('r2', 'quiz'), ('r3', 'dream'), ('r4', 'sweet')]:
+    R = S[key]
+    if key == 'r2': spans += [[R['card1'], R['card1'] + BAR, 'quiz', 0], [R['card1'] + BAR, R['t1'] - BAR / 4, 'quizFast', 0]]
+    else: spans.append([R['card1'], R['t1'], mode, 0])
+spans += [[G['t0'], G['silence'], 'tension', 0], [G['stamp'] - (G['stamp'] % BAR), G['t1'], 'pop', 0],
+          [S['offline']['t0'], S['offline']['t1'], 'light', 0], [F['t0'], F['snap'], 'popBig', 2], [F['snap'], F['t1'], 'end', 2]]
+SCORE = {'spans': spans, 'jingles': [S[k]['t0'] for k in ('r1', 'r2', 'r3', 'r4')], 'crashes': [S['reveal']['t0'], F['snap']],
+         'fanfares': [[F['snap'], 2]], 'rolls': [[G['silence'] - BAR / 2, G['silence']]],
+         'silences': [[H['silence'], H['t1']], [G['silence'], G['stamp'] - 0.005]],
+         'ambience': [['room', 0, H['silence']], ['crickets', S['r3']['card1'], S['r3']['t1']], ['cheer', F['snap'] - 1.2, F['snap'] + 0.6]]}
+
+TL = {'B': B, 'BAR': BAR, 'dur': dur, 'S': S, 'lines': lines, 'score': SCORE}
 open('timeline.js', 'w', encoding='utf-8').write('window.TL = ' + json.dumps(TL, ensure_ascii=False, indent=1) + ';\n')
 json.dump(TL, open('timeline.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 for k, v in S.items(): print(f"{k:8s} {v['t0']:6.2f} → {v['t1']:6.2f}")

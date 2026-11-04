@@ -198,11 +198,11 @@ function mascot(parent, o) {
   }
   const sweat = el('path', { d: 'M 92 -200 Q 80 -178 92 -170 Q 104 -178 92 -200 Z', fill: '#8ED1FC', ...SO, 'stroke-width': 4 }, body);
   const c = { g, body, armL, armR, eyes, eyeL, eyeR, maskEyes, eyesMeh, eyesX, eyesUp, mC, mF, mO, mask, soot, sweat, blush };
-  pose(c, {});
+  poseCard(c, {});
   return c;
 }
 // angles des bras en degrés (0 = le long du corps, 90 = à l'horizontale vers l'extérieur, 160 = levé)
-function pose(c, { hey = 0, armsL = null, armsR = null, open = false, flat = false, sq = 1, lean = 0, eyes = 'n', look = 0, mask = false, soot = false, sweat = false }) {
+function poseCard(c, { hey = 0, armsL = null, armsR = null, open = false, flat = false, sq = 1, lean = 0, eyes = 'n', look = 0, mask = false, soot = false, sweat = false }) {
   const aL = armsL ?? lerp(16, 158, hey), aR = armsR ?? lerp(16, 158, hey);
   c.armL.setAttribute('transform', `translate(-80 -150) rotate(${aL.toFixed(1)})`);
   c.armR.setAttribute('transform', `translate(80 -150) rotate(${(-aR).toFixed(1)})`);
