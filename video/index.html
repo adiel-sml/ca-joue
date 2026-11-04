@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Ça Joue, film de lancement</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+  html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #26264A; }
+  svg { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+</style>
+</head>
+<body>
+<svg id="stage" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+  <defs><clipPath id="frameClip"><rect width="1080" height="1920"/></clipPath></defs>
+  <g clip-path="url(#frameClip)">
+    <g id="world"></g>
+    <g id="hud"></g>
+    <rect id="flash" width="1080" height="1920" fill="#FFFFFF" opacity="0"/>
+  </g>
+</svg>
+<script src="timeline.js"></script>
+<script src="assets/games.js"></script>
+<script src="engine.js"></script>
+<script>
+(async () => {
+  await Promise.all(['700 60px Fredoka', '600 50px Fredoka'].map(f => document.fonts.load(f, 'Ça Joue ?é')));
+  await document.fonts.ready;
+  await new Promise((ok, ko) => { const s = document.createElement('script'); s.src = 'film.js'; s.onload = ok; s.onerror = ko; document.body.appendChild(s); });
+  for (let t = 0; t < window.DUR; t += 1 / 24) window.render(t);     // crée toutes les images d'écran
+  await Promise.all(LOADS);
+  const q = new URLSearchParams(location.search);
+  window.render(q.has('t') ? +q.get('t') : 0);
+  window.READY = true;
+})();
+</script>
+</body>
+</html>
