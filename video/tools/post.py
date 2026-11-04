@@ -7,7 +7,8 @@ post.json (écrit par Claude avec l'utilisateur) :
    "youtube":   {"title": "… (100 caractères max)", "text": "…", "hashtags": ["#Shorts", "…"]}}
 
 Produit :
-- tiktok.mp4, reels.mp4, shorts.mp4 : la même vidéo verticale, vérifiée (1080×1920, H.264, AAC 48 kHz, lecture rapide
+- tiktok.mp4, reels.mp4, shorts.mp4 : la même vidéo verticale ; instagram-4x5.mp4 : recadrage pour le fil Instagram ;
+  la vidéo verticale, vérifiée (1080×1920, H.264, AAC 48 kHz, lecture rapide
   « faststart »), avec les limites de durée de chaque réseau ;
 - couverture-9x16.jpg (image à cover_t) et couverture-4x5.jpg (recadrage 1080×1350 pour la grille Instagram) ;
 - zones-sures.jpg : trois images du film avec, en rouge, les zones couvertes par l'interface de TikTok, Reels et Shorts ;
@@ -24,22 +25,40 @@ probe = lambda *a: subprocess.run(['ffprobe', '-v', 'error', *a, film], capture_
 dur = float(probe('-show_entries', 'format=duration', '-of', 'csv=p=0'))
 w, h = map(int, probe('-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0:s=x').split('x'))
 problems = []
-if (w, h) != (1080, 1920): problems.append(f'format {w}×{h} au lieu de 1080×1920')
+if w > h:      # version horizontale : une vidéo YouTube classique, pas de Shorts ni de Reels
+    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', film, '-c', 'copy', '-movflags', '+faststart', os.path.join(out, 'youtube-16x9.mp4')], check=True)
+elif (w, h) != (1080, 1920): problems.append(f'format {w}×{h} au lieu de 1080×1920')
 # durées (novembre 2026) : TikTok jusqu'à 10 min, Reels et Shorts jusqu'à 3 min ; au-delà de 90 s, les Reels sont moins poussés
 LIM = {'tiktok': 600, 'reels': 180, 'shorts': 180}
-for name, lim in LIM.items():
+for name, lim in (LIM.items() if h > w else []):
     dst = os.path.join(out, name + '.mp4')
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', film, '-c', 'copy', '-movflags', '+faststart', dst], check=True)
     if dur > lim: problems.append(f'{name} : {dur:.0f} s, au-delà de la limite de {lim} s')
+# fil Instagram 4:5 : la bande y 190 à 1540 du vertical (même cadrage que le rendu en 1080×1350)
+if (w, h) == (1080, 1920):
+    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', film, '-vf', 'crop=1080:1350:0:190', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium',
+                    '-pix_fmt', 'yuv420p', '-c:a', 'copy', '-movflags', '+faststart', os.path.join(out, 'instagram-4x5.mp4')], check=True)
 if dur > 90: problems.append(f'Reels : {dur:.0f} s ; sous 90 s, la vidéo est davantage mise en avant')
 
 def frame(t, path):
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-ss', f'{t:.2f}', '-i', film, '-frames:v', '1', '-q:v', '2', path], check=True)
     return Image.open(path).convert('RGB')
 ct = post.get('cover_t', min(1.2, dur / 2))
-cov = frame(ct, os.path.join(out, 'couverture-9x16.jpg'))
-y0 = int((1920 - 1350) * 0.42)
-cov.crop((0, y0, 1080, y0 + 1350)).save(os.path.join(out, 'couverture-4x5.jpg'), quality=92)
+cover = os.path.join(out, 'couverture-9x16.jpg' if h > w else 'miniature-16x9.jpg')
+if post.get('cover_title'):      # couverture dessinée : l'image à cover_t, sans sous-titre, avec le titre en grand
+    import urllib.parse
+    lib = os.environ.get('LIB', os.path.expanduser('~/.doodle-video/lemo-opuscar')); proj = os.path.dirname(os.path.abspath(film))
+    q = urllib.parse.urlencode({'cover': ct, 'title': post['cover_title']})
+    subprocess.run(['node', 'core/render/still.mjs', proj, '0', '--size', f'{w}x{h}', '--q', q, '--out', out, '--prefix', 'cov_'], cwd=lib, check=True, capture_output=True)
+    Image.open(os.path.join(out, 'cov_0.jpg')).convert('RGB').save(cover, quality=92); os.remove(os.path.join(out, 'cov_0.jpg'))
+    cov = Image.open(cover)
+else:
+    cov = frame(ct, cover)
+if h > w:
+    y0 = 190
+    cov.crop((0, y0, 1080, y0 + 1350)).save(os.path.join(out, 'couverture-4x5.jpg'), quality=92)
+else:
+    cov.resize((1280, 720)).save(os.path.join(out, 'miniature-16x9.jpg'), quality=92)   # taille de miniature YouTube
 
 # zones couvertes par l'interface (approximatives, en pixels sur 1080×1920)
 ZONES = {
@@ -49,15 +68,16 @@ ZONES = {
 }
 ts = [dur * k for k in (0.12, 0.45, 0.8)]
 tiles = []
-for i, (name, zs) in enumerate(ZONES.items()):
+for i, (name, zs) in enumerate(ZONES.items() if h > w else []):
     im = frame(ts[i], os.path.join(out, f'.z{i}.jpg')); ov = Image.new('RGBA', im.size, (0, 0, 0, 0)); d = ImageDraw.Draw(ov)
     for z in zs: d.rectangle(z, fill=(255, 40, 40, 90), outline=(255, 40, 40, 255), width=6)
     d.text((30, 160), name, fill=(255, 255, 255, 255))
     tiles.append(Image.alpha_composite(im.convert('RGBA'), ov).convert('RGB').resize((360, 640)))
     os.remove(os.path.join(out, f'.z{i}.jpg'))
-sheet = Image.new('RGB', (360 * 3 + 40, 640), 'white')
-for i, t_ in enumerate(tiles): sheet.paste(t_, (i * 380, 0))
-sheet.save(os.path.join(out, 'zones-sures.jpg'), quality=90)
+if tiles:
+    sheet = Image.new('RGB', (360 * 3 + 40, 640), 'white')
+    for i, t_ in enumerate(tiles): sheet.paste(t_, (i * 380, 0))
+    sheet.save(os.path.join(out, 'zones-sures.jpg'), quality=90)
 
 def block(name, p, limit, title=None):
     if not p: return ''

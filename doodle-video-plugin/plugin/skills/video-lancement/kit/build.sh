@@ -5,7 +5,7 @@
 #         TTS=1 sh build.sh                    (voix de synthèse : Microsoft en ligne, sinon Kokoro hors ligne)
 # Prérequis : la bibliothèque Lemo-Opuscar (LIB) avec ses outils installés (setup.sh deps voice), Python 3.11+.
 set -e
-LIB=${LIB:-$HOME/lemo-opuscar}
+LIB=${LIB:-$HOME/.doodle-video/lemo-opuscar}
 HERE=$(cd "$(dirname "$0")" && pwd)
 export LIB
 PY="$LIB/.venv/bin/python"
@@ -14,7 +14,11 @@ VDIR=${1:-voice}; [ -f "$HERE/$VDIR/l1.wav" ] || VDIR=voice-scratch
 FF=${DOODLE_HOME:-$HOME/.doodle-video}/bin; [ -x "$FF/ffmpeg" ] && PATH="$FF:$PATH" && export PATH
 OUT=${OUT:-$HERE/out}; mkdir -p "$OUT"
 NAME=${NAME:-$(basename "$HERE")}
+# format de l'image : SIZE=1080x1920 (vertical, défaut), 1920x1080 (YouTube 16:9), 1080x1350 (fil Instagram 4:5)
+SIZE=${SIZE:-1080x1920}; export SIZE
 cd "$HERE"
+# distribution du projet : cast.json → cast.js (personnages et voix réutilisés d'une vidéo à l'autre)
+[ -f cast.json ] && { printf 'window.CAST_DATA = '; cat cast.json; printf ';\n'; } > cast.js
 # REC=<fichier audio> : découpe d'abord l'enregistrement de la voix off en lignes dans voice/
 # TTS=1 : génère la voix de synthèse (tools/tts.py, voix choisie dans lines.json) dans voice/
 if [ -n "$TTS" ]; then "$PY" tools/tts.py lines.json voice; VDIR=voice; fi
@@ -23,8 +27,8 @@ if [ -n "$REC" ]; then "$PY" tools/split_voice.py "$REC" lines.json voice; VDIR=
 TLPY=tools/timeline.py; [ -f story.json ] && TLPY=tools/timeline_story.py
 "$PY" "$TLPY" "$VDIR"
 cd "$LIB"
-node core/render/events.mjs "$HERE" --size 1080x1920
-node core/render/video.mjs "$HERE" --size 1080x1920 --fps 24 --workers ${WORKERS:-3} --out "$OUT/video.mp4"
+node core/render/events.mjs "$HERE" --size "$SIZE"
+node core/render/video.mjs "$HERE" --size "$SIZE" --fps 24 --workers ${WORKERS:-3} --out "$OUT/video.mp4"
 cd "$HERE"
 "$PY" tools/music.py "$VDIR" "$OUT/mix.wav"
 "$PY" tools/subs.py "$OUT/cues.json"

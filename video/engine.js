@@ -1,8 +1,12 @@
-// Moteur du film « Ça Joue » : SVG 1080×1920, render(t) pur.
+// Moteur des films doodle : SVG 1080×1920, render(t) pur. Personnages : people.js. Scènes : film.js du projet.
 // Aides de base reprises et adaptées du style Game Show Flat de Lemo-Opuscar (licence MIT, voir CREDITS).
 'use strict';
 const NS = 'http://www.w3.org/2000/svg';
+// Le monde est toujours dessiné en 1080×1920 (W, H) ; l'image rendue (VW×VH) peut être verticale, 4:5 ou 16:9 :
+// la caméra et l'écran (HUD) s'adaptent (runtime.js). Taille de l'image : ?size=WxH dans l'adresse, sinon la fenêtre (--size des outils de rendu).
 const W = 1080, H = 1920, FLOOR = 1380;
+const [VW, VH] = ((new URLSearchParams(location.search).get('size')) || (innerWidth > 0 && innerHeight > 0 ? `${innerWidth}x${innerHeight}` : null) || '1080x1920').split('x').map(Number);
+const LANDSCAPE = VW > VH;
 function el(tag, attrs = {}, parent) {
   const e = document.createElementNS(NS, tag);
   for (const k in attrs) e.setAttribute(k, attrs[k]);
@@ -31,8 +35,7 @@ function measure(str, size, weight = 700) { mctx.font = `${weight} ${size}px Fre
 // ---------------- Palette ----------------
 const K = {
   ol: '#1B1B1B', white: '#FFFFFF', cream: '#FFF6E5', yellow: '#FFD23F',
-  blue: '#3A86FF', red: '#FF4D6D', gold: '#FFBE0B',               // les trois cartes du logo de l'appli
-  blueD: '#2563D9', redD: '#D93356', goldD: '#E09A00',
+  blue: '#3A86FF', red: '#FF4D6D', gold: '#FFBE0B',
   navy: '#26264A', pink: '#FF8FB1', soot: '#3A3A3A',
 };
 const SETS = {
@@ -155,75 +158,6 @@ function judge(parent, word, x, y, t0, col = K.yellow, dur = 1.6, size = 170) {
   };
 }
 
-// ---------------- Les mascottes : les trois cartes du logo ----------------
-function mascot(parent, o) {
-  const { color, dark, acc = null } = o;
-  const g = el('g', {}, parent);
-  const body = el('g', {}, g);
-  const mkArm = () => { const a = el('g', {}, body); el('rect', { x: -14, y: -4, width: 28, height: 66, rx: 14, fill: color, ...SO }, a); el('circle', { cx: 0, cy: 66, r: 18, fill: K.white, ...SO, 'stroke-width': 6 }, a); return a; };
-  const armL = mkArm(), armR = mkArm();
-  for (const x of [-38, 38]) el('ellipse', { cx: x, cy: -10, rx: 32, ry: 15, fill: dark, ...SO }, body);
-  el('rect', { x: -86, y: -244, width: 172, height: 228, rx: 30, fill: color, ...SO }, body);
-  el('rect', { x: -70, y: -228, width: 140, height: 196, rx: 20, fill: 'none', stroke: K.white, 'stroke-width': 5, opacity: .5 }, body);
-  for (const [x, y] of [[-56, -212], [56, -48]]) el('circle', { cx: x, cy: y, r: 8, fill: K.white, opacity: .75 }, body);
-  const soot = el('g', {}, body);
-  for (const [x, y, r] of [[-40, -190, 30], [30, -60, 36], [50, -170, 22], [-46, -70, 24], [0, -120, 18]]) el('circle', { cx: x, cy: y, r, fill: K.soot, opacity: .8 }, soot);
-  const mask = el('path', { d: 'M -80 -172 Q 0 -186 80 -172 L 80 -128 Q 0 -140 -80 -128 Z', fill: K.ol }, body);
-  const maskEyes = el('g', {}, body);
-  for (const x of [-30, 30]) { el('ellipse', { cx: x, cy: -150, rx: 19, ry: 15, fill: K.white }, maskEyes); }
-  const eyes = el('g', {}, body), eyeL = el('g', {}, eyes), eyeR = el('g', {}, eyes);
-  for (const [e, x] of [[eyeL, -30], [eyeR, 30]]) { el('ellipse', { cx: x, cy: -150, rx: 12, ry: 17, fill: K.ol }, e); el('circle', { cx: x + 4, cy: -157, r: 4.5, fill: K.white }, e); }
-  const eyesMeh = el('path', { d: 'M -44 -150 L -16 -150 M 16 -150 L 44 -150', stroke: K.ol, 'stroke-width': 7, 'stroke-linecap': 'round' }, body);
-  const eyesX = el('path', { d: 'M -42 -162 L -18 -138 M -18 -162 L -42 -138 M 18 -162 L 42 -138 M 42 -162 L 18 -138', stroke: K.ol, 'stroke-width': 7, 'stroke-linecap': 'round' }, body);
-  const eyesUp = el('path', { d: 'M -42 -146 Q -30 -164 -18 -146 M 18 -146 Q 30 -164 42 -146', stroke: K.ol, 'stroke-width': 7, fill: 'none', 'stroke-linecap': 'round' }, body);
-  const blush = el('g', {}, body);
-  for (const x of [-58, 58]) el('ellipse', { cx: x, cy: -120, rx: 15, ry: 8, fill: K.pink, opacity: .9 }, blush);
-  const mC = el('path', { d: 'M -16 -114 Q 0 -100 16 -114', fill: 'none', stroke: K.ol, 'stroke-width': 6, 'stroke-linecap': 'round' }, body);
-  const mF = el('path', { d: 'M -14 -108 L 14 -108', fill: 'none', stroke: K.ol, 'stroke-width': 6, 'stroke-linecap': 'round' }, body);
-  const mO = el('g', {}, body);
-  el('ellipse', { cx: 0, cy: -106, rx: 18, ry: 20, fill: K.ol }, mO);
-  el('ellipse', { cx: 0, cy: -96, rx: 11, ry: 7, fill: K.red }, mO);
-  if (acc === 'glasses') {
-    const gl = el('g', { fill: K.white, 'fill-opacity': .22, stroke: K.ol, 'stroke-width': 6 }, body);
-    el('circle', { cx: -30, cy: -150, r: 25 }, gl); el('circle', { cx: 30, cy: -150, r: 25 }, gl);
-    el('path', { d: 'M -6 -152 Q 0 -158 6 -152', fill: 'none' }, gl);
-  } else if (acc === 'hat') {
-    const h = el('g', { transform: 'translate(34 -240) rotate(14)' }, body);
-    el('path', { d: 'M -40 6 L 0 -96 L 40 6 Z', fill: K.gold, ...SO, 'stroke-width': 6 }, h);
-    el('path', { d: 'M -26 -30 L 26 -30 M -14 -62 L 14 -62', stroke: K.blue, 'stroke-width': 9 }, h);
-    el('circle', { cx: 0, cy: -100, r: 13, fill: K.white, ...SO, 'stroke-width': 5 }, h);
-  } else if (acc === 'bow') {
-    el('path', { d: 'M 0 -62 L -36 -80 L -36 -44 Z M 0 -62 L 36 -80 L 36 -44 Z', fill: K.red, ...SO, 'stroke-width': 6 }, body);
-    el('circle', { cx: 0, cy: -62, r: 10, fill: K.red, ...SO, 'stroke-width': 5 }, body);
-  }
-  const sweat = el('path', { d: 'M 92 -200 Q 80 -178 92 -170 Q 104 -178 92 -200 Z', fill: '#8ED1FC', ...SO, 'stroke-width': 4 }, body);
-  const c = { g, body, armL, armR, eyes, eyeL, eyeR, maskEyes, eyesMeh, eyesX, eyesUp, mC, mF, mO, mask, soot, sweat, blush };
-  poseCard(c, {});
-  return c;
-}
-// angles des bras en degrés (0 = le long du corps, 90 = à l'horizontale vers l'extérieur, 160 = levé)
-function poseCard(c, { hey = 0, armsL = null, armsR = null, open = false, flat = false, sq = 1, lean = 0, eyes = 'n', look = 0, mask = false, soot = false, sweat = false }) {
-  const aL = armsL ?? lerp(16, 158, hey), aR = armsR ?? lerp(16, 158, hey);
-  c.armL.setAttribute('transform', `translate(-80 -150) rotate(${aL.toFixed(1)})`);
-  c.armR.setAttribute('transform', `translate(80 -150) rotate(${(-aR).toFixed(1)})`);
-  c.body.setAttribute('transform', `rotate(${lean.toFixed(2)}) scale(${(1 / Math.sqrt(sq)).toFixed(3)} ${sq.toFixed(3)})`);
-  show(c.mO, open); show(c.mF, !open && flat); show(c.mC, !open && !flat);
-  show(c.eyes, eyes === 'n'); show(c.eyesMeh, eyes === 'meh'); show(c.eyesX, eyes === 'x'); show(c.eyesUp, eyes === 'up');
-  c.eyeL.setAttribute('transform', `translate(${look} 0)`); c.eyeR.setAttribute('transform', `translate(${look} 0)`);
-  show(c.mask, mask); show(c.maskEyes, mask && eyes === 'n');
-  show(c.soot, soot); show(c.sweat, sweat); show(c.blush, !mask);
-}
-// Position (repère du corps) de la main gauche ou droite pour un angle de bras donné.
-function handAt(side, a, sq = 1) {
-  const r = a * Math.PI / 180, sx = side === 'L' ? -1 : 1;
-  return { x: (sx * 80 + sx * 66 * Math.sin(r)) / Math.sqrt(sq), y: (-150 + 66 * Math.cos(r)) * sq };
-}
-const CAST = {
-  blue: p => mascot(p, { color: K.blue, dark: K.blueD, acc: 'glasses' }),
-  red: p => mascot(p, { color: K.red, dark: K.redD, acc: 'hat' }),
-  gold: p => mascot(p, { color: K.gold, dark: K.goldD, acc: 'bow' }),
-};
-
 // ---------------- Le téléphone (vrais écrans de l'appli) ----------------
 const SCR = { w: 400, h: 866 }, PH = { w: 432, h: 898, r: 62 };
 let clipN = 0;
@@ -254,9 +188,6 @@ function phone(parent) {
   return ph;
 }
 const LOADS = [];
-const SCREENS = [...Array(41).keys()].map(i => 'home-' + String(i).padStart(2, '0'))
-  .concat([...Array(24).keys()].map(i => 'mime-' + String(i).padStart(2, '0')))
-  .concat(['bomb', 'bomb-end', 'gage', 'uc-hide', 'uc-show', 'know', 'av', 'wyr', 'lg']);
 
 // ---------------- Icônes Lucide des jeux ----------------
 function lucide(parent, node, size = 60, stroke = K.white, sw = 2.4) {
@@ -271,16 +202,5 @@ function gameTile(parent, game, size = 128) {
   lucide(g, game.icon, size * 0.5, K.ol, 2.6);
   return g;
 }
-const GAME = Object.fromEntries(GAMES.games.map(x => [x.id, x]));
+const GAME = window.GAMES ? Object.fromEntries(GAMES.games.map(x => [x.id, x])) : {};   // optionnel : assets/games.js du projet
 
-// ---------------- Le logo de l'appli (trois cartes en éventail) ----------------
-function logo(parent, s = 1) {
-  const g = el('g', { transform: `scale(${s})` }, parent);
-  const cards = [];
-  for (const [col, r, dx] of [[K.blue, -18, -66], [K.red, 0, 0], [K.gold, 18, 66]]) {
-    const c = el('g', {}, g);
-    el('rect', { x: -75, y: -107, width: 150, height: 214, rx: 26, fill: col, ...SO, 'stroke-width': 10 }, c);
-    cards.push({ c, r, dx });
-  }
-  return { g, cards, update(t, hop = 0) { cards.forEach((k, i) => tf(k.c, k.dx, (k.r ? 6 : 0) + hop * (i === 1 ? 1 : 0.6), 1, k.r)); } };
-}

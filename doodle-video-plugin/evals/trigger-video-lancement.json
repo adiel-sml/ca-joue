@@ -1,0 +1,82 @@
+[
+ {
+  "query": "Fais-moi une vidéo de lancement pour mon appli, celle du dépôt",
+  "should_trigger": true
+ },
+ {
+  "query": "J'ai besoin d'un TikTok pour présenter mon site de recettes",
+  "should_trigger": true
+ },
+ {
+  "query": "Tu peux me faire une petite pub animée pour mon outil de facturation ?",
+  "should_trigger": true
+ },
+ {
+  "query": "Crée un teaser vertical pour la sortie de mon jeu mobile",
+  "should_trigger": true
+ },
+ {
+  "query": "Je veux un Reel qui montre les fonctions de mon appli avec des bonhommes",
+  "should_trigger": true
+ },
+ {
+  "query": "Refais une vidéo comme la dernière mais pour SplitEase",
+  "should_trigger": true
+ },
+ {
+  "query": "Une démo animée de 40 secondes de mon dashboard pour YouTube",
+  "should_trigger": true
+ },
+ {
+  "query": "Prépare une vidéo promo pour Product Hunt de mon extension Chrome",
+  "should_trigger": true
+ },
+ {
+  "query": "Fais une vidéo de présentation de mon portfolio en dessin animé",
+  "should_trigger": true
+ },
+ {
+  "query": "On lance la v2 la semaine prochaine, il me faut une vidéo pour Instagram",
+  "should_trigger": true
+ },
+ {
+  "query": "Raconte en vidéo l'histoire de comment j'ai rencontré mes associés",
+  "should_trigger": false
+ },
+ {
+  "query": "Explique en vidéo comment fonctionne l'inflation",
+  "should_trigger": false
+ },
+ {
+  "query": "Écris-moi la description de mon appli pour l'App Store",
+  "should_trigger": false
+ },
+ {
+  "query": "Fais-moi des captures d'écran de mon site pour le README",
+  "should_trigger": false
+ },
+ {
+  "query": "Monte cette vidéo que j'ai filmée et coupe les silences",
+  "should_trigger": false
+ },
+ {
+  "query": "Crée une maquette de la page d'accueil de mon appli",
+  "should_trigger": false
+ },
+ {
+  "query": "Écris un thread X pour annoncer le lancement de mon appli",
+  "should_trigger": false
+ },
+ {
+  "query": "Génère une image de mascotte pour mon logo",
+  "should_trigger": false
+ },
+ {
+  "query": "Ajoute une animation de chargement dans mon appli React",
+  "should_trigger": false
+ },
+ {
+  "query": "Fais un top 5 des erreurs en entretien d'embauche en vidéo",
+  "should_trigger": false
+ }
+]

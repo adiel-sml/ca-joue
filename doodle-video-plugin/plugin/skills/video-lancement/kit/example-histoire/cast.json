@@ -1,0 +1,4 @@
+{"persos": {
+ "malik": {"nom": "Malik", "voix": "fr-FR-HenriNeural", "look": {"skin": "#6B3E1F", "hair": "short", "hat": "cap", "hatColor": "#FF4D6D", "shirt": "#4FC3F7", "pants": "#2B2D42"}},
+ "ines": {"nom": "Inès", "voix": "fr-FR-DeniseNeural", "look": {"skin": "#C68642", "hair": "puff", "band": "#43AA8B", "earring": true, "shirt": "#FFD45E", "pants": "#2E3440", "shoe": "#FF4D6D"}}
+}}

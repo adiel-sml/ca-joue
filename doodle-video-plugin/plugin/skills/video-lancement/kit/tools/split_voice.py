@@ -42,7 +42,7 @@ for s in segs:
 merged = [s for s in merged if s[1] - s[0] >= 15]          # moins de 0,15 s : bruit
 print(len(merged), 'passages parlés :', ', '.join(f'{s[0]/100:.2f}-{s[1]/100:.2f}' for s in merged))
 
-lib = os.environ.get('LIB', os.path.expanduser('~/lemo-opuscar'))
+lib = os.environ.get('LIB', os.path.expanduser('~/.doodle-video/lemo-opuscar'))
 from kokoro_onnx import Kokoro
 k = Kokoro(os.path.join(lib, 'core/tts/kokoro-v1.0.onnx'), os.path.join(lib, 'core/tts/voices-v1.0.bin'))
 def to16(x, sr): g = np.gcd(sr, ASR); return resample_poly(x, ASR // g, sr // g).astype('float32')

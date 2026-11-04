@@ -32,12 +32,12 @@ l2a = place('l2', land - 0.12 - d2a, 0, k2, 'l2a')
 S['hook'] = {'t0': 0.0, 't1': land, 'silence': min(up_beat(l1['t1'] + 0.05), math.floor((l2a['t0'] - 0.05) / B) * B)}
 # 2. Révélation : 23 jeux
 l2b = place('l2', land + 0.5, k2, None, 'l2b')
-S['reveal'] = {'t0': land, 'rain0': land + 0.25, 'n23': q16(word(l2b, '23')['t0']), 't1': up_bar(l2b['t1'] + 0.5)}
+S['reveal'] = {'t0': land, 'rain0': land + 0.25, 'n23': q16(word(l2b, '23')['t0']), 't1': up_beat(l2b['t1'] + 0.3)}
 # 3. Six jeux, puis la partie couple : une section par ligne
 t = S['reveal']['t1']
-for key, lid, minbars in [('mime', 'l3', 1), ('bomb', 'l4', 2), ('uc', 'l5', 1), ('lg', 'l6', 1), ('wyr', 'l7', 1), ('av', 'l8', 1), ('couple', 'l9', 2)]:
+for key, lid, minbeats in [('mime', 'l3', 4), ('bomb', 'l4', 7), ('uc', 'l5', 4), ('lg', 'l6', 4), ('wyr', 'l7', 4), ('av', 'l8', 4), ('couple', 'l9', 8)]:
     L = place(lid, t + 0.25)
-    S[key] = {'t0': t, 't1': t + max(minbars * BAR, up_bar(L['t1'] + 0.45 - t)), 'line': lid}
+    S[key] = {'t0': t, 't1': max(t + minbeats * B, up_beat(L['t1'] + 0.2)), 'line': lid}      # coupe sur le temps qui suit la réplique
     t = S[key]['t1']
 # 4. Le gage : la question, un vrai silence, puis « Tu fais un gage » et le tampon
 k10 = split_at('l10', '?')
@@ -46,12 +46,12 @@ sil0 = up_beat(l10a['t1'] + 0.1)
 g_rel = next(w for w in W['l10'][k10:] if w['w'].startswith('gage'))['t0'] - W['l10'][k10]['t0']
 stamp = up_beat(sil0 + 0.9 + g_rel)
 l10b = place('l10', stamp - g_rel, k10, None, 'l10b')
-S['gage'] = {'t0': t, 'silence': sil0, 'stamp': stamp, 't1': up_bar(max(l10b['t1'] + 0.5, stamp + 1.0))}
+S['gage'] = {'t0': t, 'silence': sil0, 'stamp': stamp, 't1': up_beat(max(l10b['t1'] + 0.3, stamp + 1.0))}
 t = S['gage']['t1']
 # 5. Final : photo de groupe, puis l'écran de fin tenu au moins 4 s
-l11 = place('l11', t + 0.5)
+l11 = place('l11', t + 0.25)
 snap = up_beat(l11['t1'] + 0.35)
-S['final'] = {'t0': t, 'snap': snap, 't1': up_bar(snap + 4.4)}
+S['final'] = {'t0': t, 'snap': snap, 't1': up_beat(snap + 4.2)}
 dur = S['final']['t1']
 
 # Partition (jouée par tools/music.py) : toujours rythmée, sauf les deux silences voulus
@@ -64,12 +64,14 @@ spans = [[0, H['silence'], 'sparse', 0], [S['reveal']['t0'], S['mime']['t0'], 'b
          [S['couple']['t0'], S['couple']['t1'], 'sweet', 0],
          [G['t0'], G['silence'], 'tension', 0], [G['stamp'] - (G['stamp'] % BAR), G['t1'], 'pop', 0],
          [F['t0'], F['snap'], 'popBig', 2], [F['snap'], F['t1'], 'end', 2]]
+nb = lambda x: round(x / BAR) * BAR
+spans = [[nb(a), nb(b) if b < dur - 1e-6 else b, m, tr] for a, b, m, tr in spans]
 SCORE = {'spans': spans, 'jingles': [S['mime']['t0'], S['couple']['t0']],
          'crashes': [S['reveal']['t0'], S['bomb']['t0'], S['uc']['t0'], S['lg']['t0'], S['wyr']['t0'], S['av']['t0'], F['snap']],
          'fanfares': [[F['snap'], 2]], 'rolls': [[G['silence'] - BAR / 2, G['silence']]],
          'silences': [[H['silence'], H['t1']], [G['silence'], G['stamp'] - 0.005]],
          'ambience': [['room', 0, H['silence']], ['crickets', S['lg']['t0'], S['lg']['t1']], ['cheer', F['snap'] - 1.2, F['snap'] + 0.6]]}
-TL = {'B': B, 'BAR': BAR, 'dur': dur, 'S': S, 'lines': lines, 'score': SCORE}
+TL = {'B': B, 'BAR': BAR, 'dur': dur, 'end_hold_max': 6.5, 'S': S, 'lines': lines, 'score': SCORE, 'size': os.environ.get('SIZE', '1080x1920')}
 open('timeline.js', 'w', encoding='utf-8').write('window.TL = ' + json.dumps(TL, ensure_ascii=False, indent=1) + ';\n')
 json.dump(TL, open('timeline.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 for k, v in S.items(): print(f"{k:8s} {v['t0']:6.2f} → {v['t1']:6.2f}")

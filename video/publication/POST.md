@@ -1,6 +1,6 @@
 # Publication
 
-Durée : 54.0 s · format 1080×1920
+Durée : 45.0 s · format 1080×1920
 
 Contrôles : conformes à TikTok, Reels et Shorts.
 

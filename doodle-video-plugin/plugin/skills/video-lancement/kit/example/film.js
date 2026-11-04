@@ -65,17 +65,22 @@ function cast3(g) { const out = []; for (const [k, i] of [['cap', 0], ['puff', 1
     ev(R.t0, 'boom'); punch(R.t0, 0.05);
     ev(R.n23, 'stamp'); ev(R.n23, 'crash'); punch(R.n23, 0.04);
     ev(tFly, 'whoosh');
-    const cnt = el('g', {}, g);
+    const cnt = el('g', {}, HUD);
     el('rect', { x: -170 + 12, y: -78 + 12, width: 340, height: 156, rx: 40, fill: K.ol }, cnt);
     el('rect', { x: -170, y: -78, width: 340, height: 156, rx: 40, fill: K.cream, ...SO }, cnt);
     const num = gtext(cnt, '0', 0, 42, 118, { fill: K.yellow, sw: 18 });
-    const tag = el('g', {}, g);
+    const tag = el('g', {}, HUD);
     const tagW = measure('23 jeux', 150) + 90;
     el('rect', { x: -tagW / 2 + 14, y: -100 + 14, width: tagW, height: 200, rx: 50, fill: K.ol }, tag);
     el('rect', { x: -tagW / 2, y: -100, width: tagW, height: 200, rx: 50, fill: K.gold, ...SO, 'stroke-width': 10 }, tag);
     gtext(tag, '23 jeux', 0, 52, 150, { fill: K.white, sw: 22 });
-    reg('n23', '23 jeux', R.n23, S.mime.t0, 540, 290, tagW, 200);
-    s.fx.push(burst(g, 540, 290, R.n23, K.yellow, 1.6));
+    reg('n23', '23 jeux', R.n23, S.mime.t0, 540, 330, tagW, 200, 'hud', true);
+    s.fx.push(burst(g, 540, 330, R.n23, K.yellow, 1.6));
+    OVERLAYS.push(t => {
+      const on = t >= R.t0 && t < S.mime.t0;
+      op(cnt, on && t >= R.rain0 && t < R.n23 ? 1 : 0); tf(cnt, 540, 330, E.back(seg(t, R.rain0, R.rain0 + 0.25)));
+      op(tag, on && t >= R.n23 ? 1 : 0); tf(tag, 540, 330, E.back(seg(t, R.n23, R.n23 + 0.3)), -4);
+    });
     s.cam = t => { const p = E.io(seg(t, R.t0, tFly + 0.4)); return { x: 540, y: lerp(820, 960, p), z: lerp(1.1, 1, p) }; };
     return t => {
       bgU(t);
@@ -97,8 +102,7 @@ function cast3(g) { const out = []; for (const [k, i] of [['cap', 0], ['puff', 1
       });
       const n = Math.min(23, tiles.filter(k => t >= k.tl).length);
       num.textContent = String(n);
-      op(cnt, t >= R.rain0 && t < R.n23 ? 1 : 0); tf(cnt, 540, 290, E.back(seg(t, R.rain0, R.rain0 + 0.25)));
-      op(tag, t >= R.n23 ? 1 : 0); tf(tag, 540, 290, E.back(seg(t, R.n23, R.n23 + 0.3)), -4);
+
       s.fx.forEach(f => f(t));
     };
   });
@@ -113,7 +117,7 @@ function gameScene(key, title, gid, build) {
   CUTS.push(R.t0); punch(R.t0, 0.03);
   return scene(R.t0, R.t1, (g, s) => {
     const up = build(g, s, R, L);
-    stick(g, s, title, { col: GAME[gid].color, x: 540, y: 265, rot: -3, t0: R.t0 + 0.05, t1: R.t1, size: 64, f: 784 });
+    stick(g, s, title, { col: GAME[gid].color, x: 540, y: 300, rot: -3, t0: R.t0 + 0.05, t1: R.t1, size: 64, f: 784, hud: true, speech: true });
     return t => { up(t); s.fx.forEach(f => f(t)); };
   });
 }
@@ -141,7 +145,7 @@ function splitStage(g, left, right) {
 gameScene('mime', 'Les Mimes', 'mime', (g, s, R, L) => {
   const bgU = setBg(g, 'tang', 'stripes');
   const ph = phone(g), M = cast3(g);
-  const tF = R.t0 + (R.t1 - R.t0) * 0.55;
+  const tF = R.t0 + (R.t1 - R.t0) * 0.35;
   ev(tF, 'ding'); punch(tF, 0.02); s.fx.push(burst(g, 250, FLOOR - 360, tF, K.yellow, 1.1));
   stick(g, s, 'Trouvé !'.replace(' !', ' !'), { col: '#2FB36B', x: 230, y: 900, rot: -6, t0: tF, t1: R.t1, size: 50, sound: false });
   beatsIn(R.t0, R.t1, B / 2).forEach((x, i) => i % 2 || ev(x, 'squeak', { f: 1 + (i % 4) * 0.1 }));
@@ -206,7 +210,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
   ev(td, 'pop', { f: 659 }); ev(ti, 'stamp'); punch(ti, 0.03);
   beatsIn(R.t0, ti, B).forEach((x, i) => ev(x, 'shift', { f: i % 2 ? 1.1 : 0.9 }));
   s.fx.push(burst(g, X3[2], FLOOR - 380, ti, K.yellow, 1));
-  stick(g, s, "L'intrus", { col: K.red, x: 860, y: 900, rot: 6, t0: ti, t1: R.t1, size: 48, sound: false });
+  stick(g, s, "L'intrus", { col: K.red, x: 800, y: 780, rot: 6, t0: ti, t1: R.t1, size: 48, sound: false, speech: true });
   s.cam = t => ({ x: 540, y: 980, z: 1 + 0.06 * E.io(seg(t, R.t0, R.t1)) });
   return t => {
     bgU(t); tf(ph.g, 540, PHY); ph.set(t < td ? 'uc-hide' : 'uc-show');
@@ -261,7 +265,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
     const ph = phone(g), M = cast3(g);
     const A = el('g', {}, g), Bb = el('g', {}, g);
     for (const [grp, txt_, col] of [[A, 'A', K.yellow], [Bb, 'B', '#00BBF9']]) { el('circle', { cx: 6, cy: 6, r: 50, fill: K.ol }, grp); el('circle', { cx: 0, cy: 0, r: 50, fill: col, ...SO }, grp); gtext(grp, txt_, 0, 22, 62, { fill: K.white, sw: 9 }); }
-    stick(g, s, 'Minorité', { col: K.red, x: 860, y: 920, rot: 5, t0: tm, t1: R.t1, size: 48, sound: false });
+    stick(g, s, 'Minorité', { col: K.red, x: 800, y: 780, rot: 5, t0: tm, t1: R.t1, size: 48, sound: false, speech: true });
     s.cam = () => ({ x: 540, y: 940, z: 1 });
     const X = [170, 360, 860];                           // deux à gauche (A), une à droite (B)
     return t => {
@@ -286,7 +290,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
     const bgU = setBg(g, 'lime', 'stripes', { w: 55, angle: 28 });
     const ph = phone(g), M = cast3(g);
     stick(g, s, 'Action', { col: '#FF8C42', x: 220, y: 860, rot: -7, t0: ta, t1: R.t1, size: 52, f: 784 });
-    stick(g, s, 'Vérité', { col: '#3A86FF', x: 860, y: 900, rot: 6, t0: tv, t1: R.t1, size: 52, f: 988 });
+    stick(g, s, 'Vérité', { col: '#3A86FF', x: 800, y: 780, rot: 6, t0: tv, t1: R.t1, size: 52, f: 988 });
     s.cam = t => ({ x: 540, y: 920, z: 1 + 0.03 * seg(t, R.t0, R.t1) });
     return t => {
       bgU(t); tf(ph.g, 540, PHY); ph.set('av');
@@ -315,7 +319,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
     const cb = PEOPLE.puff(wb), cg = PEOPLE.cap(wg);
     const H2 = hearts.map((x, i) => { const h = el('path', { d: 'M 0 26 C -60 -10 -40 -60 0 -30 C 40 -60 60 -10 0 26 Z', fill: i % 2 ? K.red : K.white, ...SO, 'stroke-width': 6 }, g); const r = rng(40 + i); return { h, t0: x, x: i % 2 ? 150 + r() * 160 : 770 + r() * 160, y: 420 + r() * 380 }; });
     stick(g, s, 'En couple', { col: GAME.know.color, x: 540, y: 265, rot: -3, t0: R.t0 + 0.05, t1: R.t1, size: 64, f: 784 });
-    names.forEach(([nm, id], i) => stick(g, s, nm, { col: GAME[id].color, x: i % 2 ? 840 : 245, y: 800 + i * 100, rot: i % 2 ? 5 : -5, t0: tn[i], t1: R.t1, f: pitch(5 + i), size: 46 }));
+    names.forEach(([nm, id], i) => stick(g, s, nm, { col: GAME[id].color, x: i % 2 ? 800 : 245, y: 740 + i * 70, rot: i % 2 ? 5 : -5, t0: tn[i], t1: R.t1, f: pitch(5 + i), size: 46, speech: true }));
     s.cam = () => ({ x: 540, y: 940, z: 1 });
     return t => {
       tf(ph.g, 540, PHY); ph.set(t < tn[2] ? 'know' : 'talk');
@@ -343,7 +347,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
     const dim = el('path', { d: '', fill: K.ol, 'fill-rule': 'evenodd', opacity: 0.55 }, g);
     const beam = el('path', { d: '', fill: '#FFF3B0', opacity: 0.35 }, g);
     s.fx.push(judge(g, 'GAGE !', 540, 330, G.stamp, K.yellow, G.t1 - G.stamp, 210));
-    reg('gage', 'GAGE !', G.stamp, G.t1, 540, 330, measure('GAGE !', 210), 210);
+    reg('gage', 'GAGE !', G.stamp, G.t1, 540, 330, measure('GAGE !', 210), 210, 'world', true);
     s.fx.push(burst(g, 540, 330, G.stamp, K.white, 2.4));
     let sx = 540;
     s.cam = t => ({ x: 540, y: 960, z: 1 });
@@ -395,7 +399,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
     el('rect', { x: -urlW / 2, y: -46, width: urlW, height: 92, rx: 46, fill: K.cream, ...SO, 'stroke-width': 7 }, url);
     txt(url, 'ca-joue-rho.vercel.app', { x: 0, y: 17, 'font-size': 50, 'font-family': 'Fredoka', 'font-weight': 600, fill: K.ol, 'text-anchor': 'middle' });
     reg('title', 'Ça Joue', snap + 0.85, F.t1, 540, 1330, measure('Ça Joue', 150), 150);
-    reg('url', 'ca-joue-rho.vercel.app', snap + 1.1, F.t1, 540, 1480, urlW, 92);
+    reg('url', 'ca-joue-rho.vercel.app', snap + 1.1, F.t1, 540, 1440, urlW, 92);
     const tJ = wordT(L, 'joue') ?? F.t0 + 0.6;
     s.cam = () => ({ x: 540, y: 960, z: 1 });
     return t => {
@@ -421,7 +425,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
       op(lg.g, t >= snap + 0.6 ? 1 : 0); lg.g.setAttribute('transform', `translate(540 1130) scale(${(0.62 * E.back(seg(t, snap + 0.6, snap + 0.9))).toFixed(3)})`);
       lg.update(t, after ? hopY(t, 10) : 0);
       op(title, t >= snap + 0.85 ? 1 : 0); tf(title, 540, 1380, E.back(seg(t, snap + 0.85, snap + 1.15)), -2);
-      op(url, t >= snap + 1.1 ? 1 : 0); tf(url, 540, 1500, E.back(seg(t, snap + 1.1, snap + 1.4)));
+      op(url, t >= snap + 1.1 ? 1 : 0); tf(url, 540, 1440, E.back(seg(t, snap + 1.1, snap + 1.4)));
       void tJ;
     };
   });

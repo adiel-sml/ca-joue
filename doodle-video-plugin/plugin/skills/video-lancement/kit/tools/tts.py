@@ -29,6 +29,9 @@ async def edge(L, path):
     return words
 
 dur, WT = {}, {}
+CAST = json.load(open('cast.json', encoding='utf-8')).get('persos', {}) if os.path.exists('cast.json') else {}
+for L in lines:                                          # voix du personnage (cast.json) si la ligne n'en donne pas
+    if 'voice' not in L and L.get('who') in CAST and CAST[L['who']].get('voix'): L['voice'] = CAST[L['who']]['voix']
 for L in lines:
     v = L.get('voice', 'fr-FR-HenriNeural')
     with tempfile.TemporaryDirectory() as td:
@@ -38,7 +41,7 @@ for L in lines:
             a, _ = sf.read(wav)
         else:
             from kokoro_onnx import Kokoro
-            lib = os.environ.get('LIB', os.path.expanduser('~/lemo-opuscar'))
+            lib = os.environ.get('LIB', os.path.expanduser('~/.doodle-video/lemo-opuscar'))
             k = Kokoro(os.path.join(lib, 'core/tts/kokoro-v1.0.onnx'), os.path.join(lib, 'core/tts/voices-v1.0.bin'))
             a, _ = k.create(L['text'], voice=v, speed=L.get('speed', 1.0), lang=L.get('lang', 'fr-fr'))
     a = np.asarray(a, dtype=np.float64)

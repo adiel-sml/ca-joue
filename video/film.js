@@ -1,26 +1,5 @@
-// Les scènes du film « Ça Joue ». Tout est recalculé depuis t (render pur) ; le minutage vient de timeline.js.
+// EXEMPLE : les scènes du film de lancement de Ça Joue (appli de jeux de soirée), à adapter, jamais à recopier tel quel.
 'use strict';
-const S = TL.S;
-const WORLD = document.getElementById('world'), HUD = document.getElementById('hud');
-const FLASH = document.getElementById('flash');
-const SCENES = [], CUTS = [], TEXTREG = [];
-const X3 = [250, 540, 830];
-const PHY = 230;                       // haut du téléphone sur le plateau
-const SCR_CX = 540, SCR_CY = PHY + 16 + SCR.h / 2;
-const lineById = id => TL.lines.find(l => l.id === id);
-const wordT = (L, prefix, k = 0) => { const ws = L.words.filter(w => w.w.toLowerCase().replace(/[^a-zàâçéèêëîïôûùœ'’-]/g, '').startsWith(prefix.toLowerCase())); return ws[k] ? ws[k].t0 : null; };
-const pitch = i => 523.25 * Math.pow(2, [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24][i % 11] / 12);
-
-function scene(t0, t1, build) {
-  const g = el('g', {}, WORLD);
-  const s = { t0, t1, g, fx: [], cam: () => ({ x: 540, y: 960, z: 1 }) };
-  s.update = build(g, s);
-  show(g, false);
-  SCENES.push(s);
-  return s;
-}
-function reg(id, text, t0, t1, x, y, w, h) { TEXTREG.push({ id, text, t0, t1, x0: x - w / 2, y0: y - h / 2, x1: x + w / 2, y1: y + h / 2 }); }
-function stick(g, s, text, o) { const st = sticker(g, text, o); s.fx.push(st.update); reg('st-' + text, text, st.t0, st.t1, st.x, st.y, st.w, st.h); if (o.sound !== false) { ev(st.t0, 'pop', { f: o.f || 880 }); punch(st.t0, 0.012); } return st; }
 const PSC = 0.85;                      // échelle des bonhommes
 const PEOPLE = {
   cap:  p => person(p, { skin: SKIN[1], hair: 'short', hat: 'cap', hatColor: K.yellow, shirt: '#4FC3F7', pants: '#1F4E3D', backpack: '#2EC4B6' }),
@@ -86,17 +65,22 @@ function cast3(g) { const out = []; for (const [k, i] of [['cap', 0], ['puff', 1
     ev(R.t0, 'boom'); punch(R.t0, 0.05);
     ev(R.n23, 'stamp'); ev(R.n23, 'crash'); punch(R.n23, 0.04);
     ev(tFly, 'whoosh');
-    const cnt = el('g', {}, g);
+    const cnt = el('g', {}, HUD);
     el('rect', { x: -170 + 12, y: -78 + 12, width: 340, height: 156, rx: 40, fill: K.ol }, cnt);
     el('rect', { x: -170, y: -78, width: 340, height: 156, rx: 40, fill: K.cream, ...SO }, cnt);
     const num = gtext(cnt, '0', 0, 42, 118, { fill: K.yellow, sw: 18 });
-    const tag = el('g', {}, g);
+    const tag = el('g', {}, HUD);
     const tagW = measure('23 jeux', 150) + 90;
     el('rect', { x: -tagW / 2 + 14, y: -100 + 14, width: tagW, height: 200, rx: 50, fill: K.ol }, tag);
     el('rect', { x: -tagW / 2, y: -100, width: tagW, height: 200, rx: 50, fill: K.gold, ...SO, 'stroke-width': 10 }, tag);
     gtext(tag, '23 jeux', 0, 52, 150, { fill: K.white, sw: 22 });
-    reg('n23', '23 jeux', R.n23, S.mime.t0, 540, 290, tagW, 200);
-    s.fx.push(burst(g, 540, 290, R.n23, K.yellow, 1.6));
+    reg('n23', '23 jeux', R.n23, S.mime.t0, 540, 330, tagW, 200, 'hud', true);
+    s.fx.push(burst(g, 540, 330, R.n23, K.yellow, 1.6));
+    OVERLAYS.push(t => {
+      const on = t >= R.t0 && t < S.mime.t0;
+      op(cnt, on && t >= R.rain0 && t < R.n23 ? 1 : 0); tf(cnt, 540, 330, E.back(seg(t, R.rain0, R.rain0 + 0.25)));
+      op(tag, on && t >= R.n23 ? 1 : 0); tf(tag, 540, 330, E.back(seg(t, R.n23, R.n23 + 0.3)), -4);
+    });
     s.cam = t => { const p = E.io(seg(t, R.t0, tFly + 0.4)); return { x: 540, y: lerp(820, 960, p), z: lerp(1.1, 1, p) }; };
     return t => {
       bgU(t);
@@ -118,8 +102,7 @@ function cast3(g) { const out = []; for (const [k, i] of [['cap', 0], ['puff', 1
       });
       const n = Math.min(23, tiles.filter(k => t >= k.tl).length);
       num.textContent = String(n);
-      op(cnt, t >= R.rain0 && t < R.n23 ? 1 : 0); tf(cnt, 540, 290, E.back(seg(t, R.rain0, R.rain0 + 0.25)));
-      op(tag, t >= R.n23 ? 1 : 0); tf(tag, 540, 290, E.back(seg(t, R.n23, R.n23 + 0.3)), -4);
+
       s.fx.forEach(f => f(t));
     };
   });
@@ -134,7 +117,7 @@ function gameScene(key, title, gid, build) {
   CUTS.push(R.t0); punch(R.t0, 0.03);
   return scene(R.t0, R.t1, (g, s) => {
     const up = build(g, s, R, L);
-    stick(g, s, title, { col: GAME[gid].color, x: 540, y: 265, rot: -3, t0: R.t0 + 0.05, t1: R.t1, size: 64, f: 784 });
+    stick(g, s, title, { col: GAME[gid].color, x: 540, y: 300, rot: -3, t0: R.t0 + 0.05, t1: R.t1, size: 64, f: 784, hud: true, speech: true });
     return t => { up(t); s.fx.forEach(f => f(t)); };
   });
 }
@@ -162,7 +145,7 @@ function splitStage(g, left, right) {
 gameScene('mime', 'Les Mimes', 'mime', (g, s, R, L) => {
   const bgU = setBg(g, 'tang', 'stripes');
   const ph = phone(g), M = cast3(g);
-  const tF = R.t0 + (R.t1 - R.t0) * 0.55;
+  const tF = R.t0 + (R.t1 - R.t0) * 0.35;
   ev(tF, 'ding'); punch(tF, 0.02); s.fx.push(burst(g, 250, FLOOR - 360, tF, K.yellow, 1.1));
   stick(g, s, 'Trouvé !'.replace(' !', ' !'), { col: '#2FB36B', x: 230, y: 900, rot: -6, t0: tF, t1: R.t1, size: 50, sound: false });
   beatsIn(R.t0, R.t1, B / 2).forEach((x, i) => i % 2 || ev(x, 'squeak', { f: 1 + (i % 4) * 0.1 }));
@@ -227,7 +210,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
   ev(td, 'pop', { f: 659 }); ev(ti, 'stamp'); punch(ti, 0.03);
   beatsIn(R.t0, ti, B).forEach((x, i) => ev(x, 'shift', { f: i % 2 ? 1.1 : 0.9 }));
   s.fx.push(burst(g, X3[2], FLOOR - 380, ti, K.yellow, 1));
-  stick(g, s, "L'intrus", { col: K.red, x: 860, y: 900, rot: 6, t0: ti, t1: R.t1, size: 48, sound: false });
+  stick(g, s, "L'intrus", { col: K.red, x: 800, y: 780, rot: 6, t0: ti, t1: R.t1, size: 48, sound: false, speech: true });
   s.cam = t => ({ x: 540, y: 980, z: 1 + 0.06 * E.io(seg(t, R.t0, R.t1)) });
   return t => {
     bgU(t); tf(ph.g, 540, PHY); ph.set(t < td ? 'uc-hide' : 'uc-show');
@@ -282,7 +265,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
     const ph = phone(g), M = cast3(g);
     const A = el('g', {}, g), Bb = el('g', {}, g);
     for (const [grp, txt_, col] of [[A, 'A', K.yellow], [Bb, 'B', '#00BBF9']]) { el('circle', { cx: 6, cy: 6, r: 50, fill: K.ol }, grp); el('circle', { cx: 0, cy: 0, r: 50, fill: col, ...SO }, grp); gtext(grp, txt_, 0, 22, 62, { fill: K.white, sw: 9 }); }
-    stick(g, s, 'Minorité', { col: K.red, x: 860, y: 920, rot: 5, t0: tm, t1: R.t1, size: 48, sound: false });
+    stick(g, s, 'Minorité', { col: K.red, x: 800, y: 780, rot: 5, t0: tm, t1: R.t1, size: 48, sound: false, speech: true });
     s.cam = () => ({ x: 540, y: 940, z: 1 });
     const X = [170, 360, 860];                           // deux à gauche (A), une à droite (B)
     return t => {
@@ -307,7 +290,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
     const bgU = setBg(g, 'lime', 'stripes', { w: 55, angle: 28 });
     const ph = phone(g), M = cast3(g);
     stick(g, s, 'Action', { col: '#FF8C42', x: 220, y: 860, rot: -7, t0: ta, t1: R.t1, size: 52, f: 784 });
-    stick(g, s, 'Vérité', { col: '#3A86FF', x: 860, y: 900, rot: 6, t0: tv, t1: R.t1, size: 52, f: 988 });
+    stick(g, s, 'Vérité', { col: '#3A86FF', x: 800, y: 780, rot: 6, t0: tv, t1: R.t1, size: 52, f: 988 });
     s.cam = t => ({ x: 540, y: 920, z: 1 + 0.03 * seg(t, R.t0, R.t1) });
     return t => {
       bgU(t); tf(ph.g, 540, PHY); ph.set('av');
@@ -336,7 +319,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
     const cb = PEOPLE.puff(wb), cg = PEOPLE.cap(wg);
     const H2 = hearts.map((x, i) => { const h = el('path', { d: 'M 0 26 C -60 -10 -40 -60 0 -30 C 40 -60 60 -10 0 26 Z', fill: i % 2 ? K.red : K.white, ...SO, 'stroke-width': 6 }, g); const r = rng(40 + i); return { h, t0: x, x: i % 2 ? 150 + r() * 160 : 770 + r() * 160, y: 420 + r() * 380 }; });
     stick(g, s, 'En couple', { col: GAME.know.color, x: 540, y: 265, rot: -3, t0: R.t0 + 0.05, t1: R.t1, size: 64, f: 784 });
-    names.forEach(([nm, id], i) => stick(g, s, nm, { col: GAME[id].color, x: i % 2 ? 840 : 245, y: 800 + i * 100, rot: i % 2 ? 5 : -5, t0: tn[i], t1: R.t1, f: pitch(5 + i), size: 46 }));
+    names.forEach(([nm, id], i) => stick(g, s, nm, { col: GAME[id].color, x: i % 2 ? 800 : 245, y: 740 + i * 70, rot: i % 2 ? 5 : -5, t0: tn[i], t1: R.t1, f: pitch(5 + i), size: 46, speech: true }));
     s.cam = () => ({ x: 540, y: 940, z: 1 });
     return t => {
       tf(ph.g, 540, PHY); ph.set(t < tn[2] ? 'know' : 'talk');
@@ -364,7 +347,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
     const dim = el('path', { d: '', fill: K.ol, 'fill-rule': 'evenodd', opacity: 0.55 }, g);
     const beam = el('path', { d: '', fill: '#FFF3B0', opacity: 0.35 }, g);
     s.fx.push(judge(g, 'GAGE !', 540, 330, G.stamp, K.yellow, G.t1 - G.stamp, 210));
-    reg('gage', 'GAGE !', G.stamp, G.t1, 540, 330, measure('GAGE !', 210), 210);
+    reg('gage', 'GAGE !', G.stamp, G.t1, 540, 330, measure('GAGE !', 210), 210, 'world', true);
     s.fx.push(burst(g, 540, 330, G.stamp, K.white, 2.4));
     let sx = 540;
     s.cam = t => ({ x: 540, y: 960, z: 1 });
@@ -394,7 +377,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
   const F = S.final, L = lineById('l11');
   CUTS.push(F.t0);
   const snap = F.snap;
-  ev(snap, 'shutter'); ev(snap + 0.42, 'land'); ev(snap + 0.6, 'pop', { f: 784 }); ev(snap + 0.85, 'pop', { f: 1047 }); ev(snap + 1.1, 'pop', { f: 1319 });
+  FLASHES.push(snap); ev(snap, 'shutter'); ev(snap + 0.42, 'land'); ev(snap + 0.6, 'pop', { f: 784 }); ev(snap + 0.85, 'pop', { f: 1047 }); ev(snap + 1.1, 'pop', { f: 1319 });
   beatsIn(F.t0, snap, B).forEach((x, i) => i % 2 || ev(x, 'hop', { f: pitch(i) }));
   scene(F.t0, F.t1, (g, s) => {
     const endBg = el('g', {}, g);
@@ -416,7 +399,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
     el('rect', { x: -urlW / 2, y: -46, width: urlW, height: 92, rx: 46, fill: K.cream, ...SO, 'stroke-width': 7 }, url);
     txt(url, 'ca-joue-rho.vercel.app', { x: 0, y: 17, 'font-size': 50, 'font-family': 'Fredoka', 'font-weight': 600, fill: K.ol, 'text-anchor': 'middle' });
     reg('title', 'Ça Joue', snap + 0.85, F.t1, 540, 1330, measure('Ça Joue', 150), 150);
-    reg('url', 'ca-joue-rho.vercel.app', snap + 1.1, F.t1, 540, 1480, urlW, 92);
+    reg('url', 'ca-joue-rho.vercel.app', snap + 1.1, F.t1, 540, 1440, urlW, 92);
     const tJ = wordT(L, 'joue') ?? F.t0 + 0.6;
     s.cam = () => ({ x: 540, y: 960, z: 1 });
     return t => {
@@ -442,96 +425,21 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
       op(lg.g, t >= snap + 0.6 ? 1 : 0); lg.g.setAttribute('transform', `translate(540 1130) scale(${(0.62 * E.back(seg(t, snap + 0.6, snap + 0.9))).toFixed(3)})`);
       lg.update(t, after ? hopY(t, 10) : 0);
       op(title, t >= snap + 0.85 ? 1 : 0); tf(title, 540, 1380, E.back(seg(t, snap + 0.85, snap + 1.15)), -2);
-      op(url, t >= snap + 1.1 ? 1 : 0); tf(url, 540, 1500, E.back(seg(t, snap + 1.1, snap + 1.4)));
+      op(url, t >= snap + 1.1 ? 1 : 0); tf(url, 540, 1440, E.back(seg(t, snap + 1.1, snap + 1.4)));
       void tJ;
     };
   });
 }
 
-// ======================= Sous-titres : une plaque, la ligne s'écrit mot par mot =======================
-const SUBS = (() => {
-  const size = 60, maxW = 740, chunks = [];
-  for (const L of TL.lines) {
-    let cur = [], len = 0;
-    const flush = () => { if (cur.length) chunks.push(cur); cur = []; len = 0; };
-    L.words.forEach((w, i) => {
-      const ww = measure(w.w + ' ', size);
-      if (len + ww > maxW * 2 - 40 && cur.length) flush();
-      cur.push(w); len += ww;
-      if (/[.?!:]$/.test(w.w) && i < L.words.length - 1 && len > 260) flush();
-    });
-    flush();
-  }
-  chunks.forEach((c, i) => {
-    c.t0 = c[0].t0 - 0.08;
-    const next = chunks[i + 1];
-    c.t1 = Math.min(next ? next[0].t0 - 0.1 : 1e9, Math.max(c[c.length - 1].t1 + 0.6, c.t0 + 1.8));
-    if (next) c.t1 = Math.min(c.t1, next[0].t0 - 0.02);
-  });
-  const g = el('g', {}, HUD);
-  const items = chunks.map(c => {
-    const cg = el('g', {}, g);
-    const lines = [[]]; let lw = 0;
-    c.forEach(w => { const ww = measure(w.w, size), sp = measure(' ', size); if (lw + ww > maxW && lines[lines.length - 1].length) { lines.push([]); lw = 0; } lines[lines.length - 1].push({ w, ww }); lw += ww + sp; });
-    const widths = lines.map(l => l.reduce((a, x) => a + x.ww, 0) + measure(' ', size) * (l.length - 1));
-    const pw = Math.max(...widths) + 90, phh = lines.length * 82 + 56;
-    el('rect', { x: -pw / 2 + 12, y: -phh / 2 + 12, width: pw, height: phh, rx: 36, fill: K.ol }, cg);
-    el('rect', { x: -pw / 2, y: -phh / 2, width: pw, height: phh, rx: 36, fill: K.cream, ...SO }, cg);
-    const words = [];
-    lines.forEach((l, li) => {
-      let x = -widths[li] / 2;
-      const y = -phh / 2 + 28 + 60 + li * 82 - 6;
-      l.forEach(({ w, ww }) => {
-        const n = txt(cg, w.w, { x: x + ww / 2, y, 'font-size': size, 'font-family': 'Fredoka', 'font-weight': 700, 'text-anchor': 'middle', 'paint-order': 'stroke', 'stroke-linejoin': 'round' });
-        words.push({ n, w, x: x + ww / 2, y });
-        x += ww + measure(' ', size);
-      });
-    });
-    op(cg, 0);
-    return { cg, c, words, pw, phh };
-  });
-  return {
-    chunks,
-    update(t) {
-      items.forEach(it => {
-        const on = t >= it.c.t0 && t < it.c.t1;
-        op(it.cg, on ? 1 : 0); if (!on) return;
-        const first = it.c === it.c[0] && false;
-        void first;
-        tf(it.cg, 540, 1410, E.back(seg(t, it.c.t0, it.c.t0 + 0.2)) * (1 - 0.08 * E.in(seg(t, it.c.t1 - 0.1, it.c.t1))));
-        it.words.forEach((o, j) => {
-          const nx = it.words[j + 1];
-          const said = t >= o.w.t0 - 0.03, now = said && t < Math.min(o.w.t1 + 0.12, nx ? nx.w.t0 - 0.03 : 1e9);
-          op(o.n, said ? 1 : 0.28);
-          if (now) { o.n.setAttribute('fill', K.yellow); o.n.setAttribute('stroke', K.ol); o.n.setAttribute('stroke-width', 9); }
-          else { o.n.setAttribute('fill', K.ol); o.n.setAttribute('stroke', 'none'); o.n.setAttribute('stroke-width', 0); }
-          const p = seg(t, o.w.t0 - 0.03, o.w.t0 + 0.12);
-          o.n.setAttribute('transform', `translate(${o.x} ${o.y}) scale(${(said ? 0.85 + 0.15 * E.back(p) : 1).toFixed(3)}) translate(${-o.x} ${-o.y})`);
-        });
-      });
-    },
-  };
-})();
 
-// ======================= Rendu =======================
-CUTS.forEach(c => ev(c, 'cut'));
-window.DUR = TL.dur;
-window.render = t => {
-  let cam = { x: 540, y: 960, z: 1 };
-  for (const s of SCENES) {
-    const on = t >= s.t0 && t < s.t1;
-    show(s.g, on);
-    if (on) { s.update(t); cam = s.cam(t); }
+// Logo de Ça Joue (trois cartes en éventail) : propre à ce projet
+function logo(parent, s = 1) {
+  const g = el('g', { transform: `scale(${s})` }, parent);
+  const cards = [];
+  for (const [col, r, dx] of [[K.blue, -18, -66], [K.red, 0, 0], [K.gold, 18, 66]]) {
+    const c = el('g', {}, g);
+    el('rect', { x: -75, y: -107, width: 150, height: 214, rx: 26, fill: col, ...SO, 'stroke-width': 10 }, c);
+    cards.push({ c, r, dx });
   }
-  let pz = 0;
-  for (const [t0, a] of PUNCH) if (t >= t0 && t < t0 + 0.2) pz += a * Math.exp(-(t - t0) * 18);
-  const z = cam.z * (1 + Math.min(0.06, pz));
-  WORLD.setAttribute('transform', `translate(540 960) scale(${z.toFixed(4)}) translate(${(-cam.x).toFixed(2)} ${(-cam.y).toFixed(2)})`);
-  let fl = 0;
-  for (const c of CUTS) if (t >= c && t < c + 0.08) fl = Math.max(fl, 0.85 * (1 - (t - c) / 0.08));
-  if (t >= S.final.snap && t < S.final.snap + 0.25) fl = Math.max(fl, 1 - (t - S.final.snap) / 0.25);
-  op(FLASH, fl);
-  SUBS.update(t);
-};
-window.TEXTS = t => TEXTREG.filter(x => t >= x.t0 && t < x.t1).map(({ id, text, x0, y0, x1, y1 }) => ({ id, text, x0, y0, x1, y1 }));
-window.SUBCUES = SUBS.chunks.map(c => ({ t0: +c.t0.toFixed(3), t1: +c.t1.toFixed(3), text: c.map(w => w.w).join(' ') }));
+  return { g, cards, update(t, hop = 0) { cards.forEach((k, i) => tf(k.c, k.dx, (k.r ? 6 : 0) + hop * (i === 1 ? 1 : 0.6), 1, k.r)); } };
+}

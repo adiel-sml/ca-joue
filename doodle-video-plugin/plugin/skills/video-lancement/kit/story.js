@@ -143,7 +143,7 @@ function bigNumber(parent, value, unit, o) {
     tf(g, o.x, o.y, E.back(seg(t, o.t0, o.t0 + 0.3)));
   } };
 }
-// Liste de points qui se cochent un par un (temps donnés), pour un récapitulatif.
+// Liste de points qui se cochent un par un (temps donnés), pour un récapitulatif ; disparaît à o.t1 si donné.
 function checklist(parent, items, o) {
   const g = el('g', {}, parent), rows = items.map((it, i) => {
     const r = el('g', { transform: `translate(0 ${i * 110})` }, g);
@@ -153,7 +153,7 @@ function checklist(parent, items, o) {
     return { r, ck };
   });
   return { g, update(t) {
-    tf(g, o.x, o.y);
+    tf(g, o.x, o.y); op(g, t < (o.t1 ?? 1e9) ? 1 - seg(t, (o.t1 ?? 1e9) - 0.2, o.t1 ?? 1e9) : 0);
     rows.forEach((x, i) => { const ti = o.times[i]; op(x.r, t >= ti - 0.3 ? 1 : 0); op(x.ck, t >= ti ? 1 : 0); tf(x.ck, 0, 0, E.back(seg(t, ti, ti + 0.25))); });
   } };
 }
@@ -186,7 +186,7 @@ function dialogueCam(lines, who, o = {}) {
 function alive(t, i = 0) {
   const b = Math.sin(t * 2.4 + i * 1.7);
   const blink = ((t + i * 0.77) % 3.1) < 0.12;
-  return { lean: 2.2 * b, sq: 1 + 0.012 * Math.sin(t * 3.1 + i), eyes: blink ? 'meh' : 'n' };
+  return { lean: 2.2 * b, sq: 1 + 0.012 * Math.sin(t * 3.1 + i), eyes: blink ? 'meh' : undefined };   // hors clignement, les yeux de l'émotion
 }
 // Réaction de celui qui écoute : un petit sursaut au début de la réplique de l'autre, puis il regarde le locuteur.
 function listen(t, L, dx) { const r = L && t >= L.t0 && t < L.t0 + 0.3 ? hitSq(t, L.t0, 0.06) : 1; return { look: Math.sign(dx) * 6, sq: r }; }
@@ -199,7 +199,7 @@ function keyword(L, word, o = {}) {
   const t0 = w.t0 - 0.03, txt_ = o.text || word.toUpperCase();
   const st = sticker(g, txt_, { col: o.col || K.yellow, fill: o.fill || K.white, x: o.x ?? 540, y: o.y ?? 560, rot: o.rot ?? -5, t0, t1: o.t1 ?? (t0 + 1.6), size: o.size || 72 });
   s.fx.push(st.update); ev(t0, 'pop', { f: o.f || 988 }); punch(t0, 0.025);
-  if (typeof reg === 'function') reg('kw-' + txt_, txt_, st.t0, st.t1, st.x, st.y, st.w, st.h);
+  if (typeof reg === 'function') reg('kw-' + txt_, txt_, st.t0, st.t1, st.x, st.y, st.w, st.h, g === HUD ? 'hud' : 'world', true);
   return st;
 }
 // Transition rapide entre deux scènes : une bande de couleur balaie l'écran (0,3 s) avec un whoosh.
@@ -212,4 +212,111 @@ function drawWipes(hud, t) {
   const p = seg(t, w.t0 - 0.15, w.t0 + 0.15), x = lerp(-1400, 1500, E.io(p));
   drawWipes.r.setAttribute('fill', w.col); op(drawWipes.g, 1);
   drawWipes.r.setAttribute('d', `M ${x} -100 L ${x + 900} -100 L ${x + 600} 2020 L ${x - 300} 2020 Z`);
+}
+
+// ---------------- Autres lieux ----------------
+function wallFloor(g, wall, floor, pat) {
+  el('rect', { x: -400, y: -400, width: W + 800, height: FLOOR + 400, fill: wall }, g);
+  if (pat) dots(g, pat, 120, 7);
+  el('rect', { x: -400, y: FLOOR, width: W + 800, height: H - FLOOR + 400, fill: floor }, g);
+  el('line', { x1: -400, y1: FLOOR, x2: W + 400, y2: FLOOR, stroke: K.ol, 'stroke-width': OW }, g);
+}
+function frameBox(g, x, y, w, h, fill, r = 14) { el('rect', { x: x + 12, y: y + 12, width: w, height: h, rx: r, fill: K.ol }, g); return el('rect', { x, y, width: w, height: h, rx: r, fill, ...SO }, g); }
+// Bureau : fenêtre en bande, étagère, plante ; ajouter desk() pour un poste de travail.
+function placeOffice(g, o = {}) {
+  wallFloor(g, o.wall || '#DDE7F0', o.floor || '#9AA5B1', '#CFDBE6');
+  frameBox(g, 60, 300, 960, 230, '#A6DBFD', 18); el('path', { d: 'M 380 300 V 530 M 700 300 V 530', stroke: K.ol, 'stroke-width': 8 }, g);
+  frameBox(g, 760, 700, 260, 26, '#8E5530', 6); for (const [x, c] of [[790, K.red], [830, '#3A86FF'], [866, K.yellow], [900, '#2FB36B']]) el('rect', { x, y: 620, width: 30, height: 80, rx: 4, fill: c, ...SO, 'stroke-width': 5 }, g);
+  plant(g, 120, FLOOR);
+}
+function desk(g, x, o = {}) {
+  const d = el('g', { transform: `translate(${x} ${FLOOR})` }, g);
+  el('rect', { x: -170, y: -200, width: 340, height: 26, rx: 8, fill: o.col || '#C98A52', ...SO }, d);
+  for (const dx of [-150, 136]) el('rect', { x: dx, y: -174, width: 14, height: 174, fill: o.col || '#C98A52', ...SO, 'stroke-width': 6 }, d);
+  if (o.laptop !== false) { el('path', { d: 'M -70 -204 L -60 -290 L 60 -290 L 70 -204 Z', fill: '#C3CAD9', ...SO, 'stroke-width': 6 }, d); el('rect', { x: -48, y: -280, width: 96, height: 66, rx: 6, fill: '#8ED1FC' }, d); }
+  return d;
+}
+// Café : comptoir, ardoise du menu, lampes suspendues.
+function placeCafe(g, o = {}) {
+  wallFloor(g, o.wall || '#F6D7B0', o.floor || '#8E5530', '#EFC895');
+  const b = frameBox(g, 140, 300, 460, 300, '#2F5D50', 18); void b;
+  chalk(g, 'Menu', 370, 370, 54); for (const [i, l] of ['Café', 'Thé', 'Gâteau'].entries()) chalk(g, l, 370, 440 + i * 56, 40);
+  for (const x of [720, 900]) { el('line', { x1: x, y1: -400, x2: x, y2: 380, stroke: K.ol, 'stroke-width': 5 }, g); el('path', { d: `M ${x - 46} 420 Q ${x} 360 ${x + 46} 420 Z`, fill: K.yellow, ...SO, 'stroke-width': 6 }, g); }
+  frameBox(g, -200, FLOOR - 260, 1480, 60, '#C98A52', 10);
+  frameBox(g, -200, FLOOR - 200, 1480, 200, '#8E5530', 0);
+}
+// Chambre : lit, lampe, poster.
+function placeBedroom(g, o = {}) {
+  wallFloor(g, o.wall || '#D9E7FF', o.floor || '#B07A4A', '#C6D8FA');
+  frameBox(g, 640, 360, 220, 290, K.yellow, 10); el('path', { d: 'M 680 600 L 750 470 L 820 600 Z', fill: K.red, ...SO, 'stroke-width': 6 }, g);
+  const bed = el('g', { transform: `translate(${o.bedX ?? 300} ${FLOOR})` }, g);
+  el('rect', { x: -250, y: -330, width: 40, height: 330, rx: 14, fill: '#8E5530', ...SO }, bed);
+  el('rect', { x: -230, y: -180, width: 470, height: 110, rx: 24, fill: K.white, ...SO }, bed);
+  el('rect', { x: -60, y: -186, width: 300, height: 120, rx: 24, fill: '#7FDDCF', ...SO }, bed);
+  el('rect', { x: -210, y: -230, width: 120, height: 56, rx: 26, fill: K.white, ...SO, 'stroke-width': 6 }, bed);
+  el('rect', { x: -230, y: -70, width: 470, height: 30, fill: '#8E5530', ...SO, 'stroke-width': 6 }, bed);
+}
+// Magasin : étagères de produits, caisse.
+function placeShop(g, o = {}) {
+  wallFloor(g, o.wall || '#FFF1D6', o.floor || '#C3CAD9');
+  for (const y of [330, 520, 710]) { frameBox(g, 60, y + 120, 600, 22, '#8E5530', 4); for (let x = 80; x < 640; x += 70) el('rect', { x, y: y + 40, width: 52, height: 80, rx: 8, fill: ['#FF8FB1', '#7FDDCF', '#FFD45E', '#8ED1FC', '#FFB870'][(x / 70 + y) % 5 | 0], ...SO, 'stroke-width': 5 }, g); }
+  const c = el('g', { transform: `translate(${o.counterX ?? 860} ${FLOOR})` }, g);
+  el('rect', { x: -170, y: -230, width: 340, height: 230, rx: 10, fill: '#3A86FF', ...SO }, c);
+  el('rect', { x: -80, y: -300, width: 120, height: 70, rx: 8, fill: '#2B2D31', ...SO, 'stroke-width': 6 }, c);
+}
+// Bus ou métro : fenêtres qui défilent (paysage en mouvement), barre de maintien.
+function placeBus(g, o = {}) {
+  el('rect', { x: -400, y: -400, width: W + 800, height: H + 800, fill: o.body || '#FFD45E' }, g);
+  const view = el('g', {}, g), cp = el('clipPath', { id: 'buswin' + (++clipN) }, g);
+  for (const x of [60, 560]) el('rect', { x, y: 330, width: 460, height: 380, rx: 30 }, cp);
+  view.setAttribute('clip-path', `url(#${cp.id})`);
+  el('rect', { x: 0, y: 300, width: W, height: 450, fill: '#A6DBFD' }, view);
+  const scroll = el('g', {}, view); const r = rng(9);
+  for (let x = 0; x < 3000; x += 140) el('rect', { x, y: 560 - r() * 160, width: 110, height: 400, fill: ['#5BD68A', '#FFB870', '#7FDDCF'][x / 140 % 3 | 0], ...SO, 'stroke-width': 6 }, scroll);
+  for (const x of [60, 560]) el('rect', { x, y: 330, width: 460, height: 380, rx: 30, fill: 'none', ...SO, 'stroke-width': 12 }, g);
+  el('line', { x1: -400, y1: 230, x2: W + 400, y2: 230, stroke: '#9AA0A6', 'stroke-width': 18 }, g);
+  el('rect', { x: -400, y: FLOOR, width: W + 800, height: H - FLOOR + 400, fill: '#6B7280' }, g);
+  el('line', { x1: -400, y1: FLOOR, x2: W + 400, y2: FLOOR, stroke: K.ol, 'stroke-width': OW }, g);
+  return t => { tf(scroll, -((t * 420) % 1400), 0); };     // à appeler dans update(t) : le paysage défile
+}
+function plant(g, x, y, s = 1) {
+  const p = el('g', { transform: `translate(${x} ${y}) scale(${s})` }, g);
+  for (const a of [-40, -15, 15, 40]) el('path', { d: `M 0 -110 Q ${a * 1.6} ${-200} ${a * 1.2} -250 Q ${a * 0.4} -180 0 -110`, fill: '#43AA8B', ...SO, 'stroke-width': 6 }, p);
+  el('path', { d: 'M -50 -110 L 50 -110 L 38 0 L -38 0 Z', fill: '#E76F51', ...SO }, p);
+  return p;
+}
+function door(g, x, col = '#8E5530') {
+  const d = el('g', { transform: `translate(${x} ${FLOOR})` }, g);
+  el('rect', { x: -110, y: -500, width: 220, height: 500, rx: 10, fill: col, ...SO }, d);
+  el('circle', { cx: 70, cy: -250, r: 12, fill: K.yellow, ...SO, 'stroke-width': 5 }, d);
+  return d;
+}
+function sign(g, x, y, text, o = {}) {
+  const s = el('g', { transform: `translate(${x} ${y}) rotate(${o.rot ?? 0})` }, g);
+  const w = measure(text, o.size || 54) + 60;
+  frameBox(s, -w / 2, -50, w, 100, o.col || K.cream, 16);
+  txt(s, text, { x: 0, y: 18, 'font-size': o.size || 54, 'font-family': 'Fredoka', 'font-weight': 700, fill: K.ol, 'text-anchor': 'middle' });
+  return s;
+}
+// Ambiances : pluie (gouttes qui tombent), nuit (voile bleu sombre + étoiles) ; à appeler en dernier dans la scène.
+function rain(g, n = 70) {
+  const r = rng(77), drops = [];
+  for (let i = 0; i < n; i++) drops.push({ e: el('line', { x1: 0, y1: 0, x2: -12, y2: 46, stroke: '#CFE8FF', 'stroke-width': 5, 'stroke-linecap': 'round', opacity: .8 }, g), x: r() * 1300 - 100, p: r(), v: 0.7 + r() * 0.5 });
+  return t => drops.forEach(d => { const y = ((d.p + t * d.v) % 1) * (H + 200) - 100; tf(d.e, d.x - y * 0.15, y); });
+}
+function night(g, a = 0.45) { el('rect', { x: -400, y: -400, width: W + 800, height: H + 800, fill: '#14213D', opacity: a }, g); }
+
+// ---------------- Pas : un bruit de pas par foulée pendant une marche ----------------
+function walkSteps(t0, t1, rate = 1.8) { for (let x = t0 + 0.1; x < t1; x += 0.5 / rate) ev(x, 'step', { f: 0.9 + 0.2 * ((x * 7) % 1) }); }
+
+// Scène partagée en deux (deux camps, avant/après) : deux décors séparés par une ligne brisée, sol à deux couleurs.
+function splitStage(g, left, right) {
+  el('rect', { x: -400, y: -400, width: W + 800, height: H + 800, fill: SETS[left].bg }, g);
+  dots(g, SETS[left].pat, 90, 13);
+  const r = el('g', {}, g);
+  el('path', { d: 'M 540 -400 L 600 200 L 500 700 L 590 1200 L 540 2400 L 1600 2400 L 1600 -400 Z', fill: SETS[right].bg }, r);
+  el('path', { d: 'M 540 -400 L 600 200 L 500 700 L 590 1200 L 540 2400', fill: 'none', stroke: K.ol, 'stroke-width': OW }, r);
+  el('rect', { x: -400, y: FLOOR, width: W + 800, height: H - FLOOR + 400, fill: SETS[left].floor }, g);
+  el('rect', { x: 540, y: FLOOR, width: 1000, height: H - FLOOR + 400, fill: SETS[right].floor }, g);
+  el('line', { x1: -400, y1: FLOOR, x2: W + 400, y2: FLOOR, stroke: K.ol, 'stroke-width': OW }, g);
 }
