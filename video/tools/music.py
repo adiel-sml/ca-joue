@@ -20,7 +20,7 @@ OUT = sys.argv[2] if len(sys.argv) > 2 else 'out/mix.wav'
 EVJ = json.load(open('events.json'))
 EVS = EVJ['ev'] if isinstance(EVJ, dict) and 'ev' in EVJ else EVJ
 SEC = TL['S']; DURF = TL['dur']
-BEAT = 0.5; BAR = 2.0
+BEAT = TL['B']; BAR = TL['BAR']
 
 # Bus voix + bruitages clés (sert à baisser la musique), bus bruitages
 VL = np.zeros(S.N); VR = np.zeros(S.N)
@@ -169,48 +169,28 @@ def bar_mode(t, mode, tr=0):
         add(pad([m + tr for m in (48, 55, 64, 67, 72)], BAR), t, 0.3)
         for k in range(4): add(bell([72, 76, 79, 84][k] + tr, 1.4), t + k * BEAT, 0.12)
 
-# ---------------- Arrangement ----------------
-plan = []
-def span(t0, t1, mode, tr=0):
+# ---------------- Arrangement : lu dans timeline.json (TL["score"]) ----------------
+SC = TL['score']
+for t0, t1, mode, tr in SC['spans']:
     t = t0
-    while t < t1 - 1e-6: plan.append((t, mode, tr)); t += BAR
-H = SEC['hook']
-span(0, H['silence'] - 1e-6, 'sparse')
-span(SEC['reveal']['t0'], SEC['r1']['t0'], 'brass')
-for key, mode in [('r1', 'funk'), ('r2', 'quiz'), ('r3', 'dream'), ('r4', 'sweet')]:
-    R = SEC[key]; jingle(R['t0'])
-    if key == 'r2':
-        half = R['card1'] + BAR
-        span(R['card1'], half, 'quiz'); span(half, R['t1'] - BAR / 4, 'quizFast')
-    else: span(R['card1'], R['t1'], mode)
-G = SEC['gage']
-span(G['t0'], G['silence'], 'tension')
-span(G['stamp'] - (G['stamp'] % BAR), G['t1'], 'pop')
-O = SEC['offline']; span(O['t0'], O['t1'], 'light')
-F = SEC['final']
-span(F['t0'], F['snap'] - 1e-6, 'popBig', 2)
-span(F['snap'], F['t1'], 'end', 2)
-for t, mode, tr in plan:
-    # une mesure entamée par un silence ne joue que jusqu'au silence (le découpage se fait après)
-    bar_mode(t, mode, tr)
-add(crash(2.0), SEC['reveal']['t0'], 0.8)
-add(crash(2.0), F['snap'], 0.7)
-for k, m in enumerate([74, 78, 81, 86]): add(brass_stab([m, m + 4], 0.16), F['snap'] + k * BEAT / 3, 0.5)
-add(brass_stab([74, 78, 81, 86], 1.4), F['snap'] + BEAT * 4 / 3, 0.55)
-roll(G['silence'] - BAR / 2, G['silence'])
+    while t < t1 - 1e-6: bar_mode(t, mode, tr); t += BAR
+for t in SC.get('jingles', []): jingle(t)
+for t in SC.get('crashes', []): add(crash(2.0), t, 0.8)
+for t, tr in SC.get('fanfares', []):
+    for k, m in enumerate([72, 76, 79, 84]): add(brass_stab([m + tr, m + 4 + tr], 0.16), t + k * BEAT / 3, 0.5)
+    add(brass_stab([m + tr for m in (72, 76, 79, 84)], 1.4), t + BEAT * 4 / 3, 0.55)
+for t0, t1 in SC.get('rolls', []): roll(t0, t1)
 
 # silences : la musique et l'ambiance s'arrêtent net
 def mute(t0, t1, fade=0.04):
     i0, i1 = int(t0 * SR), int(t1 * SR); f = int(fade * SR)
     for B_ in (S.L, S.R):
         B_[i0:i0 + f] *= np.linspace(1, 0, f)[: len(B_[i0:i0 + f])]; B_[i0 + f:i1] = 0
-mute(H['silence'], H['t1'])
-mute(G['silence'], G['stamp'] - 0.005)
+for t0, t1 in SC.get('silences', []): mute(t0, t1)
 
 # ---------------- Ambiances ----------------
-add(roomtone(H['silence']), 0, 0.8)
-R3 = SEC['r3']; add(crickets(R3['t1'] - R3['card1']), R3['card1'], 1.0)
-add(cheer(1.8), F['snap'] - 1.2, 0.5)
+AMB = {'room': lambda d: roomtone(d) * 0.8, 'crickets': crickets, 'cheer': lambda d: cheer(d) * 0.5}
+for kind, t0, t1 in SC.get('ambience', []): add(AMB[kind](t1 - t0), t0, 1.0)
 
 # ---------------- Bruitages depuis les événements de l'image ----------------
 for e in EVS:
@@ -270,8 +250,7 @@ duck = 1 - 0.55 * np.clip(duck_env / (np.percentile(duck_env, 95) + 1e-9), 0, 1)
 mix = music * duck + vb + fb * 0.9
 n = int(DURF * SR); mix = mix[:, :n]
 fo = int(1.2 * SR); mix[:, -fo:] *= np.linspace(1, 0, fo)
-mix = mix / (np.abs(mix).max() + 1e-9) * 1.4
-mix = np.tanh(mix) * 0.9
+mix = mix / (np.abs(mix).max() + 1e-9) * 0.9
 os.makedirs(os.path.dirname(OUT) or '.', exist_ok=True)
 # niveau : -14 LUFS mesurés par ffmpeg (ebur128), puis limiteur à anticipation 5 ms, plafond -2 dBFS
 import subprocess, re, tempfile
@@ -281,7 +260,7 @@ def lufs(x):
         sf.write(tmp.name, x.T.astype(np.float32), SR)
         r = subprocess.run(['ffmpeg', '-hide_banner', '-nostats', '-i', tmp.name, '-af', 'ebur128', '-f', 'null', '-'], capture_output=True, text=True).stderr
     return float(re.findall(r'I:\s+(-?[\d.]+) LUFS', r)[-1])
-def limit(x, ceil_db=-2.0):
+def limit(x, ceil_db=-4.0):
     c = 10 ** (ceil_db / 20); pk = np.abs(x).max(0) + 1e-9
     g = np.minimum(1, c / pk); w = int(0.005 * SR)
     g = uniform_filter1d(minimum_filter1d(g, 2 * w + 1), 2 * w + 1)

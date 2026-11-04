@@ -1,0 +1,8 @@
+{
+  "name": "adiel",
+  "owner": { "name": "adiel-sml" },
+  "metadata": { "description": "Plugins personnels d'adiel-sml." },
+  "plugins": [
+    { "name": "doodle-video", "source": "./plugin", "description": "Vidéos de lancement en dessin animé : bonhommes doodle, vrais écrans, voix, musique rythmée." }
+  ]
+}

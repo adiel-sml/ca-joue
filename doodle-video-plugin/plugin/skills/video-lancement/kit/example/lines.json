@@ -1,0 +1,11 @@
+[
+ {"id":"l1","text":"Ce soir, personne ne sait à quoi jouer ?","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
+ {"id":"l2","text":"Sors ton téléphone. Ça Joue, c'est vingt-trois jeux de soirée dans une seule appli.","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
+ {"id":"l3","text":"En équipes : les mimes, le mot interdit, Time's Up.","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
+ {"id":"l4","text":"Tous ensemble : action ou vérité, la bombe, tu préfères.","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
+ {"id":"l5","text":"Rôles secrets : Undercover, et un loup-garou où l'appli mène la partie.","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
+ {"id":"l6","text":"En couple : des jeux rien que pour vous deux.","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
+ {"id":"l7","text":"Et celui qui perd ? Il fait un gage.","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
+ {"id":"l8","text":"Même sans réseau, ça marche.","voice":"ff_siwis","lang":"fr-fr","speed":1.0},
+ {"id":"l9","text":"Ça Joue. Ce soir, c'est toi qui lances la partie.","voice":"ff_siwis","lang":"fr-fr","speed":1.0}
+]
