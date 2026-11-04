@@ -11,6 +11,8 @@ Ce skill refait, pour n'importe quel projet, le film de lancement de Ça Joue : 
 
 Parle en français à l'utilisateur, sauf s'il écrit dans une autre langue.
 
+**Skills d'appoint, s'ils sont installés** : ceux du plugin Social Media Skills (`hook-writer` pour l'accroche, `tiktok-script`, `reels-script`, `youtube-shorts`, `caption-writer`, `hashtag-strategy`, `platform-specs-and-validation`) pour le texte et la publication ; `dataviz` pour un graphique dans une explication. Ils complètent ce skill, ils ne remplacent ni ses règles ni son style.
+
 ## Règles de l'utilisateur, toujours
 
 - Rien qui fasse « généré » : pas de faux avis, pas de boutons qui pullulent, pas de dégradé violet (pas de violet du tout dans les décors), pas de tiret long ni de tiret court en guise de ponctuation dans les titres et les textes, pas d'emoji (des icônes à la place), pas d'animation dans tous les sens, pas de mention « IA » ni de tag IA sur les textes ou les images, aucune image générée par IA. Tout est dessiné en code.
@@ -76,7 +78,30 @@ Crée le projet du film dans un dossier `<nom>-lancement/` du dossier de l'utili
 3. **`film.js`** : d'après `kit/example/film.js` ; il ne contient que les scènes, le socle commun (scènes, étiquettes, sous-titres mot par mot, caméra, rendu) est dans `runtime.js`. Le moteur (`engine.js`) fournit décors (`setBg` : rayures, pois, soleil), téléphone avec vrais écrans (`phone`, `set(nom)`), étiquettes (`sticker`), éclat (`burst`), mot de jugement (`judge`), tuiles d'icônes Lucide (`gameTile`), caméra, coups de zoom (`punch`), événements sonores (`ev`). `people.js` fournit les bonhommes (`person`, `pose`, `personHand`), `story.js` les lieux, bulles, étapes, flèches, gros chiffres, listes et la marche (voir le skill `histoire`).
 4. **Distribution** : trois bonhommes différents (peau, coiffure, vêtements, un accessoire chacun), aux couleurs qui ne sont jamais celles du décor où ils se tiennent.
 
-Mise en page verticale : sol à y = 1380, téléphone en haut au centre, bonhommes devant sur le sol, étiquettes en bas sur les côtés du téléphone (là où les écrans sont vides), plaque de sous-titres à y ≈ 1520, rien d'important au-dessus de y = 150, sous y = 1650 ni à droite de x = 950 entre y = 900 et 1650 (interface de TikTok).
+Mise en page verticale : sol à y = 1380, téléphone en haut au centre, bonhommes devant sur le sol, étiquettes en bas sur les côtés du téléphone (là où les écrans sont vides), titres vers y = 265, plaque de sous-titres à y ≈ 1410 ; zones sûres : voir « Publication ».
+
+## Rythme : captiver jusqu'à la fin
+
+Le spectateur décide en 1 à 2 secondes s'il reste, puis à chaque temps mort. Règles, toujours :
+- **Accroche visible dès la première image** : la question ou l'enjeu en grosse étiquette (`sticker`), avec un coup de zoom à 0 s ; jamais un logo ni un plan vide pour commencer.
+- **Aucun temps mort** : 0,12 s entre deux répliques (`gap`), pas de mesure entière d'attente en fin de scène (la scène coupe sur le temps qui suit la dernière réplique), une seule phrase par ligne de voix (les points au milieu d'une ligne ajoutent environ 0,7 s de silence avec les voix Microsoft), débit `rate` de +6 % à +10 %.
+- **Quelque chose change à l'écran toutes les 1,5 à 2 secondes** : nouveau plan (`dialogueCam` : un plan par réplique, plan large puis gros plan sur celui qui parle), mot clé qui surgit sur le mot dit (`keyword`), étape qui s'affiche, réaction, objet qui entre.
+- **Personnages vivants en permanence** : respiration, balancement et clignement (`alive`), réaction de celui qui écoute (`listen`), bouche qui suit les mots (`talking`), saut ou écrasement sur les temps forts.
+- **Transitions qui claquent** : bande balayée avec whoosh (`wipe`), coupe franche avec éclair, jamais de fondu lent.
+- **Textes à l'écran** : bulles et mots clés dans le HUD (`OVERLAYS`), donc toujours visibles, même en gros plan.
+- **Musique rythmée sans interruption**, sauf un ou deux silences voulus juste avant une révélation.
+- **Fin courte** : la chute, puis 1 à 2 secondes au plus avant de couper (au-delà, le spectateur part avant la fin, ce que les réseaux pénalisent).
+- Contrôle : `timeline.json` ne doit montrer aucun blanc de plus de 0,7 s entre deux répliques, et la planche-contact à une image par seconde doit changer à chaque image.
+
+## Publication sur TikTok, Instagram et YouTube
+
+Une seule vidéo verticale 1080×1920 sert aux trois réseaux (TikTok, Reels, Shorts). Avant de livrer :
+1. Écris `post.json` avec l'utilisateur : `cover_t` (l'image de couverture, souvent l'accroche ou la révélation), et pour chaque réseau le texte (la première ligne reprend l'accroche) et 3 à 5 hashtags précis (pas de liste de 30) ; pour YouTube un titre de 100 caractères au plus et `#Shorts`.
+2. Lance `python tools/post.py <film>.mp4 post.json` : il crée `publication/` avec `tiktok.mp4`, `reels.mp4`, `shorts.mp4` (vérifiés, lecture rapide), `couverture-9x16.jpg`, `couverture-4x5.jpg` (grille Instagram), `zones-sures.jpg` et `POST.md` (textes à copier, longueurs).
+3. Regarde `zones-sures.jpg` : aucun visage, texte ou sous-titre sous les zones rouges (interface de chaque réseau). Mise en page sûre : sous-titres vers y = 1410 (`SUB_Y`), titres vers y = 265, rien d'important au-dessus de y = 220, sous y = 1500, ni à droite de x = 940 entre y = 880 et 1560.
+4. Durées : Reels et Shorts jusqu'à 3 min, TikTok jusqu'à 10 min ; viser 15 à 45 s pour une histoire, 30 à 55 s pour un lancement.
+
+Une version horizontale 16:9 pour une vidéo YouTube classique n'est pas encore prise en charge par le kit (mise en page verticale) : le dire si l'utilisateur la demande.
 
 ## 6. Voix, musique, montage
 
@@ -93,4 +118,4 @@ Mise en page verticale : sol à y = 1380, téléphone en haut au centre, bonhomm
 - Écoute critique impossible pour toi : dis-le, et demande à l'utilisateur de signaler un mot décalé.
 - Une seule série de corrections, puis livraison.
 
-**Livrer** dans le dossier du film : `<nom>.mp4`, `poster.jpg`, `<nom>.srt`, `TREATMENT.md`, `CREDITS` (d'après `kit/CREDITS.template` : police Fredoka OFL, icônes Lucide ISC, code MIT de Lemo-Opuscar, voix utilisée), et le code avec `build.sh`. Envoie la vidéo à l'utilisateur, dis où est le dossier, et propose de le sauvegarder dans une branche du dépôt du projet (la machine d'une session cloud est temporaire).
+**Livrer** dans le dossier du film, avec le dossier `publication/` : `<nom>.mp4`, `poster.jpg`, `<nom>.srt`, `TREATMENT.md`, `CREDITS` (d'après `kit/CREDITS.template` : police Fredoka OFL, icônes Lucide ISC, code MIT de Lemo-Opuscar, voix utilisée), et le code avec `build.sh`. Envoie la vidéo à l'utilisateur, dis où est le dossier, et propose de le sauvegarder dans une branche du dépôt du projet (la machine d'une session cloud est temporaire).

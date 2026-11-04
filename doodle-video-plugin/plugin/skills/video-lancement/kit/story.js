@@ -167,3 +167,49 @@ function walk(t, t0, t1, xa, xb) {
 }
 // Bouche qui parle : ouverte sur les mots de la ligne (temps des mots de TL.lines).
 function talking(L, t) { return !!L && L.words.some(w => t >= w.t0 && t < w.t1 - 0.04 && ((t - w.t0) % 0.16) < 0.1); }
+
+// ---------------- Rythme : ce qui garde le spectateur ----------------
+// Découpage automatique d'un dialogue : un plan par réplique, qui alterne plan large et gros plan sur celui qui parle,
+// avec une poussée lente pendant la réplique. who : {id de ligne → x du personnage}. Renvoie cam(t).
+function dialogueCam(lines, who, o = {}) {
+  const wide = o.wide || { x: 540, y: 1060, z: 1.25 }, headY = o.headY ?? FLOOR - 330, zc = o.zClose || 1.75;
+  const shots = lines.map((L, i) => ({ t0: L.t0 - 0.08, t1: L.t1, close: i % 3 !== 0, x: who[L.id] }));
+  return t => {
+    let k = -1; shots.forEach((s, i) => { if (t >= s.t0) k = i; });
+    if (k < 0) return wide;
+    const s = shots[k], p = seg(t, s.t0, s.t1 + 0.4);
+    if (!s.close) return { x: wide.x, y: wide.y, z: wide.z + 0.08 * p };
+    return { x: clamp(s.x, 540 - 540 * (1 - 1 / zc), 540 + 540 * (1 - 1 / zc)), y: headY + 120, z: zc + 0.1 * p };
+  };
+}
+// Vie au repos : respiration, léger balancement, clignement ; à fusionner dans les options de pose.
+function alive(t, i = 0) {
+  const b = Math.sin(t * 2.4 + i * 1.7);
+  const blink = ((t + i * 0.77) % 3.1) < 0.12;
+  return { lean: 2.2 * b, sq: 1 + 0.012 * Math.sin(t * 3.1 + i), eyes: blink ? 'meh' : 'n' };
+}
+// Réaction de celui qui écoute : un petit sursaut au début de la réplique de l'autre, puis il regarde le locuteur.
+function listen(t, L, dx) { const r = L && t >= L.t0 && t < L.t0 + 0.3 ? hitSq(t, L.t0, 0.06) : 1; return { look: Math.sign(dx) * 6, sq: r }; }
+// Mot clé qui surgit au moment où il est dit (étiquette à ombre dure), avec un pop et un coup de zoom.
+// Par défaut à l'écran (HUD, toujours visible) : keyword(L, 'mot', {…}) ; ou dans le décor : keyword(L, 'mot', {g, s}).
+function keyword(L, word, o = {}) {
+  const g = o.g || HUD, s = o.s || { fx: OVERLAYS };
+  const w = L.words.find(x => x.w.toLowerCase().replace(/[^a-zàâçéèêëîïôûùœ0-9'-]/g, '').startsWith(word.toLowerCase()));
+  if (!w) return null;
+  const t0 = w.t0 - 0.03, txt_ = o.text || word.toUpperCase();
+  const st = sticker(g, txt_, { col: o.col || K.yellow, fill: o.fill || K.white, x: o.x ?? 540, y: o.y ?? 560, rot: o.rot ?? -5, t0, t1: o.t1 ?? (t0 + 1.6), size: o.size || 72 });
+  s.fx.push(st.update); ev(t0, 'pop', { f: o.f || 988 }); punch(t0, 0.025);
+  if (typeof reg === 'function') reg('kw-' + txt_, txt_, st.t0, st.t1, st.x, st.y, st.w, st.h);
+  return st;
+}
+// Transition rapide entre deux scènes : une bande de couleur balaie l'écran (0,3 s) avec un whoosh.
+const WIPES = [];
+function wipe(t0, col = K.yellow) { WIPES.push({ t0, col }); ev(t0 - 0.12, 'whoosh'); }
+function drawWipes(hud, t) {
+  if (!drawWipes.g) { drawWipes.g = el('g', {}, hud); drawWipes.r = el('path', { d: '', fill: K.yellow, stroke: K.ol, 'stroke-width': 10 }, drawWipes.g); }
+  const w = WIPES.find(x => t >= x.t0 - 0.15 && t < x.t0 + 0.15);
+  if (!w) { op(drawWipes.g, 0); return; }
+  const p = seg(t, w.t0 - 0.15, w.t0 + 0.15), x = lerp(-1400, 1500, E.io(p));
+  drawWipes.r.setAttribute('fill', w.col); op(drawWipes.g, 1);
+  drawWipes.r.setAttribute('d', `M ${x} -100 L ${x + 900} -100 L ${x + 600} 2020 L ${x - 300} 2020 Z`);
+}

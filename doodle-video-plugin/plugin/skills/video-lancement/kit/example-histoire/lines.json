@@ -1,7 +1,51 @@
 [
- {"id":"l1","who":"malik","text":"Samedi, j'invite tout le monde, mais je ne sais pas quoi prévoir.","voice":"fr-FR-HenriNeural"},
- {"id":"l2","who":"ines","text":"Facile : il te faut trois choses.","voice":"fr-FR-DeniseNeural"},
- {"id":"l3","who":"ines","text":"Un : une playlist. Deux : des jeux. Trois : des pizzas.","voice":"fr-FR-DeniseNeural"},
- {"id":"l4","who":"malik","text":"Samedi soir, tout le monde est venu.","voice":"fr-FR-HenriNeural"},
- {"id":"l5","who":"ines","text":"Tu vois, c'était simple !","voice":"fr-FR-DeniseNeural"}
+ {
+  "id": "l1",
+  "who": "malik",
+  "text": "Samedi, j'invite tout le monde, mais je ne sais pas quoi prévoir.",
+  "voice": "fr-FR-HenriNeural",
+  "rate": "+10%"
+ },
+ {
+  "id": "l2",
+  "who": "ines",
+  "text": "Facile : il te faut trois choses.",
+  "voice": "fr-FR-DeniseNeural",
+  "rate": "+10%"
+ },
+ {
+  "id": "l3",
+  "who": "ines",
+  "text": "Un, une playlist.",
+  "voice": "fr-FR-DeniseNeural",
+  "rate": "+10%"
+ },
+ {
+  "id": "l3b",
+  "who": "ines",
+  "text": "Deux, des jeux.",
+  "voice": "fr-FR-DeniseNeural",
+  "rate": "+10%"
+ },
+ {
+  "id": "l3c",
+  "who": "ines",
+  "text": "Trois, des pizzas !",
+  "voice": "fr-FR-DeniseNeural",
+  "rate": "+10%"
+ },
+ {
+  "id": "l4",
+  "who": "malik",
+  "text": "Samedi soir, tout le monde est venu.",
+  "voice": "fr-FR-HenriNeural",
+  "rate": "+10%"
+ },
+ {
+  "id": "l5",
+  "who": "ines",
+  "text": "Tu vois, c'était simple !",
+  "voice": "fr-FR-DeniseNeural",
+  "rate": "+10%"
+ }
 ]
