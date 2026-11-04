@@ -210,6 +210,9 @@ for e in EVS:
     elif s == 'howl': addf(howl(), t, 0.9, 0.3)
     elif s == 'shift': addf(woodblock(500 * f), t, 0.12, 0.3 * (f - 1) * 10)
     elif s == 'heart': addf(pop(f), t, 0.35, rng.uniform(-.5, .5)); addf(bell(int(round(69 + 12 * np.log2(f / 440))) + 12, 0.6), t, 0.06)
+    elif s == 'buzz':
+        n_ = int(0.4 * SR); tt = np.arange(n_) / SR
+        addf(lp(np.sign(np.sin(2 * np.pi * 110 * tt)) + np.sign(np.sin(2 * np.pi * 117 * tt)), 1500) * np.clip((0.4 - tt) / 0.05, 0, 1) * 0.3, t, 0.6)
     elif s == 'nosignal': addf(nosignal(), t, 0.7)
     elif s == 'shutter': addv(shutter(), t, 0.8)
     elif s == 'land': addf(plop(), t, 0.5); addf(boing(220, 520), t + 0.02, 0.25)

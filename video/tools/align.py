@@ -88,8 +88,6 @@ def words_of(text):
         if re.fullmatch(r'[:;?!]+', w) and shown: shown[-1] += '\u00a0' + w
         else: shown.append(w)
     spoken = [re.sub(r"[^\w'’-]", '', w) for w in shown]
-    DIGITS = {'vingt-trois': '23'}                     # dits en lettres, écrits en chiffres
-    shown = [re.sub(r'(?i)^vingt-trois', '23', w) for w in shown]
     return shown, spoken
 
 
@@ -102,11 +100,26 @@ def main():
     from kokoro_onnx import Kokoro
     k = Kokoro(os.path.join(lib, 'core/tts/kokoro-v1.0.onnx'), os.path.join(lib, 'core/tts/voices-v1.0.bin'))
     out = {}
+    # voix Microsoft : les temps de mots donnés par le service sont exacts, on les prend tels quels
+    tw = os.path.join(a.vdir, 'tts_words.json')
+    TW = json.load(open(tw, encoding='utf-8')) if os.path.exists(tw) else {}
     for L in lines:
+        if L['id'] in TW:
+            shown, spoken = words_of(L['text'])
+            for said, digits in L.get('show', {}).items():
+                shown = [re.sub('(?i)^' + re.escape(said), digits, w) for w in shown]
+            ws = TW[L['id']]
+            if len(ws) == len(shown):
+                out[L['id']] = [{'w': w, 't0': x[1], 't1': x[2]} for w, x in zip(shown, ws)]
+                print(L['id'], 'temps du service', ' '.join(f"{x['w']}@{x['t0']:.2f}" for x in out[L['id']])); continue
+            print(L['id'], f'temps du service ignorés ({len(ws)} mots contre {len(shown)}), alignement DTW')
+
         shown, spoken = words_of(L['text'])
+        for said, digits in L.get('show', {}).items():          # dit en lettres, écrit en chiffres
+            shown = [re.sub('(?i)^' + re.escape(said), digits, w) for w in shown]
         ref, bounds = [], [0]
         for w in spoken:
-            s, sr = k.create(w, voice=L.get('voice', 'ff_siwis'), speed=1.0, lang=L.get('lang', 'fr-fr'))
+            s, sr = k.create(w, voice=(L.get('voice', 'ff_siwis') if not L.get('voice', '').endswith('Neural') else 'ff_siwis'), speed=1.0, lang=L.get('lang', 'fr-fr'))
             g = np.gcd(sr, SR); s = resample_poly(s, SR // g, sr // g).astype('float32')
             i0, i1 = trim(s); s = s[i0:i1]
             ref.append(s); bounds.append(bounds[-1] + len(s))

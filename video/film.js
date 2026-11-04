@@ -70,7 +70,7 @@ function cast3(g) { const out = []; for (const [k, i] of [['cap', 0], ['puff', 1
   const R = S.reveal, L = lineById('l2b');
   const tFly = q16(wordT(L, 'seule') ?? (R.n23 + 1.2));
   CUTS.push(R.t0);
-  scene(R.t0, S.r1.t0, (g, s) => {
+  scene(R.t0, S.mime.t0, (g, s) => {
     const bgU = setBg(g, 'navy', 'rays', { n: 32, cy: 680, spin: 6 });
     const ph = phone(g);
     const M = cast3(g);
@@ -95,14 +95,14 @@ function cast3(g) { const out = []; for (const [k, i] of [['cap', 0], ['puff', 1
     el('rect', { x: -tagW / 2 + 14, y: -100 + 14, width: tagW, height: 200, rx: 50, fill: K.ol }, tag);
     el('rect', { x: -tagW / 2, y: -100, width: tagW, height: 200, rx: 50, fill: K.gold, ...SO, 'stroke-width': 10 }, tag);
     gtext(tag, '23 jeux', 0, 52, 150, { fill: K.white, sw: 22 });
-    reg('n23', '23 jeux', R.n23, S.r1.t0, 540, 180, tagW, 200);
+    reg('n23', '23 jeux', R.n23, S.mime.t0, 540, 180, tagW, 200);
     s.fx.push(burst(g, 540, 180, R.n23, K.yellow, 1.6));
     s.cam = t => { const p = E.io(seg(t, R.t0, tFly + 0.4)); return { x: 540, y: lerp(820, 960, p), z: lerp(1.1, 1, p) }; };
     return t => {
       bgU(t);
       const sq = hitSq(t, R.t0, 0.1);
       tf(ph.g, 540, PHY + 30 * (1 - sq), 1, 0, 1);
-      const idx = t < tFly + 0.35 ? 0 : Math.min(40, Math.floor(seg(t, tFly + 0.35, S.r1.t0 - 0.2) * 40));
+      const idx = t < tFly + 0.35 ? 0 : Math.min(40, Math.floor(seg(t, tFly + 0.35, S.mime.t0 - 0.2) * 40));
       ph.set('home-' + String(idx).padStart(2, '0'));
       const cheer = nearestIn([R.n23], t, 0.02, 0.6);
       M.forEach((m, i) => {
@@ -125,198 +125,224 @@ function cast3(g) { const out = []; for (const [k, i] of [['cap', 0], ['puff', 1
   });
 }
 
-// ======================= 3–6. Manches : carte, puis jeu =======================
-const BANNERS = [];
-function roundCard(R, n, name, setKey, gid, tcol) {
-  CUTS.push(R.t0);
-  { const st = sticker(HUD, name, { col: tcol || GAME[gid].color, x: 540, y: 190, t0: R.card1, t1: R.t1, size: 44 }); BANNERS.push(st.update);
-    TEXTREG.push({ id: 'card' + n, text: name, t0: R.card1, t1: R.t1, x0: 540 - st.w / 2, y0: 190 - st.h / 2, x1: 540 + st.w / 2, y1: 190 + st.h / 2 }); }
-  ev(R.t0, 'jingle'); punch(R.t0, 0.03);
-  scene(R.t0, R.card1, (g, s) => {
-    const bgU = setBg(g, setKey, 'stripes', { w: 70, angle: -24, floor: false });
-    const p = el('g', {}, g);
-    el('rect', { x: -450 + 16, y: -250 + 16, width: 900, height: 500, rx: 54, fill: K.ol }, p);
-    el('rect', { x: -450, y: -250, width: 900, height: 500, rx: 54, fill: K.cream, ...SO, 'stroke-width': 10 }, p);
-    const pillW = measure('MANCHE ' + n, 50) + 70;
-    el('rect', { x: -pillW / 2, y: -300, width: pillW, height: 90, rx: 45, fill: K.ol }, p);
-    gtext(p, 'MANCHE ' + n, 0, -238, 50, { fill: K.white, sw: 0 });
-    const tile = el('g', {}, p); gameTile(tile, GAME[gid], 170);
-    let size = 118; while (measure(name, size) > 780) size -= 4;
-    const title = gtext(p, name, 0, 190, size, { fill: tcol || GAME[gid].color, sw: size * 0.13 });
-    reg('card' + n, name, R.t0, R.card1, 540, 1010, measure(name, size), size);
-    s.cam = () => ({ x: 540, y: 960, z: 1 });
-    return t => {
-      bgU(t);
-      tf(p, lerp(1500, 540, E.back(seg(t, R.t0, R.t0 + 0.32))), 860, 1, lerp(8, -2, seg(t, R.t0, R.t0 + 0.32)));
-      tf(tile, 0, -40 + hopY(t, 26), hitSq(t, R.t0 + B * Math.round((t - R.t0) / B - 0.5), 0.12));
-      void title;
-    };
+// ======================= 3. Six jeux, un par section =======================
+SETS.lime = { bg: '#C6F16D', pat: '#D5F58E', floor: '#8FC23A' };
+SETS.sun = { bg: '#FFD45E', pat: '#FFE08A', floor: '#E0A93A' };
+// Titre du jeu en haut (étiquette à la couleur du jeu), coupe franche avec éclair, cymbale dans la partition.
+function gameScene(key, title, gid, build) {
+  const R = S[key], L = lineById(R.line);
+  CUTS.push(R.t0); punch(R.t0, 0.03);
+  return scene(R.t0, R.t1, (g, s) => {
+    const up = build(g, s, R, L);
+    stick(g, s, title, { col: GAME[gid].color, x: 540, y: 150, rot: -3, t0: R.t0 + 0.05, t1: R.t1, size: 64, f: 784 });
+    return t => { up(t); s.fx.forEach(f => f(t)); };
   });
 }
-
-// --- Manche 1 : En équipes ---
-{
-  const R = S.r1, L = lineById(R.line);
-  roundCard(R, 1, 'En équipes', 'tang', 'mime');
-  const tF = R.card1 + (R.t1 - R.card1) * 12 / 24;
-  scene(R.card1, R.t1, (g, s) => {
-    const bgU = setBg(g, 'tang', 'stripes');
-    const ph = phone(g);
-    const M = cast3(g);
-    const tm = wordT(L, 'mimes'), tmot = wordT(L, 'mot'), ttu = wordT(L, 'time');
-    stick(g, s, 'Mimes', { col: GAME.mime.color, x: 215, y: 780, rot: -6, t0: q16(tm ?? R.card1), t1: R.t1, f: 784 });
-    stick(g, s, 'Mot interdit', { col: GAME.taboo.color, x: 860, y: 880, rot: 5, t0: q16(tmot ?? R.card1 + .4), t1: R.t1, f: 880 });
-    stick(g, s, "Time's Up", { col: GAME.tu.color, x: 215, y: 990, rot: -4, t0: q16(ttu ?? R.card1 + .8), t1: R.t1, f: 988 });
-    ev(tF, 'ding'); punch(tF, 0.02);
-    s.fx.push(burst(g, 250, FLOOR - 300, tF, K.yellow, 1.1));
-    const sweeps = beatsIn(R.card1, R.t1, B / 2); sweeps.forEach((x, i) => i % 2 || ev(x, 'squeak', { f: 1 + (i % 4) * 0.1 }));
-    s.cam = t => ({ x: 540, y: 900, z: 1 + 0.04 * seg(t, R.card1, R.t1) });
-    return t => {
-      bgU(t);
-      tf(ph.g, 540, PHY);
-      ph.set('mime-' + String(Math.min(23, Math.floor(seg(t, R.card1, R.t1) * 24))).padStart(2, '0'));
-      const sw = Math.sin((t - R.card1) / B * Math.PI);        // la bleue mime « curling » : elle balaie en rythme
-      const found = t >= tF;
-      M.forEach((m, i) => {
-        let o;
-        if (i === 1) o = { armsL: 50 + 30 * sw, armsR: 50 - 30 * sw, lean: 8 * sw, eyes: 'n', look: 6 * sw, flat: true, sq: 1 - 0.04 * Math.abs(sw) };
-        else if (i === 0) o = found ? { hey: 1, open: true, eyes: 'up', sq: hitSq(t, tF, 0.2) } : { armsR: 150, armsL: 20, eyes: 'n', look: 6, flat: true, lean: -3 };
-        else o = found ? { hey: 0.4, eyes: 'up', open: t < tF + 0.5 } : { armsL: 120, armsR: 20, eyes: 'n', look: -6, open: frac(t) < 0.25, lean: 3 };
-        tf(m.w, m.x, FLOOR + (i === 0 && found ? hopY(t, 26) : 0), PSC);
-        pose(m.c, o);
-      });
-      s.fx.forEach(f => f(t));
-    };
-  });
+function bombProp(g) {
+  const bomb = el('g', {}, g);
+  el('path', { d: 'M 10 -40 Q 30 -70 52 -66', fill: 'none', stroke: K.ol, 'stroke-width': 7, 'stroke-linecap': 'round' }, bomb);
+  el('circle', { cx: 0, cy: 0, r: 44, fill: '#2B2D31', ...SO }, bomb);
+  el('rect', { x: -14, y: -54, width: 28, height: 18, rx: 4, fill: '#55585E', ...SO, 'stroke-width': 5 }, bomb);
+  el('ellipse', { cx: -14, cy: -14, rx: 12, ry: 8, fill: K.white, opacity: .5 }, bomb);
+  const spark = el('path', { d: starPath(6, 22, 9), fill: K.yellow, ...SO, 'stroke-width': 4 }, bomb);
+  return { bomb, spark };
+}
+function splitStage(g, left, right) {
+  el('rect', { x: -400, y: -400, width: W + 800, height: H + 800, fill: SETS[left].bg }, g);
+  dots(g, SETS[left].pat, 90, 13);
+  const r = el('g', {}, g);
+  el('path', { d: 'M 540 -400 L 600 200 L 500 700 L 590 1200 L 540 2400 L 1600 2400 L 1600 -400 Z', fill: SETS[right].bg }, r);
+  el('path', { d: 'M 540 -400 L 600 200 L 500 700 L 590 1200 L 540 2400', fill: 'none', stroke: K.ol, 'stroke-width': OW }, r);
+  el('rect', { x: -400, y: FLOOR, width: W + 800, height: H - FLOOR + 400, fill: SETS[left].floor }, g);
+  el('rect', { x: 540, y: FLOOR, width: 1000, height: H - FLOOR + 400, fill: SETS[right].floor }, g);
+  el('line', { x1: -400, y1: FLOOR, x2: W + 400, y2: FLOOR, stroke: K.ol, 'stroke-width': OW }, g);
 }
 
-// --- Manche 2 : Tous ensemble (la bombe passe de main en main) ---
+// --- Les mimes : la bonhomme du milieu mime « curling », les autres devinent ---
+gameScene('mime', 'Les Mimes', 'mime', (g, s, R, L) => {
+  const bgU = setBg(g, 'tang', 'stripes');
+  const ph = phone(g), M = cast3(g);
+  const tF = R.t0 + (R.t1 - R.t0) * 0.55;
+  ev(tF, 'ding'); punch(tF, 0.02); s.fx.push(burst(g, 250, FLOOR - 360, tF, K.yellow, 1.1));
+  stick(g, s, 'Trouvé !'.replace(' !', ' !'), { col: '#2FB36B', x: 230, y: 900, rot: -6, t0: tF, t1: R.t1, size: 50, sound: false });
+  beatsIn(R.t0, R.t1, B / 2).forEach((x, i) => i % 2 || ev(x, 'squeak', { f: 1 + (i % 4) * 0.1 }));
+  s.cam = t => ({ x: 540, y: 900, z: 1 + 0.04 * seg(t, R.t0, R.t1) });
+  return t => {
+    bgU(t); tf(ph.g, 540, PHY);
+    ph.set('mime-' + String(Math.min(23, Math.floor(seg(t, R.t0, R.t1) * 24))).padStart(2, '0'));
+    const sw = Math.sin((t - R.t0) / B * Math.PI), found = t >= tF;
+    M.forEach((m, i) => {
+      let o;
+      if (i === 1) o = { armsL: 50 + 30 * sw, armsR: 50 - 30 * sw, lean: 8 * sw, look: 6 * sw, flat: true };
+      else if (i === 0) o = found ? { hey: 1, open: true, eyes: 'up', sq: hitSq(t, tF, 0.2) } : { armsR: 150, armsL: 20, look: 6, flat: true, lean: -3 };
+      else o = found ? { hey: 0.4, eyes: 'up', open: t < tF + 0.5 } : { armsL: 120, armsR: 20, look: -6, open: frac(t) < 0.25, lean: 3 };
+      tf(m.w, m.x, FLOOR + (i === 0 && found ? hopY(t, 26) : 0), PSC); pose(m.c, o);
+    });
+  };
+});
+
+// --- La Bombe : elle passe de main en main, de plus en plus vite, puis explose ---
 {
-  const R = S.r2, L = lineById(R.line);
-  roundCard(R, 2, 'Tous ensemble', 'green', 'bomb');
-  const tBoom = R.t1 - B;
-  const half = R.card1 + Math.floor((tBoom - R.card1) / BAR / 2 + 0.5) * BAR || R.card1 + BAR;
-  const passes = beatsIn(R.card1 + B, half, B).concat(beatsIn(half, tBoom, B / 2));
-  const N = passes.length, cyc = [0, 1, 2, 1];
-  const start = (N % 2 === 1) ? 0 : 1;                        // la bombe finit chez la bleue (au centre)
+  const R = S.bomb, tBoom = R.t1 - B, half = R.t0 + BAR;
+  const passes = beatsIn(R.t0 + B, half, B).concat(beatsIn(half, tBoom, B / 2));
+  const N = passes.length, cyc = [0, 1, 2, 1], start = (N % 2 === 1) ? 0 : 1;   // finit chez la personne du milieu
   const holderAt = k => cyc[(start + k) % 4];
   passes.forEach((x, k) => ev(x, 'pass', { f: 0.9 + 0.05 * (k % 4) }));
-  beatsIn(R.card1, tBoom, B / 2).forEach(x => ev(x, 'tick'));
+  beatsIn(R.t0, tBoom, B / 2).forEach(x => ev(x, 'tick'));
   ev(tBoom, 'boom2'); punch(tBoom, 0.06);
-  scene(R.card1, R.t1, (g, s) => {
+  gameScene('bomb', 'La Bombe', 'bomb', (g, s) => {
     const bgU = setBg(g, 'green', 'dots');
-    const ph = phone(g);
-    const M = cast3(g);
-    const bomb = el('g', {}, g);
-    el('path', { d: 'M 10 -40 Q 30 -70 52 -66', fill: 'none', stroke: K.ol, 'stroke-width': 7, 'stroke-linecap': 'round' }, bomb);
-    el('circle', { cx: 0, cy: 0, r: 44, fill: '#2B2D31', ...SO }, bomb);
-    el('rect', { x: -14, y: -54, width: 28, height: 18, rx: 4, fill: '#55585E', ...SO, 'stroke-width': 5 }, bomb);
-    el('ellipse', { cx: -14, cy: -14, rx: 12, ry: 8, fill: K.white, opacity: .5 }, bomb);
-    const spark = el('path', { d: starPath(6, 22, 9), fill: K.yellow, ...SO, 'stroke-width': 4 }, bomb);
+    const ph = phone(g), M = cast3(g), { bomb, spark } = bombProp(g);
     const puff = el('g', {}, g);
     for (const [x, y, r] of [[0, 0, 120], [-110, 40, 80], [110, 30, 90], [-60, -90, 70], [70, -100, 80], [0, 90, 70]]) el('circle', { cx: x, cy: y, r, fill: '#E9E9E9', ...SO, 'stroke-width': 7 }, puff);
     s.fx.push(burst(g, 540, FLOOR - 140, tBoom, K.yellow, 2.2));
-    const ta = wordT(L, 'action'), tb = wordT(L, 'bombe'), tw = wordT(L, 'tu');
-    stick(g, s, 'Action ou Vérité', { col: GAME.av.color, x: 260, y: 780, rot: -6, t0: q16(ta ?? R.card1), t1: R.t1, f: 784 });
-    stick(g, s, 'La Bombe', { col: GAME.bomb.color, x: 860, y: 880, rot: 5, t0: q16(tb ?? R.card1 + .5), t1: R.t1, f: 880 });
-    stick(g, s, 'Tu préfères', { col: GAME.wyr.color, x: 215, y: 990, rot: -4, t0: q16(tw ?? R.card1 + 1), t1: R.t1, f: 988 });
-    const scr = [[R.card1, 'bomb'], [q16(ta ?? R.card1), 'av'], [q16(tb ?? R.card1 + .5), 'bomb'], [q16(tw ?? R.card1 + 1), 'wyr'], [half, 'bomb'], [tBoom, 'bomb-end']];
-    s.cam = t => t >= tBoom ? { x: 540, y: FLOOR - 170, z: 1.55 } : { x: 540, y: 920, z: 1 };
+    s.cam = t => t >= tBoom ? { x: 540, y: FLOOR - 200, z: 1.5 } : { x: 540, y: 920, z: 1 };
     const handPos = (i, t) => ({ x: X3[i], y: FLOOR - 205 + hopY(t, 10) });
     return t => {
-      bgU(t);
-      tf(ph.g, 540, PHY);
-      let sc = 'bomb'; for (const [x, n] of scr) if (t >= x) sc = n; ph.set(sc);
+      bgU(t); tf(ph.g, 540, PHY); ph.set(t >= tBoom ? 'bomb-end' : 'bomb');
       let k = -1; for (let j = 0; j < N; j++) if (t >= passes[j]) k = j;
-      const hold = holderAt(k + 1), prev = holderAt(k);
-      const boom = t >= tBoom;
+      const hold = holderAt(k + 1), prev = holderAt(k), boom = t >= tBoom;
       M.forEach((m, i) => {
         tf(m.w, m.x, FLOOR + (boom ? 0 : hopY(t + i * 0.13, 10)), PSC);
         const has = i === hold;
-        if (boom) pose(m.c, i === 1 ? { eyes: 'x', open: true, soot: true, armsL: 40, armsR: 40, sq: hitSq(t, tBoom, 0.3) } : { eyes: 'n', look: i === 0 ? 8 : -8, lean: i === 0 ? -10 : 10, sweat: true, open: true, armsL: 60, armsR: 60 });
-        else pose(m.c, { armsL: has ? 62 : 25, armsR: has ? 62 : 25, eyes: 'n', look: (hold - i) * 5, open: has, sweat: has && t > half, sq: hitSq(t, passes[k] ?? -9, 0.1) });
+        if (boom) pose(m.c, i === 1 ? { eyes: 'x', open: true, soot: true, armsL: 40, armsR: 40, sq: hitSq(t, tBoom, 0.3) } : { look: i === 0 ? 8 : -8, lean: i === 0 ? -10 : 10, sweat: true, open: true, armsL: 60, armsR: 60 });
+        else pose(m.c, { armsL: has ? 62 : 25, armsR: has ? 62 : 25, look: (hold - i) * 5, open: has, sweat: has && t > half, sq: hitSq(t, passes[k] ?? -9, 0.1) });
       });
-      // la bombe : dans les mains, ou en vol entre deux joueurs
       let bx, by;
       const tk = passes[k], tn = passes[k + 1] ?? tBoom, flight = Math.min(0.32, (tn - (tk ?? tn)) * 0.8);
-      if (k >= 0 && t < tk + flight) {
-        const p = E.io(seg(t, tk, tk + flight)), a = handPos(prev, t), b = handPos(hold, t);
-        bx = lerp(a.x, b.x, p); by = lerp(a.y, b.y, p) - (t > half ? 90 : 170) * 4 * p * (1 - p);
-      } else { const h = handPos(hold, t); bx = h.x; by = h.y; }
+      if (k >= 0 && t < tk + flight) { const p = E.io(seg(t, tk, tk + flight)), a = handPos(prev, t), b = handPos(hold, t); bx = lerp(a.x, b.x, p); by = lerp(a.y, b.y, p) - (t > half ? 90 : 170) * 4 * p * (1 - p); }
+      else { const h = handPos(hold, t); bx = h.x; by = h.y; }
       op(bomb, boom ? 0 : 1); tf(bomb, bx, by, 1, Math.sin(t * 9) * 8);
       tf(spark, 52, -68, 0.7 + 0.4 * Math.abs(Math.sin(t * 31)), t * 400);
-      const pp = seg(t, tBoom, tBoom + 0.35);
-      op(puff, boom ? 1 - seg(t, tBoom + 0.18, tBoom + 0.42) : 0); tf(puff, 540, FLOOR - 190, 0.3 + 0.9 * E.out(pp));
-      s.fx.forEach(f => f(t));
+      op(puff, boom ? 1 - seg(t, tBoom + 0.18, tBoom + 0.42) : 0); tf(puff, 540, FLOOR - 190, 0.3 + 0.9 * E.out(seg(t, tBoom, tBoom + 0.35)));
     };
   });
 }
 
-// --- Manche 3 : Rôles secrets ---
+// --- Undercover : masques, regards en coin, le mot se révèle, l'intrus est désigné ---
+gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
+  const bgU = setBg(g, 'sky', 'stripes', { w: 50 });
+  const ph = phone(g), M = cast3(g);
+  const td = q16(wordT(L, 'démasque') ?? R.t0 + 1), ti = q16(wordT(L, "l'intrus") ?? td + 0.4);
+  ev(td, 'pop', { f: 659 }); ev(ti, 'stamp'); punch(ti, 0.03);
+  beatsIn(R.t0, ti, B).forEach((x, i) => ev(x, 'shift', { f: i % 2 ? 1.1 : 0.9 }));
+  s.fx.push(burst(g, X3[2], FLOOR - 380, ti, K.yellow, 1));
+  stick(g, s, "L'intrus", { col: K.red, x: 860, y: 900, rot: 6, t0: ti, t1: R.t1, size: 48, sound: false });
+  s.cam = t => ({ x: 540, y: 980, z: 1 + 0.06 * E.io(seg(t, R.t0, R.t1)) });
+  return t => {
+    bgU(t); tf(ph.g, 540, PHY); ph.set(t < td ? 'uc-hide' : 'uc-show');
+    const b = Math.floor((t - R.t0) / B), found = t >= ti;
+    M.forEach((m, i) => {
+      tf(m.w, m.x, FLOOR, PSC);
+      if (!found) pose(m.c, { mask: true, look: ((b + i) % 2 ? 8 : -8), flat: true, armsL: 18, armsR: 18, lean: ((b + i) % 2 ? 2 : -2) });
+      else if (i === 2) pose(m.c, { mask: true, look: -4, open: true, sweat: true, armsL: 40, armsR: 40, sq: hitSq(t, ti, 0.15) });
+      else pose(m.c, { mask: true, look: 8, armsR: i === 0 ? 0 : 20, armsL: 20, ...(i === 0 ? { armsR: 95, elbowR: 0 } : { armsR: 95, elbowR: 0 }), open: true });
+    });
+  };
+});
+
+// --- Le Loup-garou : la nuit tombe, tout le monde dort, l'appli mène la partie ---
 {
-  const R = S.r3, L = lineById(R.line);
-  roundCard(R, 3, 'Rôles secrets', 'night', 'uc');
-  const tu = wordT(L, 'undercover') ?? R.card1, tl = wordT(L, 'loup') ?? R.card1 + 1;
-  ev(q16(tl), 'howl');
-  beatsIn(R.card1, R.t1, B).forEach((x, i) => ev(x, 'shift', { f: i % 2 ? 1.1 : 0.9 }));
-  scene(R.card1, R.t1, (g, s) => {
+  const R = S.lg, L = lineById(R.line);
+  const tl = q16(wordT(L, 'loup') ?? R.t0 + 0.3);
+  ev(tl + 0.1, 'howl');
+  gameScene('lg', 'Le Loup-garou', 'lg', (g, s) => {
     const bgU = setBg(g, 'night', 'dots', { step: 120, r: 6 });
     const stars = el('g', {}, g); const r = rng(5);
-    for (let i = 0; i < 14; i++) { const st = el('path', { d: starPath(4, 16, 5), fill: K.yellow, transform: `translate(${80 + r() * 920} ${120 + r() * 620})` }, stars); st.dataset.ph = r() * 6; }
+    for (let i = 0; i < 14; i++) { const st = el('path', { d: starPath(4, 16, 5), fill: K.yellow, transform: `translate(${80 + r() * 920} ${260 + r() * 520})` }, stars); st.dataset.ph = r() * 6; }
     const moon = el('g', {}, g);
     const mc = el('clipPath', { id: 'moonclip' }, g); el('circle', { cx: 0, cy: 0, r: 86 }, mc);
     el('circle', { cx: 0, cy: 0, r: 86, fill: K.yellow, ...SO }, moon);
     el('circle', { cx: 46, cy: -30, r: 76, fill: SETS.night.bg, ...SO, 'clip-path': 'url(#moonclip)' }, moon);
-    const ph = phone(g);
-    const M = cast3(g);
-    stick(g, s, 'Undercover', { col: GAME.uc.color, x: 215, y: 800, rot: -6, t0: q16(tu), t1: R.t1, f: 698 });
-    stick(g, s, 'Loup-garou', { col: GAME.lg.color, x: 860, y: 920, rot: 5, t0: q16(tl), t1: R.t1, f: 587 });
-    s.cam = t => ({ x: 540, y: 1000, z: 1 + 0.08 * E.io(seg(t, R.card1, R.t1)) });
+    const ph = phone(g), M = cast3(g);
+    const zz = M.map((m, i) => { const z = el('g', {}, g); gtext(z, 'z', 0, 0, 46, { fill: K.white, sw: 7 }); return z; });
+    s.cam = t => ({ x: 540, y: 1000, z: 1 + 0.06 * E.io(seg(t, R.t0, R.t1)) });
     return t => {
       bgU(t);
       [...stars.children].forEach(st => op(st, 0.45 + 0.55 * Math.abs(Math.sin(t * 2 + +st.dataset.ph))));
-      tf(moon, 900, 260, 1 + 0.25 * Math.exp(-Math.max(0, t - tl) * 6) * (t >= tl ? 1 : 0), -10);
-      tf(ph.g, 540, PHY);
-      ph.set(t < tu + 0.25 ? 'uc-hide' : t < tl ? 'uc-show' : 'lg');
-      const b = Math.floor((t - R.card1) / B);
+      tf(moon, 880, 330, 1 + 0.25 * Math.exp(-Math.max(0, t - tl) * 6) * (t >= tl ? 1 : 0), -10);
+      tf(ph.g, 540, PHY); ph.set('lg');
       M.forEach((m, i) => {
         tf(m.w, m.x, FLOOR, PSC);
-        pose(m.c, { mask: true, eyes: 'n', look: ((b + i) % 2 ? 8 : -8), flat: true, armsL: 18, armsR: 18, sweat: i === 2, lean: ((b + i) % 2 ? 2 : -2) });
+        pose(m.c, { eyes: 'meh', flat: true, lean: -6 + 2 * Math.sin(t * 2 + i), armsL: 12, armsR: 12, sq: 1 - 0.02 * Math.sin(t * 3 + i) });
+        const p = ((t * 0.6 + i * 0.33) % 1);
+        op(zz[i], 1 - p); tf(zz[i], m.x + 50 + 30 * p, FLOOR - 400 - 80 * p, 0.7 + 0.5 * p, -10);
       });
-      s.fx.forEach(f => f(t));
     };
   });
 }
 
-// --- Manche 4 : En couple (scène partagée) ---
+// --- Tu préfères : deux camps, la minorité perd ---
 {
-  const R = S.r4, L = lineById(R.line);
-  roundCard(R, 4, 'En couple', 'pink', 'know');
-  const tj = wordT(L, 'jeux') ?? R.card1;
-  const hearts = beatsIn(R.card1 + B, R.t1, B);
+  const R = S.wyr, L = lineById(R.line);
+  const tc = q16(wordT(L, 'choisis') ?? R.t0 + 0.6), tm = q16(wordT(L, 'minorité') ?? R.t0 + 1.4);
+  ev(tc, 'swish'); ev(tm, 'buzz'); punch(tm, 0.03);
+  gameScene('wyr', 'Tu préfères', 'wyr', (g, s) => {
+    splitStage(g, 'sun', 'sky');
+    const ph = phone(g), M = cast3(g);
+    const A = el('g', {}, g), Bb = el('g', {}, g);
+    for (const [grp, txt_, col] of [[A, 'A', K.yellow], [Bb, 'B', '#00BBF9']]) { el('circle', { cx: 6, cy: 6, r: 50, fill: K.ol }, grp); el('circle', { cx: 0, cy: 0, r: 50, fill: col, ...SO }, grp); gtext(grp, txt_, 0, 22, 62, { fill: K.white, sw: 9 }); }
+    stick(g, s, 'Minorité', { col: K.red, x: 860, y: 920, rot: 5, t0: tm, t1: R.t1, size: 48, sound: false });
+    s.cam = () => ({ x: 540, y: 940, z: 1 });
+    const X = [170, 360, 860];                           // deux à gauche (A), une à droite (B)
+    return t => {
+      tf(ph.g, 540, PHY); ph.set('wyr');
+      tf(A, 230, 1000, E.back(seg(t, R.t0 + 0.2, R.t0 + 0.5)), -6); tf(Bb, 860, 760, E.back(seg(t, R.t0 + 0.3, R.t0 + 0.6)), 6);
+      const moved = E.io(seg(t, tc, tc + 0.4)), lost = t >= tm;
+      M.forEach((m, i) => {
+        const x = lerp(m.x, [X[0], X[2], X[1]][i], moved);
+        tf(m.w, x, FLOOR + (lost && i !== 1 ? hopY(t, 18) : 0), PSC);
+        if (i === 1) pose(m.c, lost ? { open: true, sweat: true, armsL: 40, armsR: 40, look: -6, sq: hitSq(t, tm, 0.15) } : { armsR: 120, armsL: 20, look: 6 });
+        else pose(m.c, lost ? { hey: 1, eyes: 'up', open: true } : { armsL: i === 0 ? 20 : 120, armsR: 20, look: -6 });
+      });
+    };
+  });
+}
+
+// --- Action ou Vérité : chacun choisit ---
+{
+  const R = S.av, L = lineById(R.line);
+  const ta = q16(wordT(L, 'action') ?? R.t0 + 0.3), tv = q16(wordT(L, 'vérité') ?? R.t0 + 0.7);
+  gameScene('av', 'Action ou Vérité', 'av', (g, s) => {
+    const bgU = setBg(g, 'lime', 'stripes', { w: 55, angle: 28 });
+    const ph = phone(g), M = cast3(g);
+    stick(g, s, 'Action', { col: '#FF8C42', x: 220, y: 860, rot: -7, t0: ta, t1: R.t1, size: 52, f: 784 });
+    stick(g, s, 'Vérité', { col: '#3A86FF', x: 860, y: 900, rot: 6, t0: tv, t1: R.t1, size: 52, f: 988 });
+    s.cam = t => ({ x: 540, y: 920, z: 1 + 0.03 * seg(t, R.t0, R.t1) });
+    return t => {
+      bgU(t); tf(ph.g, 540, PHY); ph.set('av');
+      M.forEach((m, i) => {
+        tf(m.w, m.x, FLOOR + hopY(t + i * 0.2, i === 1 ? 0 : 12), PSC);
+        if (i === 1) pose(m.c, { armsL: t >= ta ? 120 : 20, armsR: t >= tv ? 120 : 20, look: t >= tv ? 6 : -6, open: frac(t) < 0.3 });
+        else pose(m.c, { eyes: 'up', open: true, hey: 0.3 });
+      });
+    };
+  });
+}
+
+// --- Les couples : une partie rien qu'à deux ---
+{
+  const R = S.couple, L = lineById(R.line);
+  const names = [['Tu me connais', 'know'], ['Qui de nous deux', 'who2'], ['Cœur à cœur', 'talk']];
+  const tn = names.map(([n], i) => q16(wordT(L, ['tu', 'qui', 'cœur'][i], i === 0 ? 0 : 0) ?? R.t0 + 1 + i * 0.5));
+  tn[0] = q16(L.words.find(w => w.w === 'Tu')?.t0 ?? tn[0]);
+  const hearts = beatsIn(R.t0 + B, R.t1, B);
   hearts.forEach((x, i) => ev(x, 'heart', { f: pitch(i + 2) }));
-  scene(R.card1, R.t1, (g, s) => {
-    el('rect', { x: -400, y: -400, width: W + 800, height: H + 800, fill: SETS.pink.bg }, g);
-    dots(g, SETS.pink.pat, 90, 13);
-    const right = el('g', {}, g);
-    el('path', { d: 'M 540 -400 L 600 200 L 500 700 L 590 1200 L 540 2400 L 1600 2400 L 1600 -400 Z', fill: SETS.sky.bg }, right);
-    el('path', { d: 'M 540 -400 L 600 200 L 500 700 L 590 1200 L 540 2400', fill: 'none', stroke: K.ol, 'stroke-width': OW }, right);
-    el('rect', { x: -400, y: FLOOR, width: W + 800, height: H - FLOOR + 400, fill: SETS.pink.floor }, g);
-    el('rect', { x: 540, y: FLOOR, width: 1000, height: H - FLOOR + 400, fill: SETS.sky.floor }, g);
-    el('line', { x1: -400, y1: FLOOR, x2: W + 400, y2: FLOOR, stroke: K.ol, 'stroke-width': OW }, g);
+  CUTS.push(R.t0); ev(R.t0, 'jingle');
+  scene(R.t0, R.t1, (g, s) => {
+    splitStage(g, 'pink', 'sky');
     const ph = phone(g);
     const wb = el('g', {}, g), wg = el('g', {}, g);
     const cb = PEOPLE.puff(wb), cg = PEOPLE.cap(wg);
-    const H2 = hearts.map((x, i) => { const h = el('path', { d: 'M 0 26 C -60 -10 -40 -60 0 -30 C 40 -60 60 -10 0 26 Z', fill: i % 2 ? K.red : K.white, ...SO, 'stroke-width': 6 }, g); const r = rng(40 + i); return { h, t0: x, x: i % 2 ? 150 + r() * 160 : 770 + r() * 160, y: 420 + r() * 520 }; });
-    const names = ['Tu me connais ?', 'Qui de nous deux', 'Cœur à cœur'].map(x => x.replace(' ?', ' ?'));
-    const cols = [GAME.know.color, GAME.who2.color, GAME.talk.color];
-    names.forEach((nm, i) => stick(g, s, nm, { col: cols[i], x: i % 2 ? 840 : 245, y: 780 + i * 105, rot: i % 2 ? 5 : -5, t0: R.card1 + 0.25 + i * B, t1: R.t1, f: pitch(5 + i), size: 48 }));
+    const H2 = hearts.map((x, i) => { const h = el('path', { d: 'M 0 26 C -60 -10 -40 -60 0 -30 C 40 -60 60 -10 0 26 Z', fill: i % 2 ? K.red : K.white, ...SO, 'stroke-width': 6 }, g); const r = rng(40 + i); return { h, t0: x, x: i % 2 ? 150 + r() * 160 : 770 + r() * 160, y: 420 + r() * 380 }; });
+    stick(g, s, 'En couple', { col: GAME.know.color, x: 540, y: 150, rot: -3, t0: R.t0 + 0.05, t1: R.t1, size: 64, f: 784 });
+    names.forEach(([nm, id], i) => stick(g, s, nm, { col: GAME[id].color, x: i % 2 ? 840 : 245, y: 800 + i * 100, rot: i % 2 ? 5 : -5, t0: tn[i], t1: R.t1, f: pitch(5 + i), size: 46 }));
     s.cam = () => ({ x: 540, y: 940, z: 1 });
     return t => {
-      tf(ph.g, 540, PHY); ph.set('know');
+      tf(ph.g, 540, PHY); ph.set(t < tn[2] ? 'know' : 'talk');
       const hb = nearestIn(hearts, t, 0.02, 0.25);
-      tf(wb, 250, FLOOR + hopY(t, 12), PSC); pose(cb, { eyes: 'up', lean: 7, armsL: 20, armsR: 70, open: hb != null && Math.round((hb - R.card1) / B) % 2 === 0 });
-      tf(wg, 830, FLOOR + hopY(t + B / 2, 12), PSC); pose(cg, { eyes: 'up', lean: -7, armsL: 70, armsR: 20, open: hb != null && Math.round((hb - R.card1) / B) % 2 === 1 });
+      tf(wb, 250, FLOOR + hopY(t, 12), PSC); pose(cb, { eyes: 'up', lean: 7, armsL: 20, armsR: 70, open: hb != null && Math.round((hb - R.t0) / B) % 2 === 0 });
+      tf(wg, 830, FLOOR + hopY(t + B / 2, 12), PSC); pose(cg, { eyes: 'up', lean: -7, armsL: 70, armsR: 20, open: hb != null && Math.round((hb - R.t0) / B) % 2 === 1 });
       H2.forEach(k => { const p = seg(t, k.t0, k.t0 + 1.2); op(k.h, t >= k.t0 && p < 1 ? 1 - p * p : 0); tf(k.h, k.x, k.y - 120 * p, E.back(seg(t, k.t0, k.t0 + 0.25)) * 1.2, Math.sin(t * 5 + k.x) * 8); });
       s.fx.forEach(f => f(t));
     };
@@ -325,7 +351,7 @@ function roundCard(R, n, name, setKey, gid, tcol) {
 
 // ======================= 7. Le gage =======================
 {
-  const G = S.gage, la = lineById('l7a'), lb = lineById('l7b');
+  const G = S.gage, la = lineById('l10a'), lb = lineById('l10b');
   CUTS.push(G.t0);
   const sweeps = beatsIn(la.t0, G.silence, B);
   const spotX = t => { if (t >= G.silence - B) return 540; const k = sweeps.filter(x => t >= x).length; return [250, 830, 250, 830, 540][Math.min(4, k)] ?? 540; };
@@ -363,38 +389,9 @@ function roundCard(R, n, name, setKey, gid, tcol) {
   });
 }
 
-// ======================= 8. Sans réseau =======================
-{
-  const O = S.offline, L = lineById('l8');
-  CUTS.push(O.t0);
-  const ts = q16(wordT(L, 'sans') ?? O.t0 + 0.3), tm = q16(wordT(L, 'marche') ?? O.t0 + 1);
-  ev(ts, 'nosignal'); ev(tm, 'ding'); punch(tm, 0.025);
-  scene(O.t0, O.t1, (g, s) => {
-    const bgU = setBg(g, 'sky', 'dots', { step: 110, r: 10, floor: false });
-    const clouds = el('g', {}, g);
-    for (const [x, y, k] of [[170, 420, 1], [900, 300, 0.8], [880, 980, 1.1]]) { const c = el('path', { d: 'M -90 30 C -130 30 -130 -20 -86 -22 C -84 -70 -20 -80 0 -44 C 30 -80 96 -60 86 -14 C 130 -10 126 30 90 30 Z', fill: K.white, ...SO, 'stroke-width': 7, transform: `translate(${x} ${y}) scale(${k})` }, clouds); void c; }
-    const ph = phone(g);
-    const nos = el('g', {}, g);
-    el('circle', { cx: 8, cy: 8, r: 78, fill: K.ol }, nos);
-    el('circle', { cx: 0, cy: 0, r: 78, fill: K.white, ...SO }, nos);
-    [[-30, 18, 16], [-6, 4, 30], [18, -10, 44]].forEach(([x, y, h]) => el('rect', { x: x - 9, y: y + 22 - h, width: 18, height: h, rx: 4, fill: K.ol }, nos));
-    el('path', { d: 'M -46 -46 L 46 46', stroke: K.red, 'stroke-width': 14, 'stroke-linecap': 'round' }, nos);
-    stick(g, s, 'Hors ligne', { col: K.red, x: 760, y: 360, rot: 6, t0: ts, t1: O.t1, sound: false, size: 46 });
-    s.fx.push(burst(g, 300, 1060, tm, K.yellow, 1.4));
-    stick(g, s, 'Ça marche', { col: '#2FB36B', x: 300, y: 1060, rot: -5, t0: tm, t1: O.t1, sound: false, size: 52 });
-    s.cam = t => ({ x: 540, y: lerp(700, 760, seg(t, O.t0, O.t1)), z: lerp(1.3, 1.24, E.out(seg(t, O.t0, O.t1))) });
-    return t => {
-      bgU(t);
-      tf(ph.g, 540, PHY); ph.set('wyr');
-      op(nos, t >= ts ? 1 : 0); tf(nos, 330, 380, E.back(seg(t, ts, ts + 0.3)), -8);
-      s.fx.forEach(f => f(t));
-    };
-  });
-}
-
 // ======================= 9. Final : photo de groupe, puis l'écran de fin =======================
 {
-  const F = S.final, L = lineById('l9');
+  const F = S.final, L = lineById('l11');
   CUTS.push(F.t0);
   const snap = F.snap;
   ev(snap, 'shutter'); ev(snap + 0.42, 'land'); ev(snap + 0.6, 'pop', { f: 784 }); ev(snap + 0.85, 'pop', { f: 1047 }); ev(snap + 1.1, 'pop', { f: 1319 });
@@ -534,7 +531,6 @@ window.render = t => {
   for (const c of CUTS) if (t >= c && t < c + 0.08) fl = Math.max(fl, 0.85 * (1 - (t - c) / 0.08));
   if (t >= S.final.snap && t < S.final.snap + 0.25) fl = Math.max(fl, 1 - (t - S.final.snap) / 0.25);
   op(FLASH, fl);
-  BANNERS.forEach(f => f(t));
   SUBS.update(t);
 };
 window.TEXTS = t => TEXTREG.filter(x => t >= x.t0 && t < x.t1).map(({ id, text, x0, y0, x1, y1 }) => ({ id, text, x0, y0, x1, y1 }));
