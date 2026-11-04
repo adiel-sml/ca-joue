@@ -96,7 +96,7 @@ def main():
     ap.add_argument('lines'); ap.add_argument('vdir'); ap.add_argument('--out')
     a = ap.parse_args()
     lines = json.load(open(a.lines, encoding='utf-8'))
-    lib = os.environ.get('LIB', os.path.expanduser('~/lemo-opuscar'))
+    lib = os.environ.get('LIB', os.path.expanduser('~/.doodle-video/lemo-opuscar'))
     from kokoro_onnx import Kokoro
     k = Kokoro(os.path.join(lib, 'core/tts/kokoro-v1.0.onnx'), os.path.join(lib, 'core/tts/voices-v1.0.bin'))
     out = {}

@@ -181,6 +181,18 @@ for t, tr in SC.get('fanfares', []):
     add(brass_stab([m + tr for m in (72, 76, 79, 84)], 1.4), t + BEAT * 4 / 3, 0.55)
 for t0, t1 in SC.get('rolls', []): roll(t0, t1)
 
+# musique fournie par l'utilisateur (droits vérifiés) : remplace la partition synthétisée, calée sur son premier temps
+TR = SC.get('track')
+if TR:
+    import subprocess as _sp, tempfile as _tf
+    with _tf.TemporaryDirectory() as _td:
+        _w = os.path.join(_td, 'm.wav'); _sp.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', TR['file'], '-ac', '2', '-ar', str(SR), _w], check=True)
+        m_, _ = sf.read(_w)
+    m_ = m_[int(TR.get('beat0', 0) * SR):]
+    need = S.N
+    while len(m_) < need: m_ = np.concatenate([m_, m_])
+    S.L[:] = m_[:need, 0] * 10 ** (TR.get('gain', 0) / 20); S.R[:] = m_[:need, 1] * 10 ** (TR.get('gain', 0) / 20)
+
 # silences : la musique et l'ambiance s'arrêtent net
 def mute(t0, t1, fade=0.04):
     i0, i1 = int(t0 * SR), int(t1 * SR); f = int(fade * SR)
@@ -218,6 +230,16 @@ for e in EVS:
     elif s == 'land': addf(plop(), t, 0.5); addf(boing(220, 520), t + 0.02, 0.25)
     elif s == 'hop': addf(pop(f * 0.5), t, 0.12, rng.uniform(-.5, .5))
     elif s == 'gasp': pass                                 # le silence reste au silence
+    elif s == 'step': n_ = int(0.09 * SR); tt = np.arange(n_) / SR; addf(lp(rng.standard_normal(n_), 500) * np.exp(-tt * 45) * 0.9 + np.sin(2 * np.pi * 90 * f * tt) * np.exp(-tt * 40) * 0.5, t, 0.35, rng.uniform(-.3, .3))
+    elif s == 'door': addf(stamp(False), t, 0.5); addf(woodblock(300), t + 0.02, 0.4)
+    elif s == 'knock':
+        for k in range(3): addf(woodblock(420), t + k * 0.16, 0.5)
+    elif s == 'notif': addf(bell(88, 0.6), t, 0.35); addf(bell(93, 0.6), t + 0.11, 0.35)
+    elif s == 'click': addf(key_click(), t, 0.6)
+    elif s == 'crowd': addv(cheer(1.4), t, 0.6)
+    elif s == 'laugh':
+        for k in range(4): addf(boing(500 - k * 40, 620 - k * 40, 0.12), t + k * 0.13, 0.25)
+    elif s == 'sparkle': addf(sparkle(), t, 0.3)
     elif s == 'jingle': pass                               # joué par l'arrangement
 
 # ---------------- Voix ----------------

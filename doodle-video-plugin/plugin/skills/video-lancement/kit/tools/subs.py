@@ -1,7 +1,7 @@
 """Repères des sous-titres (.srt) : mêmes découpes que les plaques du film. python tools/subs.py out/cues.json"""
 import json, sys, subprocess, os
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-lib = os.environ.get('LIB', os.path.expanduser('~/lemo-opuscar'))
+lib = os.environ.get('LIB', os.path.expanduser('~/.doodle-video/lemo-opuscar'))
 js = """const {chromium}=require('playwright');(async()=>{const b=await chromium.launch();const p=await b.newPage();
 await p.goto('http://127.0.0.1:8765/index.html');await p.waitForFunction(()=>window.READY,null,{timeout:180000});
 console.log(JSON.stringify(await p.evaluate(()=>window.SUBCUES)));await b.close();})();"""

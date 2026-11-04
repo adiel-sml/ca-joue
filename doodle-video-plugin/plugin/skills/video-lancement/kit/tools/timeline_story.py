@@ -32,8 +32,8 @@ for i, sc in enumerate(ST['scenes']):
     if i: crashes.append(t0)
     if sc.get('pause'): silences.append([t0, t0 + sc['pause']])
     t = t1
-TL = {'B': B, 'BAR': BAR, 'dur': t, 'S': S, 'lines': lines,
-      'score': {'spans': spans, 'crashes': crashes, 'silences': silences, 'jingles': [], 'fanfares': [], 'rolls': [], 'ambience': ST.get('ambience', [])}}
+TL = {'B': B, 'BAR': BAR, 'dur': t, 'S': S, 'lines': lines, 'size': os.environ.get('SIZE', ST.get('size', '1080x1920')),
+      'score': {'track': ST.get('track'), 'spans': [] if ST.get('track') else spans, 'crashes': crashes, 'silences': silences, 'jingles': [], 'fanfares': [], 'rolls': [], 'ambience': ST.get('ambience', [])}}
 open('timeline.js', 'w', encoding='utf-8').write('window.TL = ' + json.dumps(TL, ensure_ascii=False, indent=1) + ';\n')
 json.dump(TL, open('timeline.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 for k, v in S.items(): print(f"{k:10s} {v['t0']:6.2f} → {v['t1']:6.2f}")

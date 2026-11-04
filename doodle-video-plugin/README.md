@@ -29,6 +29,14 @@ Le dépôt étant privé, ajoute-le aussi dans les dépôts de l'environnement.
 - « Fais-moi une vidéo de lancement » dans un projet, ou `/doodle-video:video-lancement`.
 - « Raconte en vidéo… », « Explique en vidéo comment… », ou `/doodle-video:histoire`.
 
+## Ce que fait le plugin
+
+- Personnages expressifs gardés d'une vidéo à l'autre (`cast.json`) : 10 émotions, bouche qui suit les sons, gestes, assis, trois-quarts.
+- Storyboard à valider avant le rendu, puis une vérification complète en une commande (temps morts, lecture, zones des réseaux, chevauchements, image, son, voix).
+- 7 modèles de formats (top 5, avant/après, mythe ou réalité, tuto, sketch, témoignage, erreurs), 9 lieux, pluie et nuit, accessoires, bruitages, ta propre musique calée sur son tempo, 3 styles de sous-titres, couverture dessinée.
+- Formats vertical (TikTok, Reels, Shorts), 16:9 (YouTube) et 4:5 (fil Instagram), avec le dossier de publication.
+- Bibliothèque de rendu figée à une version testée (`scripts/setup.sh`).
+
 ## Réseau (sessions cloud)
 
 - Voix Microsoft : `speech.platform.bing.com`
@@ -38,5 +46,7 @@ Le dépôt étant privé, ajoute-le aussi dans les dépôts de l'environnement.
 
 - `plugin/skills/video-lancement/SKILL.md` : la méthode, étape par étape.
 - `plugin/skills/histoire/SKILL.md` : la méthode pour les histoires et les explications.
+- `plugin/skills/video-lancement/kit/GUIDE.md` : la boîte à outils, pour les deux skills.
+- `tests/smoke.sh`, `evals/` : test de bout en bout et requêtes de déclenchement.
 - `plugin/skills/video-lancement/kit/` : moteur d'image (`engine.js`), socle commun (`runtime.js`), bonhommes (`people.js`), lieux et explications (`story.js`), outils de voix, d'alignement, de minutage, de musique et de rendu ; exemples : le film de Ça Joue (`example/`) et une petite histoire (`example-histoire/`).
 - Rendu, voix hors ligne et mixage : bibliothèque Lemo-Opuscar (MIT), installée par `scripts/setup.sh`.

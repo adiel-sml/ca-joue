@@ -2,7 +2,11 @@
 // Aides de base reprises et adaptées du style Game Show Flat de Lemo-Opuscar (licence MIT, voir CREDITS).
 'use strict';
 const NS = 'http://www.w3.org/2000/svg';
+// Le monde est toujours dessiné en 1080×1920 (W, H) ; l'image rendue (VW×VH) peut être verticale, 4:5 ou 16:9 :
+// la caméra et l'écran (HUD) s'adaptent (runtime.js). Taille de l'image : ?size=WxH dans l'adresse, sinon la fenêtre (--size des outils de rendu).
 const W = 1080, H = 1920, FLOOR = 1380;
+const [VW, VH] = ((new URLSearchParams(location.search).get('size')) || (innerWidth > 0 && innerHeight > 0 ? `${innerWidth}x${innerHeight}` : null) || '1080x1920').split('x').map(Number);
+const LANDSCAPE = VW > VH;
 function el(tag, attrs = {}, parent) {
   const e = document.createElementNS(NS, tag);
   for (const k in attrs) e.setAttribute(k, attrs[k]);

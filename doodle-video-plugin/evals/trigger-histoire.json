@@ -1,0 +1,82 @@
+[
+ {
+  "query": "Raconte en vidéo comment ma grand-mère a ouvert son restaurant",
+  "should_trigger": true
+ },
+ {
+  "query": "Explique en vidéo animée comment marche un crédit immobilier",
+  "should_trigger": true
+ },
+ {
+  "query": "Fais un top 5 des erreurs en entretien d'embauche en vidéo",
+  "should_trigger": true
+ },
+ {
+  "query": "Un sketch animé de deux colocs qui se disputent la vaisselle",
+  "should_trigger": true
+ },
+ {
+  "query": "Mythe ou réalité sur le sommeil, en format TikTok",
+  "should_trigger": true
+ },
+ {
+  "query": "Fais une vidéo pédagogique en 3 étapes pour apprendre à faire un budget",
+  "should_trigger": true
+ },
+ {
+  "query": "Je veux raconter mon premier jour de travail en dessin animé",
+  "should_trigger": true
+ },
+ {
+  "query": "Un avant/après de ma routine du matin, en vidéo courte",
+  "should_trigger": true
+ },
+ {
+  "query": "Fais un dialogue animé entre un prof et un élève sur la photosynthèse",
+  "should_trigger": true
+ },
+ {
+  "query": "Crée une vidéo qui explique les 3 erreurs à éviter quand on investit",
+  "should_trigger": true
+ },
+ {
+  "query": "Fais-moi une vidéo de lancement pour mon appli",
+  "should_trigger": false
+ },
+ {
+  "query": "Écris une histoire pour enfants que je lirai le soir",
+  "should_trigger": false
+ },
+ {
+  "query": "Explique-moi comment marche un crédit immobilier",
+  "should_trigger": false
+ },
+ {
+  "query": "Rédige le script d'un podcast sur la productivité",
+  "should_trigger": false
+ },
+ {
+  "query": "Dessine une infographie sur le sommeil pour mon blog",
+  "should_trigger": false
+ },
+ {
+  "query": "Résume cette vidéo YouTube en 5 points",
+  "should_trigger": false
+ },
+ {
+  "query": "Fais un graphique de mes dépenses du mois",
+  "should_trigger": false
+ },
+ {
+  "query": "Écris une nouvelle de science-fiction de 2000 mots",
+  "should_trigger": false
+ },
+ {
+  "query": "Corrige les sous-titres de ma vidéo",
+  "should_trigger": false
+ },
+ {
+  "query": "Prépare un diaporama pour présenter mon projet en réunion",
+  "should_trigger": false
+ }
+]
