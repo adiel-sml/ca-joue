@@ -1,7 +1,39 @@
-{"bpm": 110, "end_hold": 3.2,
+{
+ "bpm": 116,
+ "gap": 0.12,
+ "end_hold": 1.4,
  "scenes": [
-  {"id": "salon", "lines": ["l1", "l2"], "mode": "sparse", "min_bars": 2},
-  {"id": "tableau", "lines": ["l3"], "mode": "funk", "min_bars": 2},
-  {"id": "parc", "lines": ["l4", "l5"], "mode": "popBig", "min_bars": 2}
+  {
+   "id": "salon",
+   "lines": [
+    "l1",
+    "l2"
+   ],
+   "mode": "funk"
+  },
+  {
+   "id": "tableau",
+   "lines": [
+    "l3",
+    "l3b",
+    "l3c"
+   ],
+   "mode": "quiz"
+  },
+  {
+   "id": "parc",
+   "lines": [
+    "l4",
+    "l5"
+   ],
+   "mode": "popBig"
+  }
  ],
- "ambience": [["room", 0, 4]]}
+ "ambience": [
+  [
+   "room",
+   0,
+   4
+  ]
+ ]
+}

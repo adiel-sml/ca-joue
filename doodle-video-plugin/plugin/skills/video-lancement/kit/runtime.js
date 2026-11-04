@@ -23,12 +23,13 @@ function scene(t0, t1, build) {
 function reg(id, text, t0, t1, x, y, w, h) { TEXTREG.push({ id, text, t0, t1, x0: x - w / 2, y0: y - h / 2, x1: x + w / 2, y1: y + h / 2 }); }
 function stick(g, s, text, o) { const st = sticker(g, text, o); s.fx.push(st.update); reg('st-' + text, text, st.t0, st.t1, st.x, st.y, st.w, st.h); if (o.sound !== false) { ev(st.t0, 'pop', { f: o.f || 880 }); punch(st.t0, 0.012); } return st; }
 const FLASHES = [];                     // grands éclairs blancs (photo, révélation)
-let SUB_Y = 1520;                        // hauteur de la plaque de sous-titres
+let SUB_Y = 1410;                        // hauteur de la plaque de sous-titres
+const OVERLAYS = [];                     // éléments à l'écran (bulles, mots clés) : update(t) appelé à chaque image
 let SUBS_ON = true;                      // false : pas de plaque (dialogues en bulles, par exemple)
 // ======================= Sous-titres : une plaque, la ligne s'écrit mot par mot =======================
 let SUBS = null;
 const buildSubs = () => {
-  const size = 60, maxW = 880, chunks = [];
+  const size = 60, maxW = 740, chunks = [];
   for (const L of TL.lines) {
     let cur = [], len = 0;
     const flush = () => { if (cur.length) chunks.push(cur); cur = []; len = 0; };
@@ -110,6 +111,8 @@ window.render = t => {
   for (const c of FLASHES) if (t >= c && t < c + 0.25) fl = Math.max(fl, 1 - (t - c) / 0.25);
   op(FLASH, fl);
   if (SUBS_ON) SUBS.update(t); else SUBS.update(-1);
+  OVERLAYS.forEach(f => f(t));
+  if (typeof drawWipes === 'function') drawWipes(HUD, t);
 };
 window.TEXTS = t => TEXTREG.filter(x => t >= x.t0 && t < x.t1).map(({ id, text, x0, y0, x1, y1 }) => ({ id, text, x0, y0, x1, y1 }));
 Object.defineProperty(window, 'SUBCUES', { get: () => (SUBS || (SUBS = buildSubs())).chunks.map(c => ({ t0: +c.t0.toFixed(3), t1: +c.t1.toFixed(3), text: c.map(w => w.w).join(' ') })) });

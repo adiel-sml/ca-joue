@@ -81,7 +81,7 @@ function cast3(g) { const out = []; for (const [k, i] of [['cap', 0], ['puff', 1
       gameTile(w, GAME[id], 128);
       const tl = R.rain0 + (i + 1) * dt;
       ev(tl, 'pip', { f: pitch(i) });
-      return { w, x: 240 + c * 150 + (r === 4 ? 150 : 0), y: 380 + r * 150, tl, tf: tFly + i * 0.012 };
+      return { w, x: 240 + c * 150 + (r === 4 ? 150 : 0), y: 425 + r * 148, tl, tf: tFly + i * 0.012 };
     });
     ev(R.t0, 'boom'); punch(R.t0, 0.05);
     ev(R.n23, 'stamp'); ev(R.n23, 'crash'); punch(R.n23, 0.04);
@@ -95,8 +95,8 @@ function cast3(g) { const out = []; for (const [k, i] of [['cap', 0], ['puff', 1
     el('rect', { x: -tagW / 2 + 14, y: -100 + 14, width: tagW, height: 200, rx: 50, fill: K.ol }, tag);
     el('rect', { x: -tagW / 2, y: -100, width: tagW, height: 200, rx: 50, fill: K.gold, ...SO, 'stroke-width': 10 }, tag);
     gtext(tag, '23 jeux', 0, 52, 150, { fill: K.white, sw: 22 });
-    reg('n23', '23 jeux', R.n23, S.mime.t0, 540, 180, tagW, 200);
-    s.fx.push(burst(g, 540, 180, R.n23, K.yellow, 1.6));
+    reg('n23', '23 jeux', R.n23, S.mime.t0, 540, 290, tagW, 200);
+    s.fx.push(burst(g, 540, 290, R.n23, K.yellow, 1.6));
     s.cam = t => { const p = E.io(seg(t, R.t0, tFly + 0.4)); return { x: 540, y: lerp(820, 960, p), z: lerp(1.1, 1, p) }; };
     return t => {
       bgU(t);
@@ -118,8 +118,8 @@ function cast3(g) { const out = []; for (const [k, i] of [['cap', 0], ['puff', 1
       });
       const n = Math.min(23, tiles.filter(k => t >= k.tl).length);
       num.textContent = String(n);
-      op(cnt, t >= R.rain0 && t < R.n23 ? 1 : 0); tf(cnt, 540, 180, E.back(seg(t, R.rain0, R.rain0 + 0.25)));
-      op(tag, t >= R.n23 ? 1 : 0); tf(tag, 540, 180, E.back(seg(t, R.n23, R.n23 + 0.3)), -4);
+      op(cnt, t >= R.rain0 && t < R.n23 ? 1 : 0); tf(cnt, 540, 290, E.back(seg(t, R.rain0, R.rain0 + 0.25)));
+      op(tag, t >= R.n23 ? 1 : 0); tf(tag, 540, 290, E.back(seg(t, R.n23, R.n23 + 0.3)), -4);
       s.fx.forEach(f => f(t));
     };
   });
@@ -134,7 +134,7 @@ function gameScene(key, title, gid, build) {
   CUTS.push(R.t0); punch(R.t0, 0.03);
   return scene(R.t0, R.t1, (g, s) => {
     const up = build(g, s, R, L);
-    stick(g, s, title, { col: GAME[gid].color, x: 540, y: 150, rot: -3, t0: R.t0 + 0.05, t1: R.t1, size: 64, f: 784 });
+    stick(g, s, title, { col: GAME[gid].color, x: 540, y: 265, rot: -3, t0: R.t0 + 0.05, t1: R.t1, size: 64, f: 784 });
     return t => { up(t); s.fx.forEach(f => f(t)); };
   });
 }
@@ -335,7 +335,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
     const wb = el('g', {}, g), wg = el('g', {}, g);
     const cb = PEOPLE.puff(wb), cg = PEOPLE.cap(wg);
     const H2 = hearts.map((x, i) => { const h = el('path', { d: 'M 0 26 C -60 -10 -40 -60 0 -30 C 40 -60 60 -10 0 26 Z', fill: i % 2 ? K.red : K.white, ...SO, 'stroke-width': 6 }, g); const r = rng(40 + i); return { h, t0: x, x: i % 2 ? 150 + r() * 160 : 770 + r() * 160, y: 420 + r() * 380 }; });
-    stick(g, s, 'En couple', { col: GAME.know.color, x: 540, y: 150, rot: -3, t0: R.t0 + 0.05, t1: R.t1, size: 64, f: 784 });
+    stick(g, s, 'En couple', { col: GAME.know.color, x: 540, y: 265, rot: -3, t0: R.t0 + 0.05, t1: R.t1, size: 64, f: 784 });
     names.forEach(([nm, id], i) => stick(g, s, nm, { col: GAME[id].color, x: i % 2 ? 840 : 245, y: 800 + i * 100, rot: i % 2 ? 5 : -5, t0: tn[i], t1: R.t1, f: pitch(5 + i), size: 46 }));
     s.cam = () => ({ x: 540, y: 940, z: 1 });
     return t => {
@@ -450,7 +450,7 @@ gameScene('uc', 'Undercover', 'uc', (g, s, R, L) => {
 
 // ======================= Sous-titres : une plaque, la ligne s'écrit mot par mot =======================
 const SUBS = (() => {
-  const size = 60, maxW = 880, chunks = [];
+  const size = 60, maxW = 740, chunks = [];
   for (const L of TL.lines) {
     let cur = [], len = 0;
     const flush = () => { if (cur.length) chunks.push(cur); cur = []; len = 0; };
@@ -498,7 +498,7 @@ const SUBS = (() => {
         op(it.cg, on ? 1 : 0); if (!on) return;
         const first = it.c === it.c[0] && false;
         void first;
-        tf(it.cg, 540, 1520, E.back(seg(t, it.c.t0, it.c.t0 + 0.2)) * (1 - 0.08 * E.in(seg(t, it.c.t1 - 0.1, it.c.t1))));
+        tf(it.cg, 540, 1410, E.back(seg(t, it.c.t0, it.c.t0 + 0.2)) * (1 - 0.08 * E.in(seg(t, it.c.t1 - 0.1, it.c.t1))));
         it.words.forEach((o, j) => {
           const nx = it.words[j + 1];
           const said = t >= o.w.t0 - 0.03, now = said && t < Math.min(o.w.t1 + 0.12, nx ? nx.w.t0 - 0.03 : 1e9);
