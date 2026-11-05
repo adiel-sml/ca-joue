@@ -1,0 +1,9 @@
+[
+ {"id": "l1", "text": "Ce soir, c'est toi qui lances la partie.", "voice": "fr-FR-HenriNeural", "rate": "+6%"},
+ {"id": "l2", "text": "Tes potes s'ennuient ? Sors ton téléphone.", "voice": "fr-FR-HenriNeural", "rate": "+6%"},
+ {"id": "l3", "text": "Tu ouvres Ça Joue, tu choisis ton jeu.", "voice": "fr-FR-HenriNeural", "rate": "+6%"},
+ {"id": "l4", "text": "Mimes, Bombe, Undercover, Loup-garou : vingt-trois jeux dans ta poche.", "voice": "fr-FR-HenriNeural", "rate": "+6%", "show": {"vingt-trois": "23"}},
+ {"id": "l5", "text": "Tu perds ? Tu fais un gage.", "voice": "fr-FR-HenriNeural", "rate": "+0%"},
+ {"id": "l6", "text": "Et en couple ? Des parties rien qu'à deux.", "voice": "fr-FR-HenriNeural", "rate": "+0%"},
+ {"id": "l7", "text": "Ça Joue. La soirée commence ici.", "voice": "fr-FR-HenriNeural", "rate": "+6%"}
+]

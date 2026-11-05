@@ -1,0 +1,18 @@
+{
+ "accents": [
+  "#FF4D6D",
+  "#4FE3B5",
+  "#FFBE0B",
+  "#6CB6FF",
+  "#8AC926"
+ ],
+ "fond": "#FFFFFF",
+ "encre": "#16132B",
+ "ecartes": [],
+ "source": "/home/user/ca-joue",
+ "polices": {
+  "titre": "Dela Gothic One",
+  "texte": "Figtree"
+ },
+ "font": "Figtree"
+}
