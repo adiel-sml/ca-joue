@@ -1,0 +1,30 @@
+Ça Joue, film de lancement : éléments tiers et licences
+
+Image
+- Écrans de l'application Ça Joue : captures de l'appli de l'utilisateur (son propre produit), filmées avec Playwright.
+- Icônes des jeux : Lucide (https://lucide.dev), licence ISC, telles qu'utilisées dans l'appli.
+- Police Fredoka, Copyright 2016 The Fredoka Project Authors (https://github.com/hafontia/Fredoka-One), SIL Open Font License 1.1 : fonts/fredoka-latin.woff2, voir fonts/OFL.md.
+- Mascottes, décors, étiquettes et animation : dessinés en code pour ce film.
+
+Son
+- Musique et bruitages : synthétisés en code pour ce film (numpy/scipy), aucun échantillon externe.
+- Voix off : enregistrement de l'utilisateur (voice/). La voix provisoire du brouillon (voice-scratch/) est Kokoro v1.0
+  (hexgrad/Kokoro-82M, licence Apache 2.0) via kokoro-onnx (MIT), voix ff_siwis ; elle sert aussi de référence pour
+  caler les mots de l'enregistrement (tools/align.py, tools/split_voice.py), sans être entendue dans le film final.
+
+Code
+- engine.js (aides SVG, tempo, décors, éclat, mot de jugement) et tools/synth_lib.py (instruments et bruitages) reprennent
+  du code du style « Game Show Flat » de la bibliothèque Lemo-Opuscar (https://github.com/lemomo-ai/lemo-opuscar),
+  licence MIT :
+
+  MIT License. Copyright (c) 2026 LemoLab
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+  documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+  persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice
+  and this permission notice shall be included in all copies or substantial portions of the Software.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+
+- Rendu image par image, mesure de lecture et mixage final : outils core/ de Lemo-Opuscar (MIT), ffmpeg (LGPL/GPL).
+
+Motion design (skill motion, kit/motion.js) : méthode inspirée de huashu-motion (alchaincyf, MIT), product-launch-motion (AbubakrChan, MIT) et HyperFrames (HeyGen, Apache 2.0) ; aucun code repris. Police Inter (OFL 1.1).

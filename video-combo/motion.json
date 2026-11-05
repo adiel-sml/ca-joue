@@ -1,0 +1,10 @@
+{"bpm": 120,
+ "sections": [
+  {"id": "logo", "beats": 2, "mode": "tension", "lines": ["l1"], "crash": false, "lead": 0.25},
+  {"id": "ennui", "beats": 2, "mode": "sparse", "lines": ["l2"], "lead": 0.05},
+  {"id": "choix", "beats": 2, "mode": "pop", "lines": ["l3"], "lead": 0.05},
+  {"id": "jeux", "beats": 2, "mode": "popBig", "lines": ["l4"], "lead": 0.05},
+  {"id": "gage", "beats": 2, "mode": "quiz", "lines": ["l5"], "lead": 0.05},
+  {"id": "couple", "beats": 2, "mode": "sweet", "lines": ["l6"], "lead": 0.05},
+  {"id": "fin", "beats": 8, "mode": "end", "lines": ["l7"], "lead": 0.1}
+ ]}
